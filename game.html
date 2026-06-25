@@ -387,8 +387,7 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
           style="flex:1;padding:8px 4px;border:2px solid #e67e22;background:#e67e22;color:white;border-radius:8px;font-size:0.8rem;font-weight:bold;cursor:pointer;line-height:1.3;">😊<br>通常モード</button>
         <button onclick="setDifficulty('hard',this)" id="diff-hard"
           style="flex:1;padding:8px 4px;border:2px solid #e74c3c;background:white;color:#e74c3c;border-radius:8px;font-size:0.8rem;font-weight:bold;cursor:pointer;line-height:1.3;">👹<br>鬼モード</button>
-        <button onclick="setDifficulty('hell',this)" id="diff-hell"
-          style="flex:1;padding:8px 4px;border:2px solid #9b59b6;background:white;color:#9b59b6;border-radius:8px;font-size:0.8rem;font-weight:bold;cursor:pointer;line-height:1.3;">👿<br>地獄モード</button>
+
       </div>
     </div>
     <button onclick="selectModeAndStart('scoring')" style="margin-top:10px;width:100%;padding:14px;background:linear-gradient(135deg,#e67e22,#c0392b);color:white;border:none;border-radius:12px;font-size:1rem;font-weight:bold;cursor:pointer;box-shadow:0 4px 15px rgba(230,126,34,0.4);letter-spacing:0.05em;">
@@ -1209,11 +1208,9 @@ async function doScore() {
   // フリーハンドモード: pixel-overlapで採点
   if (Object.keys(fhStrokes).length > 0) {
     total = 0; html = '';
-    const fhScores = await Promise.all(getActivePartOrder().map(k => scoreFreehandOverlap(k)));
-    const fhLabels = currentDifficulty === 'hell'
-      ? {crown:'冠',leye:'ウィンク目',reye:'目',nose:'鼻',mouth:'口'}
-      : {hair:'髪',reye:'左目',leye:'右目',nose:'鼻',mouth:'口'};
-    getActivePartOrder().forEach((key, i) => {
+    const fhScores = await Promise.all(FH_PART_ORDER.map(k => scoreFreehandOverlap(k)));
+    const fhLabels = {hair:'髪',reye:'左目',leye:'右目',nose:'鼻',mouth:'口'};
+    FH_PART_ORDER.forEach((key, i) => {
       const s = fhScores[i];
       total += s;
       const em = s >= 18 ? '🌟' : s >= 14 ? '👍' : s >= 8 ? '😅' : '💦';
@@ -1230,7 +1227,7 @@ async function doScore() {
                                 '😱 もはや別の生き物！？';
 
   document.getElementById('total-score-disp').textContent = total + '点';
-  const diffLabels2 = { hard: '👹 鬼モード', hell: '👿 地獄モード', normal: '😊 通常モード', easy: '😄 イージーモード' };
+  const diffLabels2 = { hard: '👹 鬼モード', normal: '😊 通常モード', easy: '😄 イージーモード' };
   document.getElementById('score-sub').textContent = `/ 100点満点（${diffLabels2[currentDifficulty] || '通常モード'}）`;
   document.getElementById('score-comment').textContent    = comment;
   document.getElementById('part-breakdown').innerHTML     = html;
@@ -1239,7 +1236,7 @@ async function doScore() {
   lastScore = total;
   // 登録フォームは鬼モードのみ表示
   const registerSection = document.getElementById('score-register-section');
-  if (registerSection) registerSection.style.display = (currentDifficulty === 'hard' || currentDifficulty === 'hell') ? '' : 'none';
+  if (registerSection) registerSection.style.display = currentDifficulty === 'hard' ? '' : 'none';
   // チェックボックスとボタンをリセット
   const followCheck = document.getElementById('follow-check');
   const consentCheck = document.getElementById('consent-check');
@@ -1295,59 +1292,6 @@ let fhCurrentStroke = [];
 
 const FH_PART_ORDER = ['hair','reye','leye','nose','mouth'];
 
-// ================================================================
-// 地獄モード（ピヨ）キャラクター定義
-// ================================================================
-function _svgUrl(s) {
-  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s);
-}
-
-// パーツ個別SVG（viewBoxで全キャンバス(460×500)内のパーツ領域を切り出し）
-const _PIYO_CROWN = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="168 14 124 107" width="124" height="107"><path d="M185,115 C178,70 198,42 213,28 C206,50 222,42 230,25 C238,42 254,50 247,28 C262,42 282,70 275,115 Z" fill="#FF8C00" stroke="#3D1C02" stroke-width="6"/></svg>';
-const _PIYO_LEYE  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="113 203 79 38" width="79" height="38"><path d="M122,222 C137,206 163,206 183,222" stroke="#3D1C02" stroke-width="10" fill="none" stroke-linecap="round"/></svg>';
-const _PIYO_REYE  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="274 192 58 58" width="58" height="58"><circle cx="303" cy="221" r="22" fill="#3D1C02"/><circle cx="303" cy="221" r="13" fill="white"/><circle cx="303" cy="219" r="6" fill="#3D1C02"/></svg>';
-const _PIYO_NOSE  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="200 255 60 48" width="60" height="48"><ellipse cx="230" cy="279" rx="23" ry="18" fill="#FF6B00"/></svg>';
-const _PIYO_MOUTH = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="195 299 70 58" width="70" height="58"><ellipse cx="230" cy="328" rx="27" ry="22" fill="#FF6B00" stroke="#3D1C02" stroke-width="5"/></svg>';
-
-// 完全キャラクター答え合わせSVG（0.5秒だけ表示）
-const PIYO_ANSWER_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 500"><ellipse cx="230" cy="345" rx="150" ry="143" fill="#FFD700" stroke="#3D1C02" stroke-width="10"/><circle cx="230" cy="205" r="143" fill="#FFD700" stroke="#3D1C02" stroke-width="10"/><path d="M185,115 C178,70 198,42 213,28 C206,50 222,42 230,25 C238,42 254,50 247,28 C262,42 282,70 275,115 Z" fill="#FF8C00" stroke="#3D1C02" stroke-width="6"/><ellipse cx="112" cy="255" rx="28" ry="19" fill="#FFB347" opacity="0.6"/><ellipse cx="348" cy="255" rx="28" ry="19" fill="#FFB347" opacity="0.6"/><rect x="105" y="185" width="105" height="72" rx="25" fill="none" stroke="#3D1C02" stroke-width="9"/><rect x="250" y="185" width="105" height="72" rx="25" fill="none" stroke="#3D1C02" stroke-width="9"/><line x1="210" y1="221" x2="250" y2="221" stroke="#3D1C02" stroke-width="7"/><line x1="105" y1="218" x2="68" y2="213" stroke="#3D1C02" stroke-width="7"/><line x1="355" y1="218" x2="392" y2="213" stroke="#3D1C02" stroke-width="7"/><path d="M122,222 C137,206 163,206 183,222" stroke="#3D1C02" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="303" cy="221" r="21" fill="white"/><circle cx="303" cy="221" r="9" fill="#3D1C02"/><ellipse cx="230" cy="279" rx="23" ry="18" fill="#FF6B00"/><ellipse cx="230" cy="328" rx="27" ry="22" fill="#FF6B00" stroke="#3D1C02" stroke-width="5"/><path d="M82,340 C57,315 47,290 67,268 C77,288 88,313 92,342 Z" fill="#FFD700" stroke="#3D1C02" stroke-width="8"/><path d="M378,340 C403,315 413,290 393,268 C383,288 372,313 368,342 Z" fill="#FFD700" stroke="#3D1C02" stroke-width="8"/><ellipse cx="195" cy="472" rx="32" ry="20" fill="#FF6B00" stroke="#3D1C02" stroke-width="6"/><ellipse cx="265" cy="472" rx="32" ry="20" fill="#FF6B00" stroke="#3D1C02" stroke-width="6"/><circle cx="230" cy="405" r="27" fill="#FF8C00"/><text x="220" y="421" font-size="30" font-weight="bold" fill="white" font-family="Arial,sans-serif">P</text></svg>';
-
-// 地獄モード背景（メガネ・P・羽・足を黄色枠で固定表示、描画パーツ部分は暗い空白）
-const PIYO_BG_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 500"><ellipse cx="230" cy="345" rx="150" ry="143" fill="#1a1a1a" stroke="#FFD700" stroke-width="8"/><circle cx="230" cy="205" r="143" fill="#1a1a1a" stroke="#FFD700" stroke-width="8"/><ellipse cx="112" cy="255" rx="28" ry="19" fill="#FFB347" opacity="0.25"/><ellipse cx="348" cy="255" rx="28" ry="19" fill="#FFB347" opacity="0.25"/><rect x="105" y="185" width="105" height="72" rx="25" fill="none" stroke="#FFD700" stroke-width="9"/><rect x="250" y="185" width="105" height="72" rx="25" fill="none" stroke="#FFD700" stroke-width="9"/><line x1="210" y1="221" x2="250" y2="221" stroke="#FFD700" stroke-width="7"/><line x1="105" y1="218" x2="68" y2="213" stroke="#FFD700" stroke-width="7"/><line x1="355" y1="218" x2="392" y2="213" stroke="#FFD700" stroke-width="7"/><path d="M82,340 C57,315 47,290 67,268 C77,288 88,313 92,342 Z" fill="#2a2a2a" stroke="#FFD700" stroke-width="8"/><path d="M378,340 C403,315 413,290 393,268 C383,288 372,313 368,342 Z" fill="#2a2a2a" stroke="#FFD700" stroke-width="8"/><ellipse cx="195" cy="472" rx="32" ry="20" fill="#FF6B00" stroke="#FFD700" stroke-width="6"/><ellipse cx="265" cy="472" rx="32" ry="20" fill="#FF6B00" stroke="#FFD700" stroke-width="6"/><circle cx="230" cy="405" r="27" fill="#FF8C00"/><text x="220" y="421" font-size="30" font-weight="bold" fill="white" font-family="Arial,sans-serif">P</text></svg>';
-
-const PARTS_PIYO = {
-  crown: { label:'冠',       w:124, h:107, hotspot:{x:62,y:53}, target:{x:230,y:68},  svgContent:`<img src="${_svgUrl(_PIYO_CROWN)}">` },
-  leye:  { label:'ウィンク目', w:79,  h:38,  hotspot:{x:39,y:19}, target:{x:153,y:222}, svgContent:`<img src="${_svgUrl(_PIYO_LEYE)}">` },
-  reye:  { label:'目',        w:58,  h:58,  hotspot:{x:29,y:29}, target:{x:303,y:221}, svgContent:`<img src="${_svgUrl(_PIYO_REYE)}">` },
-  nose:  { label:'鼻',        w:60,  h:48,  hotspot:{x:30,y:24}, target:{x:230,y:279}, svgContent:`<img src="${_svgUrl(_PIYO_NOSE)}">` },
-  mouth: { label:'口',        w:70,  h:58,  hotspot:{x:35,y:29}, target:{x:230,y:328}, svgContent:`<img src="${_svgUrl(_PIYO_MOUTH)}">` }
-};
-const FH_PIYO_PART_ORDER = ['crown','leye','reye','nose','mouth'];
-
-function getActiveParts()     { return currentDifficulty === 'hell' ? PARTS_PIYO         : PARTS; }
-function getActivePartOrder() { return currentDifficulty === 'hell' ? FH_PIYO_PART_ORDER : FH_PART_ORDER; }
-
-async function drawHellBackground(ctx) {
-  return new Promise(res => {
-    const img = new Image();
-    img.onload = () => { ctx.drawImage(img, 0, 0, 460, 500); res(); };
-    img.onerror = res;
-    img.src = _svgUrl(PIYO_BG_SVG);
-  });
-}
-
-async function drawPiyoAnswerGuide(ctx) {
-  return new Promise(res => {
-    const img = new Image();
-    img.onload = () => {
-      ctx.save(); ctx.globalAlpha = 0.6;
-      ctx.drawImage(img, 0, 0, 460, 500);
-      ctx.restore(); res();
-    };
-    img.onerror = res;
-    img.src = _svgUrl(PIYO_ANSWER_SVG);
-  });
-}
 
 function startFreehandMode() {
   freehandMode = true;
@@ -1379,16 +1323,16 @@ function stopFreehandMode() {
 }
 
 async function startFhPart(index) {
-  if (index >= getActivePartOrder().length) {
+  if (index >= FH_PART_ORDER.length) {
     document.getElementById('freehand-overlay').style.display = 'none';
     document.getElementById('fh-next-btn').style.display = 'none';
     document.getElementById('fh-redo-btn').style.display = 'none';
-    getActivePartOrder().forEach(k => { partOnFace[k] = true; });
+    FH_PART_ORDER.forEach(k => { partOnFace[k] = true; });
     updateScoreBtn();
     renderFreehandStrokes();
     return;
   }
-  fhCurrentKey    = getActivePartOrder()[index];
+  fhCurrentKey    = FH_PART_ORDER[index];
   fhPartIndex     = index;
   fhCurrentStroke = [];
   fhStrokes[fhCurrentKey] = [];
@@ -1401,7 +1345,7 @@ async function startFhPart(index) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const labels    = {hair:'髪', reye:'左目', leye:'右目', nose:'鼻', mouth:'口'};
-  const remaining = getActivePartOrder().length - index;
+  const remaining = FH_PART_ORDER.length - index;
   const instr     = document.getElementById('fh-instruction');
 
   // ── 難易度別描画 ───────────────────────────────────
@@ -1425,27 +1369,6 @@ async function startFhPart(index) {
       `😊 【${labels[fhCurrentKey]}】を描いてください`
       + ` <small style="color:#555;">残り${remaining}パーツ</small>`;
 
-  } else if (currentDifficulty === 'hell') {
-    // 地獄モード: 背景にピヨを表示。最初のパーツのみ0.5秒チラ見せ
-    await drawHellBackground(ctx);
-    if (index === 0) {
-      instr.style.color      = '#FFD700';
-      instr.style.background = 'rgba(100,0,0,0.85)';
-      instr.innerHTML = `👿 位置をよく見て！ <small style="opacity:0.8;">すぐ消えます…</small>`;
-      fhDrawing = false;
-      canvas.style.pointerEvents = 'none';
-      await drawPiyoAnswerGuide(ctx);
-      await new Promise(res => setTimeout(res, 500));
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      await drawHellBackground(ctx);
-      canvas.style.pointerEvents = '';
-    }
-    instr.style.background = 'rgba(0,0,0,0.7)';
-    instr.style.color = '#FFD700';
-    const hellLabels = {crown:'冠',leye:'ウィンク目',reye:'目',nose:'鼻',mouth:'口'};
-    instr.innerHTML =
-      `👿 【${hellLabels[fhCurrentKey]}】を描いてください`
-      + ` <small style="opacity:0.5;">残り${remaining}パーツ</small>`;
   } else {
     // 鬼: 最初のパーツのみ0.5秒だけ輪郭位置をチラ見せ → その後は即真っ暗
     if (index === 0) {
@@ -1470,7 +1393,7 @@ async function startFhPart(index) {
   }
 
   // 現在の描画スタイルをセット
-  ctx.strokeStyle = (currentDifficulty === 'hard' || currentDifficulty === 'hell') ? '#ffffff'
+  ctx.strokeStyle = currentDifficulty === 'hard' ? '#ffffff'
                   : (currentDifficulty === 'easy' ? '#c0392b' : '#222222');
   ctx.lineWidth = 8;
   ctx.lineCap   = 'round';
@@ -1495,7 +1418,7 @@ function drawPastStrokes(ctx, upToIndex, fallbackColor) {
     nose: '#e67e22', mouth: '#9b59b6'
   };
   for (let i = 0; i < upToIndex; i++) {
-    const k       = getActivePartOrder()[i];
+    const k       = FH_PART_ORDER[i];
     const strokes = fhStrokes[k] || [];
     if (!strokes.length) continue;
     ctx.save();
@@ -1517,7 +1440,6 @@ function drawPastStrokes(ctx, upToIndex, fallbackColor) {
 
 // イージーモード用: 答え合わせで使っている見本画像（ANSWER_SVG）を半透明表示
 async function drawAnswerImageGuide(ctx) {
-  if (currentDifficulty === 'hell') { await drawPiyoAnswerGuide(ctx); return; }
   const m = ANSWER_SVG.match(/href="(data:image\/[^;]+;base64,[^"]+)"/);
   if (!m) return;
   await new Promise(res => {
@@ -1564,7 +1486,7 @@ function setupFhCanvas() {
     e.preventDefault();
     fhDrawing = true;
     fhCurrentStroke = [];
-    ctx.strokeStyle = (currentDifficulty === 'hard' || currentDifficulty === 'hell') ? '#ffffff'
+    ctx.strokeStyle = currentDifficulty === 'hard' ? '#ffffff'
                     : (currentDifficulty === 'easy' ? '#c0392b' : '#222222');
     ctx.lineWidth = 8;
     ctx.lineCap   = 'round';
@@ -1623,7 +1545,7 @@ function renderFreehandStrokes() {
   const ctx = resultCanvas.getContext('2d');
   ctx.clearRect(0, 0, 460, 500);
   const colors = {hair:'#e74c3c',reye:'#3498db',leye:'#2ecc71',nose:'#f39c12',mouth:'#9b59b6',crown:'#FF8C00'};
-  getActivePartOrder().forEach(key => {
+  FH_PART_ORDER.forEach(key => {
     const strokes = fhStrokes[key] || [];
     ctx.strokeStyle = colors[key] || '#333';
     ctx.lineWidth = 6;
@@ -1717,7 +1639,7 @@ async function renderResultCanvas() {
     } else {
       // fallback: 同じcolors/lineWidthで再描画
       const colors = {hair:'#e74c3c',reye:'#3498db',leye:'#2ecc71',nose:'#f39c12',mouth:'#9b59b6',crown:'#FF8C00'};
-      getActivePartOrder().forEach(key => {
+      FH_PART_ORDER.forEach(key => {
         const strokes = fhStrokes[key] || [];
         ctx.strokeStyle = colors[key] || '#333';
         ctx.lineWidth = 6;
@@ -1782,7 +1704,7 @@ async function renderResultCanvas() {
 }
 
 async function scoreFreehandOverlap(key) {
-  const cfg = getActiveParts()[key];
+  const cfg = PARTS[key];
   const target = cfg.target;
   const strokes = fhStrokes[key] || [];
   if (strokes.length === 0) return 0;
@@ -1843,7 +1765,7 @@ async function scoreFreehandOverlap(key) {
   // 難易度別 multiplier（lineWidth=8px基準）
   // hard: 満点ラインIoU≈18%（正確に描かないと難しい）
   // normal: 満点ラインIoU≈11%（丁寧に描けば届く）
-  const multipliers = { hard: 5.5, normal: 9.0, hell: 5.5 };
+  const multipliers = { hard: 5.5, normal: 9.0 };
   const mult = multipliers[currentDifficulty] || 5.5;
   return Math.round(20 * Math.min(1, iou * mult));
 }
@@ -2179,9 +2101,8 @@ function setDifficulty(diff, btn) {
     hard:   { active: '#e74c3c', border: '#e74c3c' },
     normal: { active: '#e67e22', border: '#e67e22' },
     easy:   { active: '#27ae60', border: '#27ae60' },
-    hell:   { active: '#9b59b6', border: '#9b59b6' }
   };
-  ['hard','normal','easy','hell'].forEach(d => {
+  ['hard','normal','easy'].forEach(d => {
     const b = document.getElementById('diff-' + d);
     if (!b) return;
     const s = styles[d];
