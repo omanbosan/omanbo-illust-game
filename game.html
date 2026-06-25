@@ -1724,12 +1724,12 @@ async function scoreFreehandOverlap(key) {
     });
   }
 
-  // User canvas: draw freehand strokes with thickness matching reference
+  // User canvas: draw freehand strokes with same thickness as actual drawing
   const userC = document.createElement('canvas');
   userC.width = 460; userC.height = 500;
   const userCtx = userC.getContext('2d');
-  // Line width ~25% of part height to match visual thickness of reference parts
-  userCtx.lineWidth = Math.max(20, cfg.h * 0.28);
+  // 実際の描画lineWidth(8px)に合わせる（太くするとざっくり書きでも高得点になるため）
+  userCtx.lineWidth = 8;
   userCtx.strokeStyle = '#000';
   userCtx.lineCap = 'round';
   userCtx.lineJoin = 'round';
@@ -1760,9 +1760,11 @@ async function scoreFreehandOverlap(key) {
   }
   const union = refPx + userPx - overlap;
   const iou = union > 0 ? overlap / union : 0;
-  // 難易度別 multiplier: 鬼=2.94, 通常=5.46
-  const multipliers = { hard: 3.8, normal: 5.46 };
-  const mult = multipliers[currentDifficulty] || 2.6;
+  // 難易度別 multiplier（lineWidth=8px基準）
+  // hard: 満点ラインIoU≈18%（正確に描かないと難しい）
+  // normal: 満点ラインIoU≈11%（丁寧に描けば届く）
+  const multipliers = { hard: 5.5, normal: 9.0 };
+  const mult = multipliers[currentDifficulty] || 5.5;
   return Math.round(20 * Math.min(1, iou * mult));
 }
 
