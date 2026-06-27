@@ -365,7 +365,7 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
     <div style="font-size:1.6rem;font-weight:bold;letter-spacing:0.1em;color:#f39c12;text-shadow:0 0 20px #e67e22,0 0 40px #e67e22;margin-bottom:6px;">おまんぼさん</div>
     <div style="font-size:1.1rem;font-weight:bold;color:#fff;margin-bottom:4px;">イラストゲーム</div>
     <div style="font-size:0.78rem;color:#aaa;margin-bottom:32px;letter-spacing:0.05em;">OMANBO ILLUST GAME</div>
-    <button id="opening-start-btn" style="padding:16px 48px;background:linear-gradient(135deg,#e67e22,#f39c12);color:white;border:none;border-radius:50px;font-size:1.1rem;font-weight:bold;cursor:pointer;box-shadow:0 4px 20px rgba(230,126,34,0.6);letter-spacing:0.1em;animation:opening-btn-pulse 1.5s ease-in-out infinite;-webkit-tap-highlight-color:rgba(0,0,0,0);touch-action:manipulation;">
+    <button onclick="closeOpeningScreen()" ontouchend="closeOpeningScreen()" style="padding:16px 48px;background:linear-gradient(135deg,#e67e22,#f39c12);color:white;border:none;border-radius:50px;font-size:1.1rem;font-weight:bold;cursor:pointer;box-shadow:0 4px 20px rgba(230,126,34,0.6);letter-spacing:0.1em;animation:opening-btn-pulse 1.5s ease-in-out infinite;touch-action:manipulation;">
       ▶ はじめる
     </button>
     <div style="font-size:0.72rem;color:#888;margin-top:16px;">タップして始める</div>
@@ -3168,24 +3168,17 @@ function setupOdekakiCanvas() {
   c.addEventListener('touchend',   onEnd,   { passive: false });
 }
 
+let _openingClosed = false;
 function closeOpeningScreen() {
+  if (_openingClosed) return;
+  _openingClosed = true;
   const el = document.getElementById('opening-screen');
-  if (!el || el.style.display === 'none') return;
+  if (!el) return;
   el.style.transition = 'opacity 0.5s';
   el.style.opacity = '0';
   setTimeout(() => { el.style.display = 'none'; }, 500);
 }
 
-// スマホ対応: DOMContentLoaded後にタッチイベントも登録
-document.addEventListener('DOMContentLoaded', function() {
-  const btn = document.getElementById('opening-start-btn');
-  if (!btn) return;
-  btn.addEventListener('click', closeOpeningScreen);
-  btn.addEventListener('touchend', function(e) {
-    e.preventDefault();
-    closeOpeningScreen();
-  });
-});
 
 function initOpeningStars() {
   const container = document.getElementById('opening-stars');
