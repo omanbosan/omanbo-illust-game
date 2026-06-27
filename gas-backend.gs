@@ -109,16 +109,18 @@ function saveScore(data) {
   if (colCount < 6) sheet.getRange(1, 6).setValue('難易度');
   if (colCount < 7) sheet.getRange(1, 7).setValue('承認');
   if (colCount < 8) sheet.getRange(1, 8).setValue('照合コード');
+  if (colCount < 9) sheet.getRange(1, 9).setValue('採点レベル');
 
   const name       = (data.name || '名無し').slice(0, 20);
   const score      = Number(data.score) || 0;
   const instagram  = (data.instagram || '').replace('@', '');
   const difficulty = data.difficulty || 'normal';
   const entryId    = String(data.entryId || '');
+  const luckLevel  = Number(data.luckLevel) || 2; // 🔥の数(1〜4)
   const rowIndex   = sheet.getLastRow() + 1;
 
   sheet.appendRow([name, score, new Date().toLocaleDateString('ja-JP'), instagram,
-                   'Drive保存中...', difficulty, '審査中', entryId]);
+                   'Drive保存中...', difficulty, '審査中', entryId, luckLevel]);
 
   // Drive に画像を保存
   if (data.image) {
@@ -150,7 +152,7 @@ function getZukanScoring() {
   const sheet = ss.getSheetByName('scores');
   if (!sheet || sheet.getLastRow() < 2) return [];
 
-  const approved = sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues()
+  const approved = sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).getValues()
     .filter(r => r[0] && (r[6] || '') === '承認済み');
 
   return approved.map((r, i) => ({
@@ -159,7 +161,8 @@ function getZukanScoring() {
     score:      Number(r[1]) || 0,
     date:       r[2] ? String(r[2]).slice(0, 10) : '',
     imageUrl:   driveUrlToThumb(r[4]),
-    difficulty: r[5] || 'normal'
+    difficulty: r[5] || 'normal',
+    luckLevel:  Number(r[8]) || 2
   })); // 登録順（古い順 = No.1が最初）
 }
 
@@ -194,7 +197,7 @@ function getPendingScores() {
   const sheet = ss.getSheetByName('scores');
   if (!sheet || sheet.getLastRow() < 2) return [];
 
-  return sheet.getRange(2, 1, sheet.getLastRow() - 1, 8).getValues()
+  return sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).getValues()
     .map((r, i) => ({
       row:        i + 2,
       name:       r[0] || '名無し',
@@ -204,7 +207,8 @@ function getPendingScores() {
       imageUrl:   driveUrlToThumb(r[4]),
       difficulty: r[5] || 'normal',
       approved:   r[6] || '審査中',
-      entryId:    r[7] || ''
+      entryId:    r[7] || '',
+      luckLevel:  Number(r[8]) || 2
     }))
     .filter(r => r.name);
 }

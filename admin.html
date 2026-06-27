@@ -585,9 +585,13 @@ function renderCards() {
 
     if (currentMode === 'scoring') {
       // 採点モードカード
-      const diff  = entry.difficulty || 'normal';
-      const dLabel = diffLabels[diff] || '';
-      const dColor = diffColors[diff] || '#e67e22';
+      const diff      = entry.difficulty || 'normal';
+      const dLabel    = diffLabels[diff] || '';
+      const dColor    = diffColors[diff] || '#e67e22';
+      const luckLevel = Number(entry.luckLevel) || 2;
+      const fires     = '🔥'.repeat(luckLevel);
+      const luckNames = ['', 'シビア日', '普通の日', 'お得な日', '大チャンスデー'];
+      const luckName  = luckNames[luckLevel] || '普通の日';
       card.innerHTML = `
         ${entry.entryId ? `
         <div style="text-align:center;margin-bottom:10px;">
@@ -597,8 +601,9 @@ function renderCards() {
           ? `<img class="card-img" src="${entry.imageUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
           : ''}
         <div class="card-img-placeholder" style="${entry.imageUrl ? 'display:none' : ''}">🎯</div>
-        <div style="text-align:center;margin-bottom:6px;">
+        <div style="text-align:center;margin-bottom:6px;display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;">
           <span style="display:inline-block;background:${dColor};color:white;font-size:0.72rem;font-weight:bold;padding:2px 10px;border-radius:12px;">${dLabel}</span>
+          <span style="display:inline-block;background:rgba(255,255,255,0.08);border:1px solid rgba(255,140,0,0.5);font-size:0.72rem;padding:2px 8px;border-radius:12px;color:#f39c12;" title="${luckName}">${fires} ${luckName}</span>
         </div>
         <div class="card-name" style="color:${dColor};">${entry.score}点</div>
         <table style="width:100%;font-size:0.78rem;border-collapse:collapse;margin:8px 0;">

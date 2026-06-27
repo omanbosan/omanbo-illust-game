@@ -835,6 +835,13 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycby0q8MVbN-Dk_fio8XO
 // 採点 multiplier（管理者が GAS config シートで変更可能。起動時に取得）
 let _scoringMultipliers = { hard: 2.0, normal: 4.5 };
 
+function getLuckLevel(hardMult) {
+  if (hardMult >= 3.2) return 4;
+  if (hardMult >= 2.6) return 3;
+  if (hardMult >= 2.0) return 2;
+  return 1;
+}
+
 function updateScoringLuckUI(hardMult) {
   const badge = document.getElementById('scoring-luck-badge');
   const msg   = document.getElementById('scoring-luck-msg');
@@ -1981,7 +1988,8 @@ async function saveScore() {
           type: 'score', name, score: lastScore, instagram,
           difficulty: currentDifficulty,
           image: lastFreehandImage,
-          entryId: entryIdLocal
+          entryId: entryIdLocal,
+          luckLevel: getLuckLevel(_scoringMultipliers.hard)
         })
       });
       await res.json().catch(() => ({}));
@@ -2847,9 +2855,12 @@ function renderScoringZukanList(list, empty, data) {
   const slice = data.slice(0, end);
 
   slice.forEach((entry, index) => {
-    const diff  = entry.difficulty || 'normal';
-    const color = diffColors[diff] || '#e67e22';
-    const label = diffLabels[diff] || '';
+    const diff      = entry.difficulty || 'normal';
+    const color     = diffColors[diff] || '#e67e22';
+    const label     = diffLabels[diff] || '';
+    const luckLevel = Number(entry.luckLevel) || 2;
+    const fires     = '🔥'.repeat(luckLevel);
+    const luckTitle = luckLevel >= 4 ? '大チャンスデー' : luckLevel === 3 ? 'お得な日' : luckLevel === 2 ? '普通の日' : 'シビア日';
     const card  = document.createElement('div');
     card.style.cssText = `background:#fff5f0;border:2px solid ${color};border-radius:10px;padding:10px;text-align:center;`;
     card.innerHTML = `
@@ -2863,6 +2874,7 @@ function renderScoringZukanList(list, empty, data) {
       }
       <div style="font-size:1.1rem;font-weight:bold;color:${color};">${entry.score}点</div>
       <div style="font-size:0.8rem;font-weight:bold;color:#333;margin:2px 0;">${entry.name || '名無し'}</div>
+      <div style="font-size:0.72rem;color:#e67e22;margin:2px 0;" title="${luckTitle}">${fires}</div>
       <div style="font-size:0.65rem;color:#bbb;">${entry.date || ''}</div>
     `;
     list.appendChild(card);
