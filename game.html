@@ -511,22 +511,25 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
   <div style="font-size:1.3rem;font-weight:bold;color:#27ae60;margin-bottom:2px;">🎨 お絵描きチャレンジ</div>
   <div style="font-size:0.8rem;color:#555;margin-bottom:8px;text-align:center;">おまんぼさんのお友達の顔を自由に描こう！</div>
 
-  <!-- キャンバスエリア（3レイヤー・円形クリップ） -->
+  <!-- キャンバス形状切替 -->
+  <div style="display:flex;gap:6px;margin-bottom:8px;">
+    <button id="shape-circle-btn" onclick="setOdekakiShape('circle')"
+      style="flex:1;padding:7px 10px;background:#27ae60;color:white;border:2px solid #27ae60;border-radius:20px;font-size:0.85rem;font-weight:bold;cursor:pointer;">⭕ 丸型</button>
+    <button id="shape-free-btn" onclick="setOdekakiShape('free')"
+      style="flex:1;padding:7px 10px;background:white;color:#27ae60;border:2px solid #27ae60;border-radius:20px;font-size:0.85rem;font-weight:bold;cursor:pointer;">🔲 フリースタイル</button>
+  </div>
+
+  <!-- キャンバスエリア（3レイヤー・形状切替対応） -->
   <div style="position:relative;width:300px;height:300px;flex-shrink:0;margin-bottom:4px;">
-    <!-- クリップ用コンテナ（はみ出し防止） -->
-    <div style="position:absolute;top:0;left:0;width:300px;height:300px;border-radius:50%;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
-      <!-- 白背景レイヤー（最下層・絶対に触らない） -->
+    <div id="odekaki-clip-container" style="position:absolute;top:0;left:0;width:300px;height:300px;border-radius:50%;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
       <canvas id="odekaki-canvas-bg" width="300" height="300"
         style="position:absolute;top:0;left:0;pointer-events:none;"></canvas>
-      <!-- 塗りレイヤー（中層） -->
       <canvas id="odekaki-canvas-fill" width="300" height="300"
         style="position:absolute;top:0;left:0;pointer-events:none;"></canvas>
-      <!-- 線レイヤー（上層・タッチ受付） -->
       <canvas id="odekaki-canvas" width="300" height="300"
         style="position:absolute;top:0;left:0;touch-action:none;cursor:crosshair;"></canvas>
     </div>
-    <!-- 輪郭SVG（クリップ外・最前面・クリック透過） -->
-    <svg width="300" height="300" style="position:absolute;top:0;left:0;pointer-events:none;z-index:5;">
+    <svg id="odekaki-outline-svg" width="300" height="300" style="position:absolute;top:0;left:0;pointer-events:none;z-index:5;">
       <circle cx="150" cy="150" r="148" fill="none" stroke="#333" stroke-width="3"/>
     </svg>
   </div>
@@ -2135,6 +2138,7 @@ function selectModeAndStart(mode) {
 // ================================================================
 let odekakiColor      = '#111111';
 let odekakiTool       = 'pen';      // 'pen' | 'bucket' | 'eraser'
+let odekakiShape      = 'circle';   // 'circle' | 'free'
 let odekakiSize       = 'thin';     // 'thin' | 'mid' | 'thick'
 let odekakiEraseLayer = 'line';     // 'line' | 'fill' | 'both'
 let odekakiDrawing = false;
@@ -2143,6 +2147,32 @@ let odekakiRedoStack = [];
 
 const ODEKAKI_SIZES = { thin: 2, mid: 6, thick: 16 };
 const ERASER_SIZES  = { thin: 10, mid: 22, thick: 40 };
+
+function setOdekakiShape(shape) {
+  odekakiShape = shape;
+  const cc  = document.getElementById('odekaki-clip-container');
+  const svg = document.getElementById('odekaki-outline-svg');
+  const cb  = document.getElementById('shape-circle-btn');
+  const fb  = document.getElementById('shape-free-btn');
+  if (shape === 'free') {
+    cc.style.borderRadius = '8px';
+    if (svg) svg.style.display = 'none';
+    cb.style.background = 'white'; cb.style.color = '#27ae60';
+    fb.style.background = '#27ae60'; fb.style.color = 'white';
+  } else {
+    cc.style.borderRadius = '50%';
+    if (svg) svg.style.display = '';
+    cb.style.background = '#27ae60'; cb.style.color = 'white';
+    fb.style.background = 'white'; fb.style.color = '#27ae60';
+  }
+  // キャンバスをクリアして白背景リセット
+  const c1 = document.getElementById('odekaki-canvas-bg');
+  const c2 = document.getElementById('odekaki-canvas-fill');
+  const c3 = document.getElementById('odekaki-canvas');
+  if (c1) { const ctx = c1.getContext('2d'); ctx.fillStyle='white'; ctx.fillRect(0,0,300,300); }
+  if (c2) c2.getContext('2d').clearRect(0,0,300,300);
+  if (c3) c3.getContext('2d').clearRect(0,0,300,300);
+}
 
 function setOdekakiSize(size) {
   odekakiSize = size;
@@ -2414,22 +2444,31 @@ async function saveOdekakiImage() {
   const out = document.createElement('canvas');
   out.width = 300; out.height = 300;
   const ctx = out.getContext('2d');
-  // 円形クリップ（輪郭より少し外まで許可して髪のはみ出しOK）
-  ctx.save();
-  ctx.beginPath(); ctx.arc(150,150,149,0,Math.PI*2); ctx.clip();
-  if (canvasBg)   ctx.drawImage(canvasBg,   0, 0); // 白背景
-  if (canvasFill) ctx.drawImage(canvasFill, 0, 0); // 塗りレイヤー
-  if (canvasLine) ctx.drawImage(canvasLine, 0, 0); // 線レイヤー
-  ctx.restore();
-  // 輪郭を1本だけ描く
-  ctx.strokeStyle = '#333'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(150,150,148,0,Math.PI*2); ctx.stroke();
+  if (odekakiShape === 'free') {
+    // フリースタイル: クリップなし・角丸枠のみ
+    if (canvasBg)   ctx.drawImage(canvasBg,   0, 0);
+    if (canvasFill) ctx.drawImage(canvasFill, 0, 0);
+    if (canvasLine) ctx.drawImage(canvasLine, 0, 0);
+    ctx.strokeStyle = '#aaa'; ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, 298, 298);
+  } else {
+    // 丸型: 円形クリップ
+    ctx.save();
+    ctx.beginPath(); ctx.arc(150,150,149,0,Math.PI*2); ctx.clip();
+    if (canvasBg)   ctx.drawImage(canvasBg,   0, 0);
+    if (canvasFill) ctx.drawImage(canvasFill, 0, 0);
+    if (canvasLine) ctx.drawImage(canvasLine, 0, 0);
+    ctx.restore();
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(150,150,148,0,Math.PI*2); ctx.stroke();
+  }
   const dataUrl = out.toDataURL('image/png');
 
   // 長押し保存用の画像を表示（スマホはこれで保存）
   const resultWrap = document.getElementById('odekaki-result-wrap');
   const resultImg  = document.getElementById('odekaki-result-img');
   resultImg.src = dataUrl;
+  resultImg.style.borderRadius = odekakiShape === 'free' ? '8px' : '50%';
   resultWrap.style.display = 'block';
 
   // PCのみダウンロード（スマホはスキップ）
