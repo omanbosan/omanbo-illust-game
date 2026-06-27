@@ -210,6 +210,10 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
   25% { transform: translateX(-6px); }
   75% { transform: translateX(6px); }
 }
+@keyframes luckPulse {
+  from { transform: scale(1) rotate(-5deg); filter: brightness(1); }
+  to   { transform: scale(1.18) rotate(5deg); filter: brightness(1.4); }
+}
 </style>
 </head>
 <body>
@@ -348,11 +352,15 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
   <div style="background:linear-gradient(135deg,rgba(230,126,34,0.25) 0%,rgba(192,57,43,0.2) 100%);border:1.5px solid rgba(230,126,34,0.6);border-radius:16px;padding:16px;margin-bottom:14px;width:100%;text-align:left;box-shadow:0 4px 20px rgba(230,126,34,0.2);">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
       <div style="font-size:2rem;">🎯</div>
-      <div>
+      <div style="flex:1;">
         <div style="font-size:1.05rem;font-weight:bold;color:#f39c12;">採点チャレンジ</div>
         <div style="font-size:0.72rem;color:#f39c12;opacity:0.8;">SCORING CHALLENGE</div>
       </div>
+      <!-- 今日の採点運バッジ（JS で更新） -->
+      <div id="scoring-luck-badge" style="display:none;text-align:center;min-width:70px;"></div>
     </div>
+    <!-- 今日の採点運メッセージ（JS で更新） -->
+    <div id="scoring-luck-msg" style="display:none;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:0.8rem;text-align:center;"></div>
     <div style="font-size:0.82rem;line-height:1.7;color:#eee;margin-bottom:12px;">
       おまんぼさんの顔を覚えて、フリーハンドで描画！<br>
       見本との重なり具合で採点します。（100点満点）
@@ -826,6 +834,42 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycby0q8MVbN-Dk_fio8XO
 
 // 採点 multiplier（管理者が GAS config シートで変更可能。起動時に取得）
 let _scoringMultipliers = { hard: 2.0, normal: 4.5 };
+
+function updateScoringLuckUI(hardMult) {
+  const badge = document.getElementById('scoring-luck-badge');
+  const msg   = document.getElementById('scoring-luck-msg');
+  if (!badge || !msg) return;
+
+  // multiplierの値によって「採点運」のレベルを決定（数値は見せない）
+  let level, badgeHTML, msgStyle, msgText;
+  if (hardMult >= 3.2) {
+    level = 4;
+    badgeHTML = `<div style="font-size:1.4rem;animation:luckPulse 1s ease-in-out infinite alternate;">🌈</div><div style="font-size:0.6rem;font-weight:bold;color:#ffd700;letter-spacing:0.05em;">大吉！</div>`;
+    msgStyle  = 'background:linear-gradient(135deg,rgba(255,215,0,0.25),rgba(255,140,0,0.2));border:1.5px solid #ffd700;color:#ffd700;';
+    msgText   = '🌈 <b>今日は大チャンスデー！！</b><br><span style="font-size:0.72rem;opacity:0.85;">採点がいつもより甘め…かも？ぜひ挑戦してみて！</span>';
+  } else if (hardMult >= 2.6) {
+    level = 3;
+    badgeHTML = `<div style="font-size:1.4rem;">✨</div><div style="font-size:0.6rem;font-weight:bold;color:#f39c12;letter-spacing:0.05em;">中吉</div>`;
+    msgStyle  = 'background:rgba(243,156,18,0.15);border:1.5px solid rgba(243,156,18,0.5);color:#f5c26b;';
+    msgText   = '✨ <b>今日はちょっとお得な日かも？</b><br><span style="font-size:0.72rem;opacity:0.85;">狙い目の日…かもしれない 👀</span>';
+  } else if (hardMult >= 2.0) {
+    level = 2;
+    badgeHTML = `<div style="font-size:1.4rem;">😐</div><div style="font-size:0.6rem;font-weight:bold;color:#aaa;letter-spacing:0.05em;">普通</div>`;
+    msgStyle  = 'background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.15);color:#aaa;';
+    msgText   = '😐 <b>今日は普通の採点日</b><br><span style="font-size:0.72rem;opacity:0.75;">実力勝負！丁寧に描こう</span>';
+  } else {
+    level = 1;
+    badgeHTML = `<div style="font-size:1.4rem;">😈</div><div style="font-size:0.6rem;font-weight:bold;color:#e74c3c;letter-spacing:0.05em;">凶…</div>`;
+    msgStyle  = 'background:rgba(231,76,60,0.15);border:1.5px solid rgba(231,76,60,0.4);color:#e74c3c;';
+    msgText   = '😈 <b>今日はシビア採点日…</b><br><span style="font-size:0.72rem;opacity:0.85;">腕に自信がある人だけ挑戦して…！</span>';
+  }
+
+  badge.innerHTML = badgeHTML;
+  badge.style.display = 'block';
+  msg.innerHTML = msgText;
+  msg.style.cssText = `display:block;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:0.8rem;text-align:center;${msgStyle}`;
+}
+
 (async function fetchScoringConfig() {
   try {
     const res = await fetch(WEBHOOK_URL + '?type=config', { redirect: 'follow' });
@@ -833,6 +877,7 @@ let _scoringMultipliers = { hard: 2.0, normal: 4.5 };
     if (typeof cfg.hardMult === 'number')   _scoringMultipliers.hard   = cfg.hardMult;
     if (typeof cfg.normalMult === 'number') _scoringMultipliers.normal = cfg.normalMult;
   } catch(e) { /* ネットワーク失敗時はデフォルト値を維持 */ }
+  updateScoringLuckUI(_scoringMultipliers.hard);
 })();
 
 let _gameScale = 1;
