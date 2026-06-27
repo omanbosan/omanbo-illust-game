@@ -377,12 +377,6 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
       <div style="font-weight:bold;color:#f39c12;margin-bottom:4px;">📐 採点基準</div>
       <div>髪・左目・右目・鼻・口の <b style="color:white;">5パーツ × 各20点 = 100点満点</b></div>
       <div style="color:#999;font-size:0.72rem;margin-top:4px;">各パーツは「描いた線と見本の重なり具合」で自動採点。正確な位置・形に描くほど高得点！</div>
-      <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
-        <span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.5);border-radius:4px;padding:2px 6px;">🌟 18〜20点</span>
-        <span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 6px;">👍 14〜17点</span>
-        <span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 6px;">😅 8〜13点</span>
-        <span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 6px;">💦 0〜7点</span>
-      </div>
     </div>
 
     <!-- 景品情報（左ボーダーINFOエリア） -->
@@ -1889,7 +1883,8 @@ async function scoreFreehandOverlap(key) {
   if (currentDifficulty === 'easy') {
     // イージー: recall基準（見本をどれだけカバーできたか）
     const recall = overlap / refPx;
-    return Math.round(20 * Math.min(1, recall * 7.0));
+    const s = Math.round(20 * Math.min(1, recall * 7.0));
+    return (overlap > 0 && s === 0) ? 1 : s;
   }
   const union = refPx + userPx - overlap;
   const iou = union > 0 ? overlap / union : 0;
@@ -1898,7 +1893,8 @@ async function scoreFreehandOverlap(key) {
   // → 輪郭同士のIoU想定: 普通30-35%、上手い40-45%、プロ50%+
   const multipliers = _scoringMultipliers;
   const mult = multipliers[currentDifficulty] || 3.0;
-  return Math.round(20 * Math.min(1, iou * mult));
+  const s = Math.round(20 * Math.min(1, iou * mult));
+  return (overlap > 0 && s === 0) ? 1 : s;
 }
 
 function drawAnswerComparison() {

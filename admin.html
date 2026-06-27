@@ -522,6 +522,11 @@ async function loadConfigPanel() {
 async function saveConfig() {
   const h = parseFloat(document.getElementById('cfg-hard').value);
   const n = parseFloat(document.getElementById('cfg-normal').value);
+  if (isNaN(h) || isNaN(n)) {
+    document.getElementById('config-msg').style.color = '#e74c3c';
+    document.getElementById('config-msg').textContent = '❌ プリセットを選択してください';
+    return;
+  }
   document.getElementById('config-msg').style.color = '#aaa';
   document.getElementById('config-msg').textContent = '保存中...';
   try {
@@ -530,12 +535,20 @@ async function saveConfig() {
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ type: 'setConfig', hardMult: h, normalMult: n })
     });
-    await res.json();
-    document.getElementById('config-msg').style.color = '#27ae60';
-    document.getElementById('config-msg').textContent = '✅ 保存しました！';
+    const text = await res.text();
+    let parsed;
+    try { parsed = JSON.parse(text); } catch(e) { parsed = null; }
+    if (parsed && parsed.ok) {
+      document.getElementById('config-msg').style.color = '#27ae60';
+      document.getElementById('config-msg').textContent = '✅ 保存しました！';
+    } else {
+      document.getElementById('config-msg').style.color = '#e74c3c';
+      document.getElementById('config-msg').textContent = '❌ GASエラー: GASを最新版で再デプロイしてください';
+      console.error('GAS response:', text);
+    }
   } catch(e) {
     document.getElementById('config-msg').style.color = '#e74c3c';
-    document.getElementById('config-msg').textContent = '保存に失敗しました';
+    document.getElementById('config-msg').textContent = '❌ 通信エラー: ' + e.message;
   }
 }
 
