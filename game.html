@@ -1805,99 +1805,48 @@ async function scoreFreehandOverlap(key) {
   const strokes = fhStrokes[key] || [];
   if (strokes.length === 0) return 0;
 
-  // ── 採点の概念（全モード共通） ──────────────────────────
-  // 参照: PNG画像のエッジを半径8px（幅16px）で膨張した輪郭
-  // ユーザー: 実際の描画を lineWidth=16px で再描画
-  // → 同じ「16px幅の線」同士を比較するため公平
-  // 難易度の差は IoU/recall に掛ける multiplier だけで表現する
-  // ─────────────────────────────────────────────────────────
+  // ── 採点方式: ストローク重心 × 正解位置への距離スコア ──────────
+  // ピクセル比較は誤差に弱いため、「どこに描いたか」で採点する。
+  // 各パーツの正解位置 (target.x, target.y) に対して
+  // ユーザーが描いたストロークの重心がどれだけ近いかで点を計算する。
+  //
+  // 難易度別の許容半径 (threshold):
+  //   イージー: 大きめ → 大まかに正しい位置なら満点近く
+  //   通常    : 中程度
+  //   鬼      : 小さめ → ほぼ正確な位置が必要
+  // ─────────────────────────────────────────────────────────────────
 
-  // Reference canvas: エッジ抽出 + 半径8px膨張（幅16px輪郭）
-  const refC = document.createElement('canvas');
-  refC.width = 460; refC.height = 500;
-  const refCtx = refC.getContext('2d');
-  const imgMatch = cfg.svgContent.match(/src="([^"]+)"/);
-  if (imgMatch) {
-    await new Promise(res => {
-      const img = new Image();
-      img.onload = () => {
-        const tmpC = document.createElement('canvas');
-        tmpC.width = 460; tmpC.height = 500;
-        const tmpCtx = tmpC.getContext('2d');
-        tmpCtx.drawImage(img, target.x - cfg.w/2, target.y - cfg.h/2, cfg.w, cfg.h);
-        const d = tmpCtx.getImageData(0, 0, 460, 500).data;
-        const W = 460, H = 500, R = 8; // 半径8px = 幅16px
-        const edgeBuf = new Uint8ClampedArray(W * H * 4);
-        for (let y = 1; y < H - 1; y++) {
-          for (let x = 1; x < W - 1; x++) {
-            if (d[(y*W+x)*4+3] > 30) {
-              if (d[((y-1)*W+x)*4+3] < 30 || d[((y+1)*W+x)*4+3] < 30 ||
-                  d[(y*W+x-1)*4+3] < 30 || d[(y*W+x+1)*4+3] < 30) {
-                for (let dy = -R; dy <= R; dy++) {
-                  for (let dx = -R; dx <= R; dx++) {
-                    if (dx*dx + dy*dy <= R*R) {
-                      const ex = x+dx, ey = y+dy;
-                      if (ex >= 0 && ex < W && ey >= 0 && ey < H) {
-                        edgeBuf[(ey*W+ex)*4+3] = 255;
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        refCtx.putImageData(new ImageData(edgeBuf, W, H), 0, 0);
-        res();
-      };
-      img.onerror = res;
-      img.src = imgMatch[1];
-    });
-  }
+  // ① 全ストロークの点群を集める
+  const allPoints = [];
+  strokes.forEach(stroke => stroke.forEach(p => allPoints.push(p)));
+  if (allPoints.length === 0) return 0;
 
-  // User canvas: 全モード共通 lineWidth=16px
-  const userC = document.createElement('canvas');
-  userC.width = 460; userC.height = 500;
-  const userCtx = userC.getContext('2d');
-  userCtx.lineWidth = 16;
-  userCtx.strokeStyle = '#000';
-  userCtx.lineCap = 'round';
-  userCtx.lineJoin = 'round';
-  strokes.forEach(stroke => {
-    if (stroke.length < 2) return;
-    userCtx.beginPath();
-    userCtx.moveTo(stroke[0].x, stroke[0].y);
-    stroke.forEach(p => userCtx.lineTo(p.x, p.y));
-    userCtx.stroke();
-  });
+  // ② 重心を計算
+  const cx = allPoints.reduce((s, p) => s + p.x, 0) / allPoints.length;
+  const cy = allPoints.reduce((s, p) => s + p.y, 0) / allPoints.length;
 
-  // Pixel comparison
-  const refData = refCtx.getImageData(0, 0, 460, 500).data;
-  const userDataArr = userCtx.getImageData(0, 0, 460, 500).data;
-  let refPx = 0, userPx = 0, overlap = 0;
-  for (let i = 3; i < refData.length; i += 4) {
-    const r = refData[i] > 30;
-    const u = userDataArr[i] > 30;
-    if (r) refPx++;
-    if (u) userPx++;
-    if (r && u) overlap++;
-  }
-  if (refPx === 0) return 0;
+  // ③ 正解位置への距離
+  const dist = Math.hypot(cx - target.x, cy - target.y);
 
-  const union = refPx + userPx - overlap;
-  const iou   = union > 0 ? overlap / union : 0;
-  // イージー: recall（どれだけ輪郭をカバーできたか）、multiplierは大きめ
-  // 通常・鬼: IoU（精度重視）、multiplierはGAS設定値
-  const multipliers = _scoringMultipliers;
-  let score;
-  if (currentDifficulty === 'easy') {
-    const recall = overlap / refPx;
-    const easyMult = multipliers.easy ?? 3.0; // イージー専用multiplier（GAS設定 or デフォルト3.0）
-    score = Math.round(20 * Math.min(1, recall * easyMult));
-  } else {
-    const mult = multipliers[currentDifficulty] || 3.0;
-    score = Math.round(20 * Math.min(1, iou * mult));
-  }
+  // ④ 難易度別 threshold（px単位。この距離以内なら満点に近い）
+  // キャンバスは460×500px。顔の半径は182px。
+  // multiplierが大きいほど🔥が多くシビア → thresholdを小さく（許容を狭く）する
+  const m = _scoringMultipliers;
+  // 基準threshold（multiplier=1のとき）: easy=90, normal=70, hard=70
+  // multiplierが上がるほど threshold が小さくなる
+  let threshold;
+  if (currentDifficulty === 'easy')
+    threshold = 90 / Math.max(0.5, (m.easy   ?? 3.0) / 3.0);
+  else if (currentDifficulty === 'normal')
+    threshold = 70 / Math.max(0.5, (m.normal ?? 4.5) / 4.5);
+  else
+    threshold = 70 / Math.max(0.5, (m.hard   ?? 2.0) / 2.0);
+
+  // ⑤ スコア計算: 距離がthreshold以内なら満点、離れるほど減点
+  const ratio = Math.max(0, 1 - dist / threshold);
+  const score = Math.round(20 * ratio);
+  return (dist < threshold && score === 0) ? 1 : score;
+}
   return (overlap > 0 && score === 0) ? 1 : score;
 }
 

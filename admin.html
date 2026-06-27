@@ -560,18 +560,14 @@ function onNumInput(mode) {
 function updateHint(mode, mult) {
   const hintEl = document.getElementById(`cfg-${mode}-hint`);
   if (!hintEl) return;
-  if (mode === 'easy') {
-    // イージーは recall（輪郭カバー率）ベース
-    const typical = Math.min(20, Math.round(20 * Math.min(1, 0.40 * mult)));
-    const good    = Math.min(20, Math.round(20 * Math.min(1, 0.60 * mult)));
-    hintEl.textContent = `目安: 大まか${typical*5}点 / ちゃんと${good*5}点`;
-  } else {
-    // 通常・鬼は IoU ベース
-    const typical = Math.min(20, Math.round(20 * Math.min(1, 0.30 * mult)));
-    const good    = Math.min(20, Math.round(20 * Math.min(1, 0.42 * mult)));
-    const pro     = Math.min(20, Math.round(20 * Math.min(1, 0.55 * mult)));
-    hintEl.textContent = `目安: 普通${typical*5}点 / 上手い${good*5}点 / プロ${pro*5}点`;
-  }
+  // 採点方式: 重心距離ベース。threshold = base / (mult/defaultMult)
+  // base: easy=90px, normal/hard=70px  defaultMult: easy=3.0, normal=4.5, hard=2.0
+  const defaultMults = { easy: 3.0, normal: 4.5, hard: 2.0 };
+  const bases        = { easy: 90,  normal: 70,   hard: 70  };
+  const base = bases[mode] || 70;
+  const def  = defaultMults[mode] || 3.0;
+  const threshold = Math.round(base / Math.max(0.5, mult / def));
+  hintEl.textContent = `許容半径: ${threshold}px（大きいほど甘め）`;
 }
 
 async function loadConfigPanel() {
