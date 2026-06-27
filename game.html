@@ -1213,13 +1213,22 @@ async function doScore() {
     total = 0; html = '';
     const fhScores = await Promise.all(FH_PART_ORDER.map(k => scoreFreehandOverlap(k)));
     const fhLabels = {hair:'髪',reye:'左目',leye:'右目',nose:'鼻',mouth:'口'};
+    // パーツ毎の採点結果テーブル
+    html += '<table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-bottom:4px;">';
+    html += '<tr style="background:#f0f0f0;"><th style="padding:4px 6px;text-align:left;">パーツ</th><th style="padding:4px 6px;text-align:center;">得点</th><th style="padding:4px 6px;text-align:center;">評価</th></tr>';
     FH_PART_ORDER.forEach((key, i) => {
       const s = fhScores[i];
       total += s;
       const em = s >= 18 ? '🌟' : s >= 14 ? '👍' : s >= 8 ? '😅' : '💦';
-      html += `<div>${em} ${fhLabels[key]}：${s}点 <small>（重なり度: ${Math.round(s/20*100)}%）</small></div>`;
+      const bar = '█'.repeat(Math.round(s/2)) + '░'.repeat(10 - Math.round(s/2));
+      html += `<tr style="border-bottom:1px solid #eee;">
+        <td style="padding:4px 6px;">${fhLabels[key]}</td>
+        <td style="padding:4px 6px;text-align:center;font-weight:bold;">${s}<small>/20</small></td>
+        <td style="padding:4px 6px;text-align:center;">${em} <span style="font-size:0.7rem;color:#aaa;font-family:monospace;">${bar}</span></td>
+      </tr>`;
     });
-    total = Math.min(100, total + 40); // ボーナス+40点（上限100点）
+    html += `<tr style="background:#fff8e1;font-weight:bold;"><td style="padding:6px;">合計</td><td style="padding:6px;text-align:center;color:#e67e22;">${total}<small>/100</small></td><td></td></tr>`;
+    html += '</table>';
   }
 
   const comment = total >= 92 ? '🎉 神業！！完璧すぎる！！' :
@@ -1768,7 +1777,7 @@ async function scoreFreehandOverlap(key) {
   // 難易度別 multiplier（lineWidth=8px基準）
   // hard: 満点ラインIoU≈18%（正確に描かないと難しい）
   // normal: 満点ラインIoU≈11%（丁寧に描けば届く）
-  const multipliers = { hard: 5.5, normal: 9.0 };
+  const multipliers = { hard: 4.0, normal: 9.0 }; // hard: 満点ラインIoU=25%（上位5%が95点超）
   const mult = multipliers[currentDifficulty] || 5.5;
   return Math.round(20 * Math.min(1, iou * mult));
 }
