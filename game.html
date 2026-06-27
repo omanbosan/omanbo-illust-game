@@ -1729,7 +1729,7 @@ async function scoreFreehandOverlap(key) {
   const strokes = fhStrokes[key] || [];
   if (strokes.length === 0) return 0;
 
-  // Reference canvas: draw the target part image at correct position
+  // Reference canvas: PNG画像のエッジを8px幅で描画（ユーザー線と同一の太さに統一）
   const refC = document.createElement('canvas');
   refC.width = 460; refC.height = 500;
   const refCtx = refC.getContext('2d');
@@ -1738,7 +1738,39 @@ async function scoreFreehandOverlap(key) {
     await new Promise(res => {
       const img = new Image();
       img.onload = () => {
-        refCtx.drawImage(img, target.x - cfg.w/2, target.y - cfg.h/2, cfg.w, cfg.h);
+        // ① 一時キャンバスにPNG画像を描画
+        const tmpC = document.createElement('canvas');
+        tmpC.width = 460; tmpC.height = 500;
+        const tmpCtx = tmpC.getContext('2d');
+        tmpCtx.drawImage(img, target.x - cfg.w/2, target.y - cfg.h/2, cfg.w, cfg.h);
+        const d = tmpCtx.getImageData(0, 0, 460, 500).data;
+        // ② エッジ検出：不透明ピクセルのうち隣に透明ピクセルがあるものを抽出し、
+        //    半径4px（= 8px幅）の円で描画 → ユーザー線と同じ太さになる
+        const W = 460, H = 500, R = 4;
+        const edgeBuf = new Uint8ClampedArray(W * H * 4);
+        for (let y = 1; y < H - 1; y++) {
+          for (let x = 1; x < W - 1; x++) {
+            if (d[(y*W+x)*4+3] > 30) {
+              if (d[((y-1)*W+x)*4+3] < 30 || d[((y+1)*W+x)*4+3] < 30 ||
+                  d[(y*W+x-1)*4+3] < 30 || d[(y*W+x+1)*4+3] < 30) {
+                // エッジピクセルを半径Rで塗りつぶす
+                for (let dy = -R; dy <= R; dy++) {
+                  for (let dx = -R; dx <= R; dx++) {
+                    if (dx*dx + dy*dy <= R*R) {
+                      const ex = x+dx, ey = y+dy;
+                      if (ex >= 0 && ex < W && ey >= 0 && ey < H) {
+                        const ei = (ey*W+ex)*4;
+                        edgeBuf[ei] = 0; edgeBuf[ei+1] = 0;
+                        edgeBuf[ei+2] = 0; edgeBuf[ei+3] = 255;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        refCtx.putImageData(new ImageData(edgeBuf, W, H), 0, 0);
         res();
       };
       img.onerror = res;
@@ -1746,11 +1778,10 @@ async function scoreFreehandOverlap(key) {
     });
   }
 
-  // User canvas: draw freehand strokes with same thickness as actual drawing
+  // User canvas: 実際の描画と同じ 8px で再描画
   const userC = document.createElement('canvas');
   userC.width = 460; userC.height = 500;
   const userCtx = userC.getContext('2d');
-  // 実際の描画lineWidth(8px)に合わせる（太くするとざっくり書きでも高得点になるため）
   userCtx.lineWidth = 8;
   userCtx.strokeStyle = '#000';
   userCtx.lineCap = 'round';
@@ -1776,17 +1807,17 @@ async function scoreFreehandOverlap(key) {
   }
   if (refPx === 0) return 0;
   if (currentDifficulty === 'easy') {
-    // イージー: recall基準（見本をどれだけカバーできたか）。50%カバーで満点
+    // イージー: recall基準（見本をどれだけカバーできたか）
     const recall = overlap / refPx;
     return Math.round(20 * Math.min(1, recall * 7.0));
   }
   const union = refPx + userPx - overlap;
   const iou = union > 0 ? overlap / union : 0;
-  // 難易度別 multiplier（lineWidth=8px基準）
-  // hard: 満点ラインIoU≈18%（正確に描かないと難しい）
-  // normal: 満点ラインIoU≈11%（丁寧に描けば届く）
-  const multipliers = { hard: 4.0, normal: 9.0 }; // hard: 満点ラインIoU=25%（上位5%が95点超）
-  const mult = multipliers[currentDifficulty] || 5.5;
+  // 参照が輪郭8px・ユーザーも8pxで対称になったため multiplier を再設定
+  // hard: 普通の人70-80点、絵が上手い人80-90点、プロ95点 を目標
+  // → 輪郭同士のIoU想定: 普通30-35%、上手い40-45%、プロ50%+
+  const multipliers = { hard: 2.0, normal: 4.5 };
+  const mult = multipliers[currentDifficulty] || 3.0;
   return Math.round(20 * Math.min(1, iou * mult));
 }
 
