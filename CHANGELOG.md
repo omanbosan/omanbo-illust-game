@@ -282,3 +282,27 @@ const multipliers = { hard: 3.8, normal: 5.46 };
 - 鬼モード景品: `レザー調キーホルダー` → `コースター`
 - 地獄モード（新キャラ）を試験追加したが品質不足のため完全削除
 
+
+---
+
+### [2026-06-27] 採点multiplierを管理画面から設定可能に
+
+**コミット:** `67c0806`
+
+**GAS変更（要デプロイ）:**
+- `config` シート追加（列: key / value）
+- `getConfig()` 関数: `hardMult` / `normalMult` を返す（デフォルト 2.0 / 4.5）
+- `setConfig(data)` 関数: config シートに upsert
+- `doGet`: `type === 'config'` ルーティング追加
+- `doPost`: `type === 'setConfig'` ルーティング追加
+
+**game.html変更:**
+- 起動時に GAS から `_scoringMultipliers` を非同期取得
+- GAS 取得失敗時はデフォルト値（hard: 2.0, normal: 4.5）を使用
+- `scoreFreehandOverlap` が `_scoringMultipliers` を参照するように変更
+
+**admin.html変更:**
+- 「⚙️ 採点設定」モードボタン追加
+- 鬼モード / 通常モード の multiplier 入力欄
+- 入力値から「満点ラインとなるIoU%」をリアルタイム表示
+- 💾 保存 / 🎲 ランダム設定（鬼: 1.5〜3.5 / 通常: 3.0〜7.0）/ ↩ デフォルト リセット ボタン
