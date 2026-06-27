@@ -832,10 +832,11 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycby0q8MVbN-Dk_fio8XO
 let _scoringMultipliers = { hard: 2.0, normal: 4.5 };
 
 function getLuckLevel(hardMult) {
-  if (hardMult >= 3.2) return 4;
-  if (hardMult >= 2.6) return 3;
-  if (hardMult >= 2.0) return 2;
-  return 1;
+  // 🔥が多いほどシビア（厳しい採点日）
+  if (hardMult < 2.0) return 4;  // 🔥🔥🔥🔥 超シビア
+  if (hardMult < 2.6) return 3;  // 🔥🔥🔥 シビア
+  if (hardMult < 3.2) return 2;  // 🔥🔥 普通
+  return 1;                       // 🔥 ゆるめ
 }
 
 function updateScoringLuckUI(hardMult) {
@@ -2856,7 +2857,7 @@ function renderScoringZukanList(list, empty, data) {
     const label     = diffLabels[diff] || '';
     const luckLevel = Number(entry.luckLevel) || 2;
     const fires     = '🔥'.repeat(luckLevel);
-    const luckTitle = luckLevel >= 4 ? '大チャンスデー' : luckLevel === 3 ? 'お得な日' : luckLevel === 2 ? '普通の日' : 'シビア日';
+    const luckTitle = luckLevel >= 4 ? '超シビア日！' : luckLevel === 3 ? 'シビア日' : luckLevel === 2 ? '普通の日' : 'ゆるめの日';
     const card  = document.createElement('div');
     card.style.cssText = `background:#fff5f0;border:2px solid ${color};border-radius:10px;padding:10px;text-align:center;`;
     card.innerHTML = `

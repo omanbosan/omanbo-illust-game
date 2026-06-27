@@ -590,7 +590,7 @@ function renderCards() {
       const dColor    = diffColors[diff] || '#e67e22';
       const luckLevel = Number(entry.luckLevel) || 2;
       const fires     = '🔥'.repeat(luckLevel);
-      const luckNames = ['', 'シビア日', '普通の日', 'お得な日', '大チャンスデー'];
+      const luckNames = ['', 'ゆるめの日', '普通の日', 'シビア日', '超シビア日！'];
       const luckName  = luckNames[luckLevel] || '普通の日';
       card.innerHTML = `
         ${entry.entryId ? `
