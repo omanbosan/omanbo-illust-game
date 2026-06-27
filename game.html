@@ -473,11 +473,8 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
       <div id="prize-code" style="display:none; font-size:1.3rem; font-weight:bold; color:#c0392b; letter-spacing:3px; margin:8px 0; background:white; padding:8px 16px; border-radius:8px;"></div>
     </div>
 
-    <!-- パーツ内訳（折りたたみ） -->
-    <details style="margin:8px 0;">
-      <summary style="cursor:pointer;font-size:0.85rem;color:#666;padding:6px;background:#f8f9fa;border-radius:6px;">📊 パーツ別内訳を見る</summary>
-      <div id="part-breakdown" style="font-size:0.86rem;background:#f8f9fa;border-radius:0 0 8px 8px;padding:10px 12px;line-height:2.1;"></div>
-    </details>
+    <!-- パーツ内訳 -->
+    <div id="part-breakdown" style="font-size:0.86rem;background:#f8f9fa;border-radius:8px;padding:10px 12px;line-height:2.1;margin:8px 0;"></div>
 
     <!-- 登録フォーム（スクロール不要の位置） -->
     <div id="score-register-section" style="border-top:1px solid #eee;margin-top:12px;padding-top:12px;">
@@ -1227,16 +1224,15 @@ async function doScore() {
     const fhLabels = {hair:'髪',reye:'左目',leye:'右目',nose:'鼻',mouth:'口'};
     // パーツ毎の採点結果テーブル
     html += '<table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-bottom:4px;">';
-    html += '<tr style="background:#f0f0f0;"><th style="padding:4px 6px;text-align:left;">パーツ</th><th style="padding:4px 6px;text-align:center;">得点</th><th style="padding:4px 6px;text-align:center;">評価</th></tr>';
+    html += '<tr style="background:#f0f0f0;"><th style="padding:4px 6px;text-align:left;">パーツ</th><th style="padding:4px 6px;text-align:center;">得点</th><th style="padding:4px 6px;text-align:center;">グラフ</th></tr>';
     FH_PART_ORDER.forEach((key, i) => {
       const s = fhScores[i];
       total += s;
-      const em = s >= 18 ? '🌟' : s >= 14 ? '👍' : s >= 8 ? '😅' : '💦';
       const bar = '█'.repeat(Math.round(s/2)) + '░'.repeat(10 - Math.round(s/2));
       html += `<tr style="border-bottom:1px solid #eee;">
         <td style="padding:4px 6px;">${fhLabels[key]}</td>
         <td style="padding:4px 6px;text-align:center;font-weight:bold;">${s}<small>/20</small></td>
-        <td style="padding:4px 6px;text-align:center;">${em} <span style="font-size:0.7rem;color:#aaa;font-family:monospace;">${bar}</span></td>
+        <td style="padding:4px 6px;text-align:center;"><span style="font-size:0.7rem;color:#aaa;font-family:monospace;">${bar}</span></td>
       </tr>`;
     });
     html += `<tr style="background:#fff8e1;font-weight:bold;"><td style="padding:6px;">合計</td><td style="padding:6px;text-align:center;color:#e67e22;">${total}<small>/100</small></td><td></td></tr>`;
