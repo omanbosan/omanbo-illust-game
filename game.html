@@ -218,6 +218,44 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
 </head>
 <body>
 
+<!-- ⚠️ メンテナンス画面 -->
+<div id="maintenance-screen" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0d0d0d 0%,#1a1a2e 100%);display:none;flex-direction:column;align-items:center;justify-content:center;color:white;text-align:center;padding:32px;">
+  <div style="font-size:3.5rem;margin-bottom:12px;">🎨</div>
+  <div style="font-size:1.5rem;font-weight:bold;color:#f39c12;margin-bottom:12px;letter-spacing:0.05em;">もうすぐ新しくなるよ！</div>
+  <div style="font-size:1rem;color:#ddd;line-height:2;margin-bottom:20px;">
+    おまんぼさんゲームをパワーアップ中✨<br>
+    もっと楽しくなって戻ってくるから<br>
+    楽しみに待っててね🙌
+  </div>
+  <div style="font-size:0.8rem;color:#888;margin-bottom:32px;">（ただいまアップデート中）</div>
+  <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:16px 20px;width:100%;max-width:280px;">
+    <div style="font-size:0.75rem;color:#888;margin-bottom:8px;">管理者の方はこちら</div>
+    <input id="maintenance-password" type="password" placeholder="パスワード"
+      style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #444;background:#1a1a1a;color:white;font-size:1rem;box-sizing:border-box;margin-bottom:8px;"
+      onkeydown="if(event.key==='Enter')checkMaintenancePassword()">
+    <button onclick="checkMaintenancePassword()"
+      style="width:100%;padding:10px;background:#e67e22;color:white;border:none;border-radius:8px;font-size:0.95rem;font-weight:bold;cursor:pointer;touch-action:manipulation;">
+      ログイン
+    </button>
+    <div id="maintenance-login-msg" style="font-size:0.8rem;color:#e74c3c;margin-top:6px;min-height:18px;"></div>
+  </div>
+</div>
+<script>
+  (function() {
+    try { if (sessionStorage.getItem('ml') === '1') return; } catch(e) {}
+    document.getElementById('maintenance-screen').style.display = 'flex';
+  })();
+  function checkMaintenancePassword() {
+    if (document.getElementById('maintenance-password').value === 'omanbo2026') {
+      try { sessionStorage.setItem('ml', '1'); } catch(e) {}
+      document.getElementById('maintenance-screen').style.display = 'none';
+    } else {
+      document.getElementById('maintenance-login-msg').textContent = 'パスワードが違います';
+      document.getElementById('maintenance-password').value = '';
+    }
+  }
+</script>
+
 <h1>🎨 おまんぼさんイラストゲーム</h1>
 <div id="subtitle">✏️ おまんぼさんの顔を描いて採点チャレンジ！(100点満点)</div>
 
@@ -1846,8 +1884,6 @@ async function scoreFreehandOverlap(key) {
   const ratio = Math.max(0, 1 - dist / threshold);
   const score = Math.round(20 * ratio);
   return (dist < threshold && score === 0) ? 1 : score;
-}
-  return (overlap > 0 && score === 0) ? 1 : score;
 }
 
 function drawAnswerComparison() {
