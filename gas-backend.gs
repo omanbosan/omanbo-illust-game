@@ -552,14 +552,15 @@ function getConfig() {
   const ss = SpreadsheetApp.openById(CONFIG.sheetId);
   let sheet = ss.getSheetByName('config');
   if (!sheet || sheet.getLastRow() < 2) {
-    return { hardMult: 2.0, normalMult: 4.5 }; // デフォルト値
+    return { hardMult: 2.0, normalMult: 4.5, easyMult: 3.0 }; // デフォルト値
   }
   const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
   const cfg = {};
   rows.forEach(r => { if (r[0]) cfg[String(r[0])] = r[1]; });
   return {
     hardMult:   parseFloat(cfg['hardMult'])   || 2.0,
-    normalMult: parseFloat(cfg['normalMult']) || 4.5
+    normalMult: parseFloat(cfg['normalMult']) || 4.5,
+    easyMult:   parseFloat(cfg['easyMult'])   || 3.0
   };
 }
 
@@ -574,7 +575,7 @@ function setConfig(data) {
   const rows = lastRow >= 2
     ? sheet.getRange(2, 1, lastRow - 1, 2).getValues()
     : [];
-  const keys = ['hardMult', 'normalMult'];
+  const keys = ['hardMult', 'normalMult', 'easyMult'];
   keys.forEach(key => {
     if (data[key] === undefined) return;
     const val = parseFloat(data[key]);
@@ -586,5 +587,5 @@ function setConfig(data) {
       sheet.appendRow([key, val]);
     }
   });
-  return { ok: true, hardMult: data.hardMult, normalMult: data.normalMult };
+  return { ok: true, hardMult: data.hardMult, normalMult: data.normalMult, easyMult: data.easyMult };
 }

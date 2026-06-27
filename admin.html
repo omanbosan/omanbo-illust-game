@@ -278,9 +278,23 @@ body {
         </div>
       </div>
 
+      <!-- イージーモード -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:0.85rem;font-weight:bold;color:#27ae60;margin-bottom:8px;">😄 イージーモード</div>
+        <div style="font-size:0.72rem;color:#666;margin-bottom:6px;">recall（輪郭カバー率）×倍率で採点。大きいほど甘め。</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率を直接入力:</span>
+          <input type="number" id="cfg-easy-num" min="0.5" max="20" step="0.1" value="3.0"
+            style="width:80px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
+            oninput="onNumInput('easy')">
+          <span id="cfg-easy-hint" style="font-size:0.7rem;color:#f39c12;"></span>
+        </div>
+      </div>
+
       <!-- 隠し数値（実際に保存される値） -->
       <input type="hidden" id="cfg-hard" value="2.0">
       <input type="hidden" id="cfg-normal" value="4.5">
+      <input type="hidden" id="cfg-easy" value="3.0">
 
       <div style="display:flex;gap:8px;">
         <button onclick="saveConfig()"
@@ -522,22 +536,23 @@ function onNumInput(mode) {
   if (isNaN(val) || val <= 0) return;
   hiddenEl.value = val;
   updateHint(mode, val);
-  const presets  = mode === 'hard' ? HARD_PRESETS : NORMAL_PRESETS;
-  const descId   = mode === 'hard' ? 'hard-desc'  : 'normal-desc';
-  const btnId    = mode === 'hard' ? 'hard-preset-btns' : 'normal-preset-btns';
-  // プリセットボタンのハイライトを更新（完全一致しない場合は「カスタム」表示）
+  // easy はプリセットボタンなし
+  if (mode === 'easy') return;
+  const presets = mode === 'hard' ? HARD_PRESETS : NORMAL_PRESETS;
+  const descId  = `${mode}-desc`;
+  const btnId   = `${mode}-preset-btns`;
   const exact = presets.find(p => Math.abs(p.mult - val) < 0.01);
   if (exact) {
     buildPresetButtons(btnId, descId, `cfg-${mode}`, presets, val);
   } else {
-    // ハイライトなし＋カスタム表示
     const container = document.getElementById(btnId);
-    container.querySelectorAll('button').forEach(b => {
+    if (container) container.querySelectorAll('button').forEach(b => {
       b.style.border = '2px solid #2a2a4a';
       b.style.background = 'transparent';
       b.style.color = '#888';
     });
-    document.getElementById(descId).textContent = `カスタム値: ${val}`;
+    const descEl = document.getElementById(descId);
+    if (descEl) descEl.textContent = `カスタム値: ${val}`;
   }
 }
 
@@ -545,44 +560,56 @@ function onNumInput(mode) {
 function updateHint(mode, mult) {
   const hintEl = document.getElementById(`cfg-${mode}-hint`);
   if (!hintEl) return;
-  // IoU=0.30 (普通の人想定) でのスコア予測
-  const typical = Math.min(20, Math.round(20 * Math.min(1, 0.30 * mult)));
-  const good    = Math.min(20, Math.round(20 * Math.min(1, 0.42 * mult)));
-  const pro     = Math.min(20, Math.round(20 * Math.min(1, 0.55 * mult)));
-  hintEl.textContent = `目安: 普通${typical*5}点 / 上手い${good*5}点 / プロ${pro*5}点`;
+  if (mode === 'easy') {
+    // イージーは recall（輪郭カバー率）ベース
+    const typical = Math.min(20, Math.round(20 * Math.min(1, 0.40 * mult)));
+    const good    = Math.min(20, Math.round(20 * Math.min(1, 0.60 * mult)));
+    hintEl.textContent = `目安: 大まか${typical*5}点 / ちゃんと${good*5}点`;
+  } else {
+    // 通常・鬼は IoU ベース
+    const typical = Math.min(20, Math.round(20 * Math.min(1, 0.30 * mult)));
+    const good    = Math.min(20, Math.round(20 * Math.min(1, 0.42 * mult)));
+    const pro     = Math.min(20, Math.round(20 * Math.min(1, 0.55 * mult)));
+    hintEl.textContent = `目安: 普通${typical*5}点 / 上手い${good*5}点 / プロ${pro*5}点`;
+  }
 }
 
 async function loadConfigPanel() {
   document.getElementById('config-current').textContent = '読み込み中...';
   document.getElementById('config-msg').textContent = '';
-  let h = 2.0, n = 4.5;
+  let h = 2.0, n = 4.5, e = 3.0;
   try {
     const res = await fetch(WEBHOOK_URL + '?type=config', { redirect: 'follow' });
     const cfg = await res.json();
     h = cfg.hardMult   ?? 2.0;
     n = cfg.normalMult ?? 4.5;
+    e = cfg.easyMult   ?? 3.0;
     document.getElementById('config-current').textContent = '現在の設定を読み込みました';
-  } catch(e) {
+  } catch(err) {
     document.getElementById('config-current').textContent = '読み込み失敗（デフォルト値で表示）';
   }
   document.getElementById('cfg-hard').value   = h;
   document.getElementById('cfg-normal').value = n;
+  document.getElementById('cfg-easy').value   = e;
   document.getElementById('cfg-hard-num').value   = h;
   document.getElementById('cfg-normal-num').value = n;
+  document.getElementById('cfg-easy-num').value   = e;
   document.getElementById('hard-desc').textContent   = '';
   document.getElementById('normal-desc').textContent = '';
   buildPresetButtons('hard-preset-btns',   'hard-desc',   'cfg-hard',   HARD_PRESETS,   h);
   buildPresetButtons('normal-preset-btns', 'normal-desc', 'cfg-normal', NORMAL_PRESETS, n);
   updateHint('hard', h);
   updateHint('normal', n);
+  updateHint('easy', e);
 }
 
 async function saveConfig() {
   const h = parseFloat(document.getElementById('cfg-hard').value);
   const n = parseFloat(document.getElementById('cfg-normal').value);
-  if (isNaN(h) || isNaN(n)) {
+  const e = parseFloat(document.getElementById('cfg-easy').value);
+  if (isNaN(h) || isNaN(n) || isNaN(e)) {
     document.getElementById('config-msg').style.color = '#e74c3c';
-    document.getElementById('config-msg').textContent = '❌ プリセットを選択してください';
+    document.getElementById('config-msg').textContent = '❌ 値を入力してください';
     return;
   }
   document.getElementById('config-msg').style.color = '#aaa';
@@ -591,11 +618,11 @@ async function saveConfig() {
     const res = await fetch(WEBHOOK_URL, {
       method: 'POST', redirect: 'follow',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ type: 'setConfig', hardMult: h, normalMult: n })
+      body: JSON.stringify({ type: 'setConfig', hardMult: h, normalMult: n, easyMult: e })
     });
     const text = await res.text();
     let parsed;
-    try { parsed = JSON.parse(text); } catch(e) { parsed = null; }
+    try { parsed = JSON.parse(text); } catch(err) { parsed = null; }
     if (parsed && parsed.ok) {
       document.getElementById('config-msg').style.color = '#27ae60';
       document.getElementById('config-msg').textContent = '✅ 保存しました！';
@@ -604,9 +631,9 @@ async function saveConfig() {
       document.getElementById('config-msg').textContent = '❌ GASエラー: GASを最新版で再デプロイしてください';
       console.error('GAS response:', text);
     }
-  } catch(e) {
+  } catch(err) {
     document.getElementById('config-msg').style.color = '#e74c3c';
-    document.getElementById('config-msg').textContent = '❌ 通信エラー: ' + e.message;
+    document.getElementById('config-msg').textContent = '❌ 通信エラー: ' + err.message;
   }
 }
 
