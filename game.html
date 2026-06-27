@@ -2285,11 +2285,13 @@ function setOdekakiShape(shape) {
   const fb  = document.getElementById('shape-free-btn');
   if (shape === 'free') {
     cc.style.borderRadius = '8px';
+    cc.style.overflow = 'visible'; // 丸クリッピングを解除
     if (svg) svg.style.display = 'none';
     cb.style.background = 'white'; cb.style.color = '#27ae60';
     fb.style.background = '#27ae60'; fb.style.color = 'white';
   } else {
     cc.style.borderRadius = '50%';
+    cc.style.overflow = 'hidden'; // 丸クリッピングを有効化
     if (svg) svg.style.display = '';
     cb.style.background = '#27ae60'; cb.style.color = 'white';
     fb.style.background = 'white'; fb.style.color = '#27ae60';
