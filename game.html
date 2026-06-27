@@ -340,16 +340,22 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
 
   <!-- 図鑑ボタン群（最上部） -->
   <div style="display:flex;gap:8px;width:100%;margin-bottom:16px;">
-    <button onclick="openScoringZukan()" style="flex:1;padding:12px 8px;background:linear-gradient(135deg,#e67e22,#c0392b);color:white;border:none;border-radius:12px;font-size:0.88rem;font-weight:bold;cursor:pointer;box-shadow:0 4px 15px rgba(230,126,34,0.3);line-height:1.4;">
-      🎯 みんなが書いた<br>おまんぼさん<br><span style="font-size:0.68rem;font-weight:normal;opacity:0.9;">採点チャレンジ結果</span>
+    <button onclick="openScoringZukan()" style="flex:1;padding:14px 8px;background:linear-gradient(135deg,#e67e22,#c0392b);color:white;border:none;border-radius:14px;font-size:0.85rem;font-weight:bold;cursor:pointer;box-shadow:0 5px 18px rgba(230,126,34,0.4);line-height:1.5;transition:transform 0.1s,box-shadow 0.1s;"
+      onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''"
+      ontouchstart="this.style.transform='scale(0.97)'" ontouchend="this.style.transform=''">
+      <div style="font-size:1.4rem;margin-bottom:2px;">🎯</div>
+      みんなのおまんぼさん<br><span style="font-size:0.68rem;font-weight:normal;opacity:0.85;">採点チャレンジ結果を見る</span>
     </button>
-    <button onclick="openZukan()" style="flex:1;padding:12px 8px;background:linear-gradient(135deg,#27ae60,#1e8449);color:white;border:none;border-radius:12px;font-size:0.88rem;font-weight:bold;cursor:pointer;box-shadow:0 4px 15px rgba(39,174,96,0.3);line-height:1.4;">
-      🎨 おまんぼさんの<br>お友達図鑑<br><span style="font-size:0.68rem;font-weight:normal;opacity:0.9;">お絵描きチャレンジ</span>
+    <button onclick="openZukan()" style="flex:1;padding:14px 8px;background:linear-gradient(135deg,#27ae60,#1e8449);color:white;border:none;border-radius:14px;font-size:0.85rem;font-weight:bold;cursor:pointer;box-shadow:0 5px 18px rgba(39,174,96,0.4);line-height:1.5;transition:transform 0.1s,box-shadow 0.1s;"
+      onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''"
+      ontouchstart="this.style.transform='scale(0.97)'" ontouchend="this.style.transform=''">
+      <div style="font-size:1.4rem;margin-bottom:2px;">🎨</div>
+      お友達図鑑<br><span style="font-size:0.68rem;font-weight:normal;opacity:0.85;">お絵描きチャレンジ</span>
     </button>
   </div>
 
   <!-- 採点チャレンジカード -->
-  <div style="background:linear-gradient(135deg,rgba(230,126,34,0.25) 0%,rgba(192,57,43,0.2) 100%);border:1.5px solid rgba(230,126,34,0.6);border-radius:16px;padding:16px;margin-bottom:14px;width:100%;text-align:left;box-shadow:0 4px 20px rgba(230,126,34,0.2);">
+  <div style="background:linear-gradient(135deg,rgba(230,126,34,0.18) 0%,rgba(192,57,43,0.14) 100%);border:2px solid rgba(230,126,34,0.7);border-radius:16px;padding:16px;margin-bottom:14px;width:100%;text-align:left;box-shadow:0 4px 24px rgba(230,126,34,0.25);">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
       <div style="font-size:2rem;">🎯</div>
       <div style="flex:1;">
@@ -357,62 +363,62 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
         <div style="font-size:0.72rem;color:#f39c12;opacity:0.8;">SCORING CHALLENGE</div>
       </div>
     </div>
-    <div style="font-size:0.82rem;line-height:1.7;color:#eee;margin-bottom:12px;">
-      おまんぼさんの顔を覚えて、フリーハンドで描画！<br>
-      見本との重なり具合で採点します。（100点満点）
+
+    <!-- 説明文（左ボーダーで「読むもの」と明示） -->
+    <div style="border-left:3px solid rgba(230,126,34,0.5);padding-left:10px;margin-bottom:12px;">
+      <div style="font-size:0.82rem;line-height:1.7;color:#ddd;">
+        おまんぼさんの顔を覚えて、フリーハンドで描画！<br>
+        見本との重なり具合で採点します。（100点満点）
+      </div>
     </div>
-    <!-- 採点基準説明 -->
-    <div style="background:rgba(0,0,0,0.3);border-radius:10px;padding:10px;margin-bottom:10px;font-size:0.78rem;line-height:1.8;color:#ddd;">
+
+    <!-- 採点基準（折りたたみ風のINFOエリア） -->
+    <div style="border-left:3px solid rgba(230,126,34,0.5);padding-left:10px;margin-bottom:12px;font-size:0.78rem;line-height:1.8;color:#ccc;">
       <div style="font-weight:bold;color:#f39c12;margin-bottom:4px;">📐 採点基準</div>
       <div>髪・左目・右目・鼻・口の <b style="color:white;">5パーツ × 各20点 = 100点満点</b></div>
-      <div style="color:#aaa;font-size:0.72rem;margin-top:4px;">各パーツは「描いた線と見本の重なり具合」で自動採点。正確な位置・形に描くほど高得点！</div>
-      <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
-        <span style="background:rgba(255,215,0,0.2);border:1px solid #ffd700;border-radius:4px;padding:2px 6px;">🌟 18〜20点：ほぼ完璧</span>
-        <span style="background:rgba(255,255,255,0.1);border:1px solid #aaa;border-radius:4px;padding:2px 6px;">👍 14〜17点：なかなか</span>
-        <span style="background:rgba(255,255,255,0.1);border:1px solid #aaa;border-radius:4px;padding:2px 6px;">😅 8〜13点：もう少し</span>
-        <span style="background:rgba(255,255,255,0.1);border:1px solid #aaa;border-radius:4px;padding:2px 6px;">💦 0〜7点：ズレてるよ</span>
+      <div style="color:#999;font-size:0.72rem;margin-top:4px;">各パーツは「描いた線と見本の重なり具合」で自動採点。正確な位置・形に描くほど高得点！</div>
+      <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
+        <span style="background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.5);border-radius:4px;padding:2px 6px;">🌟 18〜20点</span>
+        <span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 6px;">👍 14〜17点</span>
+        <span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 6px;">😅 8〜13点</span>
+        <span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:2px 6px;">💦 0〜7点</span>
       </div>
     </div>
-    <!-- 鬼モードのみプレゼント案内 -->
-    <div style="background:linear-gradient(135deg,rgba(231,76,60,0.3),rgba(192,57,43,0.3));border:1.5px solid #e74c3c;border-radius:10px;padding:10px;margin-bottom:8px;text-align:center;">
-      <div style="font-size:0.85rem;font-weight:bold;color:#ff6b6b;margin-bottom:4px;">👹 鬼モードのみプレゼント対象！</div>
-      <div style="font-size:0.72rem;color:#eee;line-height:1.6;">通常・イージーモードはプレゼント対象外です<br>景品狙いは <b style="color:#ff6b6b;">鬼モード</b> に挑戦しよう🔥</div>
-    </div>
-    <div style="background:rgba(0,0,0,0.4);border-radius:10px;padding:10px;font-size:0.8rem;line-height:2.2;">
-      <div style="font-size:0.7rem;color:#aaa;margin-bottom:4px;text-align:center;">🏆 鬼モード景品（月末締め・結果発表）</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-        <span>🏆 <b style="color:#ffd700;">特賞</b></span><span style="color:#ffd700;font-size:0.75rem;">95点以上</span><span style="font-size:0.72rem;color:#aaa;">スペシャルプレゼント</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-        <span>🥇 <b style="color:#f39c12;">1等賞</b></span><span style="font-size:0.72rem;color:#aaa;">銘木キーホルダー</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-        <span>🥈 <b style="color:#bdc3c7;">2等賞</b></span><span style="font-size:0.72rem;color:#aaa;">コースター</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
-        <span>🥉 <b style="color:#cd6133;">3等賞</b></span><span style="font-size:0.72rem;color:#aaa;">500円オフクーポン</span>
-      </div>
-    </div>
-    <!-- 難易度選択 -->
-    <div style="margin-top:12px;margin-bottom:2px;">
-      <div style="font-size:0.75rem;color:#aaa;margin-bottom:6px;text-align:center;">🎮 難易度を選んでください</div>
-      <div style="display:flex;gap:6px;">
-        <button onclick="setDifficulty('easy',this)" id="diff-easy"
-          style="flex:1;padding:8px 4px;border:2px solid #27ae60;background:white;color:#27ae60;border-radius:8px;font-size:0.8rem;font-weight:bold;cursor:pointer;line-height:1.3;">😄<br>イージーモード</button>
-        <button onclick="setDifficulty('normal',this)" id="diff-normal"
-          style="flex:1;padding:8px 4px;border:2px solid #e67e22;background:#e67e22;color:white;border-radius:8px;font-size:0.8rem;font-weight:bold;cursor:pointer;line-height:1.3;">😊<br>通常モード</button>
-        <button onclick="setDifficulty('hard',this)" id="diff-hard"
-          style="flex:1;padding:8px 4px;border:2px solid #e74c3c;background:white;color:#e74c3c;border-radius:8px;font-size:0.8rem;font-weight:bold;cursor:pointer;line-height:1.3;">👹<br>鬼モード</button>
 
+    <!-- 景品情報（左ボーダーINFOエリア） -->
+    <div style="border-left:3px solid rgba(231,76,60,0.6);padding-left:10px;margin-bottom:16px;">
+      <div style="font-size:0.78rem;font-weight:bold;color:#ff6b6b;margin-bottom:6px;">👹 鬼モードのみプレゼント対象（月末締め）</div>
+      <div style="display:flex;flex-direction:column;gap:2px;font-size:0.78rem;color:#ccc;">
+        <div>🏆 <b style="color:#ffd700;">特賞</b>　<span style="color:#ffd700;">95点以上</span>　スペシャルプレゼント</div>
+        <div>🥇 <b style="color:#f39c12;">1等賞</b>　銘木キーホルダー</div>
+        <div>🥈 <b style="color:#bdc3c7;">2等賞</b>　コースター</div>
+        <div>🥉 <b style="color:#cd6133;">3等賞</b>　500円オフクーポン</div>
       </div>
     </div>
-    <button onclick="selectModeAndStart('scoring')" style="margin-top:10px;width:100%;padding:14px;background:linear-gradient(135deg,#e67e22,#c0392b);color:white;border:none;border-radius:12px;font-size:1rem;font-weight:bold;cursor:pointer;box-shadow:0 4px 15px rgba(230,126,34,0.4);letter-spacing:0.05em;">
-      🎯 採点チャレンジをはじめる →
-    </button>
+
+    <!-- ここから操作エリア（明確に区切る） -->
+    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;">
+      <div style="font-size:0.72rem;color:#f39c12;font-weight:bold;letter-spacing:0.1em;margin-bottom:8px;text-align:center;">▼ 難易度を選んではじめる</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
+        <button onclick="setDifficulty('easy',this)" id="diff-easy"
+          style="flex:1;padding:10px 4px;border:2px solid #27ae60;background:transparent;color:#27ae60;border-radius:10px;font-size:0.8rem;font-weight:bold;cursor:pointer;line-height:1.4;transition:all 0.15s;">😄<br>イージー</button>
+        <button onclick="setDifficulty('normal',this)" id="diff-normal"
+          style="flex:1;padding:10px 4px;border:2px solid #e67e22;background:#e67e22;color:white;border-radius:10px;font-size:0.8rem;font-weight:bold;cursor:pointer;line-height:1.4;box-shadow:0 2px 10px rgba(230,126,34,0.5);transition:all 0.15s;">😊<br>通常</button>
+        <button onclick="setDifficulty('hard',this)" id="diff-hard"
+          style="flex:1;padding:10px 4px;border:2px solid #e74c3c;background:transparent;color:#e74c3c;border-radius:10px;font-size:0.8rem;font-weight:bold;cursor:pointer;line-height:1.4;transition:all 0.15s;">👹<br>鬼モード</button>
+      </div>
+      <button onclick="selectModeAndStart('scoring')" style="width:100%;padding:16px;background:linear-gradient(135deg,#e67e22,#c0392b);color:white;border:none;border-radius:12px;font-size:1.05rem;font-weight:bold;cursor:pointer;box-shadow:0 6px 20px rgba(230,126,34,0.5);letter-spacing:0.05em;transition:transform 0.1s,box-shadow 0.1s;"
+        onmousedown="this.style.transform='scale(0.97)';this.style.boxShadow='0 2px 8px rgba(230,126,34,0.4)'"
+        onmouseup="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(230,126,34,0.5)'"
+        ontouchstart="this.style.transform='scale(0.97)'"
+        ontouchend="this.style.transform=''">
+        🎯 採点チャレンジをはじめる →
+      </button>
+    </div>
   </div>
 
   <!-- お絵描きチャレンジカード -->
-  <div style="background:linear-gradient(135deg,rgba(39,174,96,0.25) 0%,rgba(21,132,70,0.2) 100%);border:1.5px solid rgba(39,174,96,0.6);border-radius:16px;padding:16px;margin-bottom:14px;width:100%;text-align:left;box-shadow:0 4px 20px rgba(39,174,96,0.2);">
+  <div style="background:linear-gradient(135deg,rgba(39,174,96,0.18) 0%,rgba(21,132,70,0.14) 100%);border:2px solid rgba(39,174,96,0.7);border-radius:16px;padding:16px;margin-bottom:14px;width:100%;text-align:left;box-shadow:0 4px 24px rgba(39,174,96,0.2);">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
       <div style="font-size:2rem;">🎨</div>
       <div>
@@ -420,9 +426,13 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
         <div style="font-size:0.72rem;color:#2ecc71;opacity:0.8;">DRAWING CHALLENGE</div>
       </div>
     </div>
-    <div style="font-size:0.82rem;line-height:1.7;color:#eee;margin-bottom:10px;">
-      おまんぼさんの<b style="color:#a8e6cf;">お友達の顔を自由に描いて</b>図鑑に登録しよう！<br>
-      描いた顔に名前をつけると、あなたオリジナルのお友達キャラクターが誕生します🎨
+
+    <!-- 説明文 -->
+    <div style="border-left:3px solid rgba(39,174,96,0.5);padding-left:10px;margin-bottom:10px;">
+      <div style="font-size:0.82rem;line-height:1.7;color:#ddd;">
+        おまんぼさんの<b style="color:#a8e6cf;">お友達の顔を自由に描いて</b>図鑑に登録しよう！<br>
+        描いた顔に名前をつけると、あなたオリジナルのお友達キャラクターが誕生します🎨
+      </div>
     </div>
 
     <!-- フロー -->
@@ -436,12 +446,22 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
       <div style="background:rgba(39,174,96,0.3);border-radius:8px;padding:5px 8px;font-size:0.7rem;color:#dfd;text-align:center;min-width:52px;">🎭<br>キャラクターに！</div>
     </div>
 
-    <img src="odekaki-description.png" alt="おまんぼさんを探そう" style="display:block;width:100%;border-radius:12px;object-fit:cover;margin-bottom:10px;">
-    <div style="font-size:0.72rem;color:#e74c3c;margin-bottom:12px;">⚠️ アニメキャラクターなどに似せた絵はご遠慮ください。おまんぼさんのオリジナルのお友達を描いてね🎨</div>
+    <img src="odekaki-description.png" alt="おまんぼさんを探そう" style="display:block;width:100%;border-radius:12px;object-fit:cover;margin-bottom:8px;">
+    <div style="border-left:3px solid rgba(231,76,60,0.5);padding-left:8px;margin-bottom:14px;font-size:0.72rem;color:#f1948a;line-height:1.6;">
+      ⚠️ アニメキャラクターなどに似せた絵はご遠慮ください。おまんぼさんのオリジナルのお友達を描いてね🎨
+    </div>
 
-    <button onclick="selectModeAndStart('drawing')" style="width:100%;padding:14px;background:linear-gradient(135deg,#27ae60,#1e8449);color:white;border:none;border-radius:12px;font-size:1rem;font-weight:bold;cursor:pointer;box-shadow:0 4px 15px rgba(39,174,96,0.4);letter-spacing:0.05em;">
-      🎨 お絵描きチャレンジをはじめる →
-    </button>
+    <!-- 操作エリア -->
+    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;">
+      <div style="font-size:0.72rem;color:#2ecc71;font-weight:bold;letter-spacing:0.1em;margin-bottom:8px;text-align:center;">▼ タップしてはじめる</div>
+      <button onclick="selectModeAndStart('drawing')" style="width:100%;padding:16px;background:linear-gradient(135deg,#27ae60,#1e8449);color:white;border:none;border-radius:12px;font-size:1.05rem;font-weight:bold;cursor:pointer;box-shadow:0 6px 20px rgba(39,174,96,0.45);letter-spacing:0.05em;transition:transform 0.1s,box-shadow 0.1s;"
+        onmousedown="this.style.transform='scale(0.97)';this.style.boxShadow='0 2px 8px rgba(39,174,96,0.3)'"
+        onmouseup="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(39,174,96,0.45)'"
+        ontouchstart="this.style.transform='scale(0.97)'"
+        ontouchend="this.style.transform=''">
+        🎨 お絵描きチャレンジをはじめる →
+      </button>
+    </div>
   </div>
 
   <div style="height:12px;"></div>
