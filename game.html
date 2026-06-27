@@ -1804,7 +1804,7 @@ async function scoreFreehandOverlap(key) {
   const strokes = fhStrokes[key] || [];
   if (strokes.length === 0) return 0;
 
-  // Reference canvas: PNG画像のエッジを8px幅で描画（ユーザー線と同一の太さに統一）
+  // Reference canvas
   const refC = document.createElement('canvas');
   refC.width = 460; refC.height = 500;
   const refCtx = refC.getContext('2d');
@@ -1813,30 +1813,28 @@ async function scoreFreehandOverlap(key) {
     await new Promise(res => {
       const img = new Image();
       img.onload = () => {
-        // ① 一時キャンバスにPNG画像を描画
         const tmpC = document.createElement('canvas');
         tmpC.width = 460; tmpC.height = 500;
         const tmpCtx = tmpC.getContext('2d');
         tmpCtx.drawImage(img, target.x - cfg.w/2, target.y - cfg.h/2, cfg.w, cfg.h);
         const d = tmpCtx.getImageData(0, 0, 460, 500).data;
-        // ② エッジ検出：不透明ピクセルのうち隣に透明ピクセルがあるものを抽出し、
-        //    半径4px（= 8px幅）の円で描画 → ユーザー線と同じ太さになる
-        const W = 460, H = 500, R = 8; // 16px幅の輪郭（ユーザー線と同じ太さ）
-        const edgeBuf = new Uint8ClampedArray(W * H * 4);
-        for (let y = 1; y < H - 1; y++) {
-          for (let x = 1; x < W - 1; x++) {
-            if (d[(y*W+x)*4+3] > 30) {
-              if (d[((y-1)*W+x)*4+3] < 30 || d[((y+1)*W+x)*4+3] < 30 ||
-                  d[(y*W+x-1)*4+3] < 30 || d[(y*W+x+1)*4+3] < 30) {
-                // エッジピクセルを半径Rで塗りつぶす
+        const W = 460, H = 500;
+
+        if (currentDifficulty === 'easy') {
+          // イージー: PNG塗りつぶし全体 + 周囲20px膨張 を参照とする
+          // → ユーザーが形の近くに描くだけで高 recall が出る
+          const R = 20;
+          const fillBuf = new Uint8ClampedArray(W * H * 4);
+          for (let y = 0; y < H; y++) {
+            for (let x = 0; x < W; x++) {
+              if (d[(y*W+x)*4+3] > 30) {
                 for (let dy = -R; dy <= R; dy++) {
                   for (let dx = -R; dx <= R; dx++) {
                     if (dx*dx + dy*dy <= R*R) {
                       const ex = x+dx, ey = y+dy;
                       if (ex >= 0 && ex < W && ey >= 0 && ey < H) {
                         const ei = (ey*W+ex)*4;
-                        edgeBuf[ei] = 0; edgeBuf[ei+1] = 0;
-                        edgeBuf[ei+2] = 0; edgeBuf[ei+3] = 255;
+                        fillBuf[ei+3] = 255;
                       }
                     }
                   }
@@ -1844,8 +1842,33 @@ async function scoreFreehandOverlap(key) {
               }
             }
           }
+          refCtx.putImageData(new ImageData(fillBuf, W, H), 0, 0);
+        } else {
+          // 通常・鬼: エッジ16px幅の輪郭のみ
+          const R = 8;
+          const edgeBuf = new Uint8ClampedArray(W * H * 4);
+          for (let y = 1; y < H - 1; y++) {
+            for (let x = 1; x < W - 1; x++) {
+              if (d[(y*W+x)*4+3] > 30) {
+                if (d[((y-1)*W+x)*4+3] < 30 || d[((y+1)*W+x)*4+3] < 30 ||
+                    d[(y*W+x-1)*4+3] < 30 || d[(y*W+x+1)*4+3] < 30) {
+                  for (let dy = -R; dy <= R; dy++) {
+                    for (let dx = -R; dx <= R; dx++) {
+                      if (dx*dx + dy*dy <= R*R) {
+                        const ex = x+dx, ey = y+dy;
+                        if (ex >= 0 && ex < W && ey >= 0 && ey < H) {
+                          const ei = (ey*W+ex)*4;
+                          edgeBuf[ei+3] = 255;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          refCtx.putImageData(new ImageData(edgeBuf, W, H), 0, 0);
         }
-        refCtx.putImageData(new ImageData(edgeBuf, W, H), 0, 0);
         res();
       };
       img.onerror = res;
@@ -1853,11 +1876,12 @@ async function scoreFreehandOverlap(key) {
     });
   }
 
-  // User canvas: 実際の描画と同じ 16px で再描画（参照輪郭と対称）
+  // User canvas: イージーは太め(40px)、通常・鬼は16px
+  const userLineWidth = currentDifficulty === 'easy' ? 40 : 16;
   const userC = document.createElement('canvas');
   userC.width = 460; userC.height = 500;
   const userCtx = userC.getContext('2d');
-  userCtx.lineWidth = 16;
+  userCtx.lineWidth = userLineWidth;
   userCtx.strokeStyle = '#000';
   userCtx.lineCap = 'round';
   userCtx.lineJoin = 'round';
@@ -1882,9 +1906,11 @@ async function scoreFreehandOverlap(key) {
   }
   if (refPx === 0) return 0;
   if (currentDifficulty === 'easy') {
-    // イージー: recall基準（見本をどれだけカバーできたか）
+    // イージー: recall基準（塗りつぶし膨張エリアをどれだけカバーできたか）
+    // 参照が膨張済みPNG全体なので、形の近くに描くだけで高recallになる
+    // ユーザー線40px × recall で採点：大まかに描けば満点に近い
     const recall = overlap / refPx;
-    const s = Math.round(20 * Math.min(1, recall * 7.0));
+    const s = Math.round(20 * Math.min(1, recall * 2.5));
     return (overlap > 0 && s === 0) ? 1 : s;
   }
   const union = refPx + userPx - overlap;
