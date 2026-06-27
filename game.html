@@ -218,6 +218,17 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
 </head>
 <body>
 
+<!-- ⚠️ メンテナンス画面（表示したいときは display:flex、非表示は display:none） -->
+<div id="maintenance-screen" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0d0d0d 0%,#1a1a2e 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;text-align:center;padding:32px;">
+  <div style="font-size:3rem;margin-bottom:16px;">🔧</div>
+  <div style="font-size:1.5rem;font-weight:bold;color:#f39c12;margin-bottom:10px;letter-spacing:0.05em;">メンテナンス中</div>
+  <div style="font-size:1rem;color:#ccc;line-height:1.8;margin-bottom:24px;">
+    ただいまゲームをアップデート中です。<br>
+    しばらくお待ちください🙏
+  </div>
+  <div style="font-size:0.82rem;color:#888;">準備ができ次第、再開します</div>
+</div>
+
 <h1>🎨 おまんぼさんイラストゲーム</h1>
 <div id="subtitle">✏️ おまんぼさんの顔を描いて採点チャレンジ！(100点満点)</div>
 
