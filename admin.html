@@ -251,22 +251,34 @@ body {
       <!-- 鬼モード -->
       <div style="margin-bottom:18px;">
         <div style="font-size:0.85rem;font-weight:bold;color:#e74c3c;margin-bottom:8px;">👹 鬼モード</div>
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;" id="hard-preset-btns">
-          <!-- JS で生成 -->
-        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;" id="hard-preset-btns"></div>
         <div style="font-size:0.7rem;color:#666;text-align:center;margin-top:4px;" id="hard-desc"></div>
+        <!-- 数値直接入力 -->
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+          <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率を直接入力:</span>
+          <input type="number" id="cfg-hard-num" min="0.5" max="10" step="0.1" value="2.0"
+            style="width:80px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
+            oninput="onNumInput('hard')">
+          <span id="cfg-hard-hint" style="font-size:0.7rem;color:#f39c12;"></span>
+        </div>
       </div>
 
       <!-- 通常モード -->
       <div style="margin-bottom:20px;">
         <div style="font-size:0.85rem;font-weight:bold;color:#e67e22;margin-bottom:8px;">😊 通常モード</div>
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;" id="normal-preset-btns">
-          <!-- JS で生成 -->
-        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;" id="normal-preset-btns"></div>
         <div style="font-size:0.7rem;color:#666;text-align:center;margin-top:4px;" id="normal-desc"></div>
+        <!-- 数値直接入力 -->
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+          <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率を直接入力:</span>
+          <input type="number" id="cfg-normal-num" min="0.5" max="20" step="0.1" value="4.5"
+            style="width:80px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
+            oninput="onNumInput('normal')">
+          <span id="cfg-normal-hint" style="font-size:0.7rem;color:#f39c12;"></span>
+        </div>
       </div>
 
-      <!-- 隠し数値（JS 内部用） -->
+      <!-- 隠し数値（実際に保存される値） -->
       <input type="hidden" id="cfg-hard" value="2.0">
       <input type="hidden" id="cfg-normal" value="4.5">
 
@@ -487,15 +499,57 @@ function buildPresetButtons(containerId, descId, hiddenId, presets, currentMult)
       color:${active ? 'white' : '#888'};`;
     btn.innerHTML = `${p.label}<br><span style="font-size:0.65rem;">${p.name}</span>`;
     btn.onclick = () => {
+      const numId = hiddenId === 'cfg-hard' ? 'cfg-hard-num' : 'cfg-normal-num';
+      const mode  = hiddenId === 'cfg-hard' ? 'hard' : 'normal';
       document.getElementById(hiddenId).value = p.mult;
+      document.getElementById(numId).value    = p.mult;
       document.getElementById(descId).textContent = `選択中: ${p.name}（${p.label}）`;
       buildPresetButtons(containerId, descId, hiddenId, presets, p.mult);
+      updateHint(mode, p.mult);
     };
     container.appendChild(btn);
   });
   if (document.getElementById(descId).textContent === '') {
     document.getElementById(descId).textContent = `選択中: ${closest.name}（${closest.label}）`;
   }
+}
+
+// 数値入力欄が変わったとき
+function onNumInput(mode) {
+  const numEl    = document.getElementById(`cfg-${mode}-num`);
+  const hiddenEl = document.getElementById(`cfg-${mode}`);
+  const val = parseFloat(numEl.value);
+  if (isNaN(val) || val <= 0) return;
+  hiddenEl.value = val;
+  updateHint(mode, val);
+  const presets  = mode === 'hard' ? HARD_PRESETS : NORMAL_PRESETS;
+  const descId   = mode === 'hard' ? 'hard-desc'  : 'normal-desc';
+  const btnId    = mode === 'hard' ? 'hard-preset-btns' : 'normal-preset-btns';
+  // プリセットボタンのハイライトを更新（完全一致しない場合は「カスタム」表示）
+  const exact = presets.find(p => Math.abs(p.mult - val) < 0.01);
+  if (exact) {
+    buildPresetButtons(btnId, descId, `cfg-${mode}`, presets, val);
+  } else {
+    // ハイライトなし＋カスタム表示
+    const container = document.getElementById(btnId);
+    container.querySelectorAll('button').forEach(b => {
+      b.style.border = '2px solid #2a2a4a';
+      b.style.background = 'transparent';
+      b.style.color = '#888';
+    });
+    document.getElementById(descId).textContent = `カスタム値: ${val}`;
+  }
+}
+
+// 倍率からスコア感の目安ヒントを表示
+function updateHint(mode, mult) {
+  const hintEl = document.getElementById(`cfg-${mode}-hint`);
+  if (!hintEl) return;
+  // IoU=0.30 (普通の人想定) でのスコア予測
+  const typical = Math.min(20, Math.round(20 * Math.min(1, 0.30 * mult)));
+  const good    = Math.min(20, Math.round(20 * Math.min(1, 0.42 * mult)));
+  const pro     = Math.min(20, Math.round(20 * Math.min(1, 0.55 * mult)));
+  hintEl.textContent = `目安: 普通${typical*5}点 / 上手い${good*5}点 / プロ${pro*5}点`;
 }
 
 async function loadConfigPanel() {
@@ -513,10 +567,14 @@ async function loadConfigPanel() {
   }
   document.getElementById('cfg-hard').value   = h;
   document.getElementById('cfg-normal').value = n;
+  document.getElementById('cfg-hard-num').value   = h;
+  document.getElementById('cfg-normal-num').value = n;
   document.getElementById('hard-desc').textContent   = '';
   document.getElementById('normal-desc').textContent = '';
   buildPresetButtons('hard-preset-btns',   'hard-desc',   'cfg-hard',   HARD_PRESETS,   h);
   buildPresetButtons('normal-preset-btns', 'normal-desc', 'cfg-normal', NORMAL_PRESETS, n);
+  updateHint('hard', h);
+  updateHint('normal', n);
 }
 
 async function saveConfig() {
@@ -556,12 +614,16 @@ function randomizeConfig() {
   const hi = Math.floor(Math.random() * HARD_PRESETS.length);
   const ni = Math.floor(Math.random() * NORMAL_PRESETS.length);
   const hp = HARD_PRESETS[hi], np = NORMAL_PRESETS[ni];
-  document.getElementById('cfg-hard').value   = hp.mult;
-  document.getElementById('cfg-normal').value = np.mult;
+  document.getElementById('cfg-hard').value        = hp.mult;
+  document.getElementById('cfg-normal').value      = np.mult;
+  document.getElementById('cfg-hard-num').value    = hp.mult;
+  document.getElementById('cfg-normal-num').value  = np.mult;
   document.getElementById('hard-desc').textContent   = '';
   document.getElementById('normal-desc').textContent = '';
   buildPresetButtons('hard-preset-btns',   'hard-desc',   'cfg-hard',   HARD_PRESETS,   hp.mult);
   buildPresetButtons('normal-preset-btns', 'normal-desc', 'cfg-normal', NORMAL_PRESETS, np.mult);
+  updateHint('hard', hp.mult);
+  updateHint('normal', np.mult);
   document.getElementById('config-msg').style.color = '#e67e22';
   document.getElementById('config-msg').textContent = `🎲 鬼: ${hp.name} ／ 通常: ${np.name} — 保存ボタンで確定`;
 }
