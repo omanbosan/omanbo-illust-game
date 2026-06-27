@@ -3170,7 +3170,6 @@ function setupOdekakiCanvas() {
 
 function closeOpeningScreen() {
   const el = document.getElementById('opening-screen');
-  if (!el || el.style.opacity === '0') return;
   el.style.transition = 'opacity 0.5s';
   el.style.opacity = '0';
   setTimeout(() => { el.style.display = 'none'; }, 500);
