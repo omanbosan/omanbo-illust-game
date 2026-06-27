@@ -186,6 +186,8 @@ body {
           style="padding:6px 12px;border:2px solid #e67e22;background:transparent;color:#e67e22;border-radius:8px;font-size:0.82rem;font-weight:bold;cursor:pointer;">🎯 採点</button>
         <button id="mode-vote" onclick="switchMode('vote')"
           style="padding:6px 12px;border:2px solid #9b59b6;background:transparent;color:#9b59b6;border-radius:8px;font-size:0.82rem;font-weight:bold;cursor:pointer;">🏆 投票</button>
+        <button id="mode-config" onclick="switchMode('config')"
+          style="padding:6px 12px;border:2px solid #3498db;background:transparent;color:#3498db;border-radius:8px;font-size:0.82rem;font-weight:bold;cursor:pointer;">⚙️ 採点設定</button>
       </div>
       <div class="tab-bar">
         <button class="tab-btn active" id="tab-pending"  onclick="switchTab('pending')">
@@ -234,6 +236,52 @@ body {
     </table>
     <div id="vote-empty" style="display:none;text-align:center;padding:40px;color:#666;">まだ投票データがありません</div>
   </div>
+
+  <!-- ⚙️ 採点設定パネル -->
+  <div id="config-panel" style="display:none;max-width:480px;margin:0 auto;">
+    <div style="background:#16213e;border-radius:14px;padding:20px 18px;">
+      <div style="font-size:1rem;font-weight:bold;color:#3498db;margin-bottom:16px;">⚙️ 採点基準（multiplier）設定</div>
+
+      <div style="font-size:0.78rem;color:#aaa;line-height:1.7;margin-bottom:16px;background:rgba(255,255,255,0.05);border-radius:8px;padding:10px 12px;">
+        採点式: <b style="color:white;">得点 = round(20 × min(1, IoU × multiplier))</b><br>
+        multiplier が大きいほど甘い採点になります。<br>
+        鬼モード推奨範囲: <b style="color:#e67e22;">1.5〜3.5</b>（デフォルト 2.0）
+      </div>
+
+      <div id="config-current" style="text-align:center;margin-bottom:18px;font-size:0.85rem;color:#888;">読み込み中...</div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px;">
+        <div>
+          <label style="font-size:0.82rem;color:#ccc;display:block;margin-bottom:4px;">👹 鬼モード multiplier</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="number" id="cfg-hard" step="0.1" min="0.5" max="10"
+              style="width:100px;padding:8px;border:2px solid #2a2a4a;border-radius:8px;background:#0f3460;color:white;font-size:1rem;text-align:center;">
+            <span style="font-size:0.75rem;color:#888;">満点ライン IoU = <span id="cfg-hard-line">-</span>%</span>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:0.82rem;color:#ccc;display:block;margin-bottom:4px;">😐 通常モード multiplier</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="number" id="cfg-normal" step="0.1" min="0.5" max="10"
+              style="width:100px;padding:8px;border:2px solid #2a2a4a;border-radius:8px;background:#0f3460;color:white;font-size:1rem;text-align:center;">
+            <span style="font-size:0.75rem;color:#888;">満点ライン IoU = <span id="cfg-normal-line">-</span>%</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="saveConfig()"
+          style="flex:1;padding:10px;background:#3498db;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:bold;cursor:pointer;">💾 保存</button>
+        <button onclick="randomizeConfig()"
+          style="flex:1;padding:10px;background:#e67e22;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:bold;cursor:pointer;">🎲 ランダム設定</button>
+        <button onclick="resetConfig()"
+          style="padding:10px 14px;background:transparent;border:2px solid #555;color:#aaa;border-radius:8px;font-size:0.9rem;cursor:pointer;">↩ デフォルト</button>
+      </div>
+
+      <div id="config-msg" style="margin-top:12px;text-align:center;font-size:0.85rem;min-height:20px;"></div>
+    </div>
+  </div>
+
 </div>
 
 <div id="toast"></div>
@@ -244,7 +292,7 @@ const ADMIN_PW    = 'luke1227mb'; // ← 管理者パスワード
 
 let allData    = [];
 let currentTab  = 'pending';
-let currentMode = 'drawing'; // 'drawing' | 'scoring' | 'vote'
+let currentMode = 'drawing'; // 'drawing' | 'scoring' | 'vote' | 'config'
 
 // ================================================================
 // ログイン（セッション保持対応）
@@ -371,25 +419,117 @@ function switchMode(mode) {
   const dm = document.getElementById('mode-drawing');
   const sm = document.getElementById('mode-scoring');
   const vm = document.getElementById('mode-vote');
+  const cm = document.getElementById('mode-config');
   // ボタン状態リセット
   dm.style.background = 'transparent'; dm.style.color = '#27ae60';
   sm.style.background = 'transparent'; sm.style.color = '#e67e22';
   vm.style.background = 'transparent'; vm.style.color = '#9b59b6';
+  cm.style.background = 'transparent'; cm.style.color = '#3498db';
   if (mode === 'drawing') { dm.style.background = '#27ae60'; dm.style.color = 'white'; }
   if (mode === 'scoring') { sm.style.background = '#e67e22'; sm.style.color = 'white'; }
   if (mode === 'vote')    { vm.style.background = '#9b59b6'; vm.style.color = 'white'; }
+  if (mode === 'config')  { cm.style.background = '#3498db'; cm.style.color = 'white'; }
 
-  // タブバー・検索は drawing/scoring のみ表示
-  const showTabs = mode !== 'vote';
+  // カード/テーブル/設定パネルの表示切替
+  const showCards = mode === 'drawing' || mode === 'scoring';
+  document.getElementById('card-grid').style.display        = showCards ? '' : 'none';
+  document.getElementById('loading').style.display          = 'none';
+  document.getElementById('empty').style.display            = 'none';
+  document.getElementById('vote-table-wrap').style.display  = mode === 'vote'   ? '' : 'none';
+  document.getElementById('config-panel').style.display     = mode === 'config' ? '' : 'none';
+
+  const showTabs = showCards;
   document.querySelector('.tab-bar').style.display = showTabs ? '' : 'none';
   const searchWrap = document.getElementById('search-entry')?.parentElement;
   if (searchWrap) searchWrap.style.display = showTabs ? '' : 'none';
+
+  if (mode === 'config') {
+    loadConfigPanel();
+    return;
+  }
 
   currentTab = 'pending';
   ['pending','approved','rejected'].forEach(t => {
     document.getElementById('tab-'+t).classList.toggle('active', t === 'pending');
   });
   loadData();
+}
+
+// ================================================================
+// 採点設定パネル
+// ================================================================
+function updateMultLine() {
+  const h = parseFloat(document.getElementById('cfg-hard').value);
+  const n = parseFloat(document.getElementById('cfg-normal').value);
+  if (!isNaN(h)) document.getElementById('cfg-hard-line').textContent   = (100/h).toFixed(1);
+  if (!isNaN(n)) document.getElementById('cfg-normal-line').textContent = (100/n).toFixed(1);
+}
+
+async function loadConfigPanel() {
+  document.getElementById('config-current').textContent = '読み込み中...';
+  document.getElementById('config-msg').textContent = '';
+  try {
+    const res = await fetch(WEBHOOK_URL + '?type=config', { redirect: 'follow' });
+    const cfg = await res.json();
+    document.getElementById('cfg-hard').value   = cfg.hardMult   ?? 2.0;
+    document.getElementById('cfg-normal').value = cfg.normalMult ?? 4.5;
+    updateMultLine();
+    document.getElementById('config-current').innerHTML =
+      `現在の設定: 鬼モード <b style="color:#e67e22;">${cfg.hardMult}</b> ／ 通常モード <b style="color:#aaa;">${cfg.normalMult}</b>`;
+  } catch(e) {
+    document.getElementById('config-current').textContent = '読み込み失敗（デフォルト値を表示中）';
+    document.getElementById('cfg-hard').value   = 2.0;
+    document.getElementById('cfg-normal').value = 4.5;
+    updateMultLine();
+  }
+  document.getElementById('cfg-hard').addEventListener('input', updateMultLine);
+  document.getElementById('cfg-normal').addEventListener('input', updateMultLine);
+}
+
+async function saveConfig() {
+  const h = parseFloat(document.getElementById('cfg-hard').value);
+  const n = parseFloat(document.getElementById('cfg-normal').value);
+  if (isNaN(h) || isNaN(n) || h <= 0 || n <= 0) {
+    document.getElementById('config-msg').style.color = '#e74c3c';
+    document.getElementById('config-msg').textContent = '正の数値を入力してください';
+    return;
+  }
+  document.getElementById('config-msg').style.color = '#aaa';
+  document.getElementById('config-msg').textContent = '保存中...';
+  try {
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ type: 'setConfig', hardMult: h, normalMult: n })
+    });
+    await res.json();
+    document.getElementById('config-msg').style.color = '#27ae60';
+    document.getElementById('config-msg').textContent = `✅ 保存しました（鬼: ${h} ／ 通常: ${n}）`;
+    document.getElementById('config-current').innerHTML =
+      `現在の設定: 鬼モード <b style="color:#e67e22;">${h}</b> ／ 通常モード <b style="color:#aaa;">${n}</b>`;
+  } catch(e) {
+    document.getElementById('config-msg').style.color = '#e74c3c';
+    document.getElementById('config-msg').textContent = '保存に失敗しました';
+  }
+}
+
+function randomizeConfig() {
+  // 鬼モード: 1.5〜3.5 の0.1刻み、通常モード: 3.0〜7.0 の0.1刻み
+  const h = Math.round((1.5 + Math.random() * 2.0) * 10) / 10;
+  const n = Math.round((3.0 + Math.random() * 4.0) * 10) / 10;
+  document.getElementById('cfg-hard').value   = h;
+  document.getElementById('cfg-normal').value = n;
+  updateMultLine();
+  document.getElementById('config-msg').style.color = '#e67e22';
+  document.getElementById('config-msg').textContent = `🎲 鬼: ${h} ／ 通常: ${n} — 保存ボタンで確定`;
+}
+
+function resetConfig() {
+  document.getElementById('cfg-hard').value   = 2.0;
+  document.getElementById('cfg-normal').value = 4.5;
+  updateMultLine();
+  document.getElementById('config-msg').style.color = '#aaa';
+  document.getElementById('config-msg').textContent = 'デフォルト値に戻しました。保存ボタンで確定';
 }
 
 function updateBadges() {

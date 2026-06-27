@@ -824,6 +824,17 @@ let peekCooldown  = false;
 let lastScore     = 0;
 const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycby0q8MVbN-Dk_fio8XOAqZW4XnxJC4_RNw4__XQOt57RgQUfAEjqkirPBHCHlZ30D4JoA/exec';
 
+// 採点 multiplier（管理者が GAS config シートで変更可能。起動時に取得）
+let _scoringMultipliers = { hard: 2.0, normal: 4.5 };
+(async function fetchScoringConfig() {
+  try {
+    const res = await fetch(WEBHOOK_URL + '?type=config', { redirect: 'follow' });
+    const cfg = await res.json();
+    if (typeof cfg.hardMult === 'number')   _scoringMultipliers.hard   = cfg.hardMult;
+    if (typeof cfg.normalMult === 'number') _scoringMultipliers.normal = cfg.normalMult;
+  } catch(e) { /* ネットワーク失敗時はデフォルト値を維持 */ }
+})();
+
 let _gameScale = 1;
 
 function applyGameScale() {
@@ -1816,7 +1827,7 @@ async function scoreFreehandOverlap(key) {
   // 参照が輪郭8px・ユーザーも8pxで対称になったため multiplier を再設定
   // hard: 普通の人70-80点、絵が上手い人80-90点、プロ95点 を目標
   // → 輪郭同士のIoU想定: 普通30-35%、上手い40-45%、プロ50%+
-  const multipliers = { hard: 2.0, normal: 4.5 };
+  const multipliers = _scoringMultipliers;
   const mult = multipliers[currentDifficulty] || 3.0;
   return Math.round(20 * Math.min(1, iou * mult));
 }

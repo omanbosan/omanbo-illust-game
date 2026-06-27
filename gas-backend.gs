@@ -27,7 +27,8 @@ function doGet(e) {
     if (type === 'pending')        return buildResponse(getPending());
     if (type === 'pendingScores')  return buildResponse(getPendingScores());
     if (type === 'voteRanking')    return buildResponse(getVoteRanking());
-    return buildResponse({ ok: true, message: 'おまんぼさんイラストゲームAPI v1.8' });
+    if (type === 'config')         return buildResponse(getConfig());
+    return buildResponse({ ok: true, message: 'おまんぼさんイラストゲームAPI v1.9' });
   } catch(err) {
     return buildResponse({ error: err.message });
   }
@@ -44,6 +45,7 @@ function doPost(e) {
     if (data.type === 'setApproval') return buildResponse(setApproval(data));
     if (data.type === 'vote')       return buildResponse(castVote(data));
     if (data.type === 'unvote')     return buildResponse(castVote({ ...data, delta: -1 }));
+    if (data.type === 'setConfig')  return buildResponse(setConfig(data));
     return buildResponse({ ok: true });
   } catch(err) {
     return buildResponse({ error: err.message });
@@ -537,4 +539,48 @@ function setupApprovalColumn() {
   }
 
   Logger.log(`✅ 承認列セットアップ完了！${lastRow - 1}件を「承認済み」に設定しました`);
+}
+
+// ----------------------------------------------------------------
+// 採点設定（config シート）
+// ----------------------------------------------------------------
+function getConfig() {
+  const ss = SpreadsheetApp.openById(CONFIG.sheetId);
+  let sheet = ss.getSheetByName('config');
+  if (!sheet || sheet.getLastRow() < 2) {
+    return { hardMult: 2.0, normalMult: 4.5 }; // デフォルト値
+  }
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
+  const cfg = {};
+  rows.forEach(r => { if (r[0]) cfg[String(r[0])] = r[1]; });
+  return {
+    hardMult:   parseFloat(cfg['hardMult'])   || 2.0,
+    normalMult: parseFloat(cfg['normalMult']) || 4.5
+  };
+}
+
+function setConfig(data) {
+  const ss = SpreadsheetApp.openById(CONFIG.sheetId);
+  let sheet = ss.getSheetByName('config');
+  if (!sheet) {
+    sheet = ss.insertSheet('config');
+    sheet.appendRow(['key', 'value']);
+  }
+  const lastRow = sheet.getLastRow();
+  const rows = lastRow >= 2
+    ? sheet.getRange(2, 1, lastRow - 1, 2).getValues()
+    : [];
+  const keys = ['hardMult', 'normalMult'];
+  keys.forEach(key => {
+    if (data[key] === undefined) return;
+    const val = parseFloat(data[key]);
+    if (isNaN(val)) return;
+    const idx = rows.findIndex(r => String(r[0]) === key);
+    if (idx >= 0) {
+      sheet.getRange(idx + 2, 2).setValue(val);
+    } else {
+      sheet.appendRow([key, val]);
+    }
+  });
+  return { ok: true, hardMult: data.hardMult, normalMult: data.normalMult };
 }
