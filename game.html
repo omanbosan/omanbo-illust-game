@@ -885,11 +885,11 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycby0q8MVbN-Dk_fio8XO
 let _scoringMultipliers = { hard: 2.0, normal: 4.5, easy: 3.0 };
 
 function getLuckLevel(hardMult) {
-  // 🔥が多いほどシビア（厳しい採点日）
-  if (hardMult < 2.0) return 4;  // 🔥🔥🔥🔥 超シビア
-  if (hardMult < 2.6) return 3;  // 🔥🔥🔥 シビア
-  if (hardMult < 3.2) return 2;  // 🔥🔥 普通
-  return 1;                       // 🔥 ゆるめ
+  // 数値が高いほどシビア（🔥が多い）
+  if (hardMult >= 3.5) return 4;  // 🔥🔥🔥🔥 超シビア
+  if (hardMult >= 2.4) return 3;  // 🔥🔥🔥 シビア
+  if (hardMult >= 1.7) return 2;  // 🔥🔥 普通
+  return 1;                        // 🔥 ゆるめ
 }
 
 function updateScoringLuckUI(hardMult) {
