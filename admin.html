@@ -493,18 +493,18 @@ function switchMode(mode) {
 // ================================================================
 // ※採点式: threshold = base / (mult/default) → 数値が高いほどシビア、低いほど甘め
 const HARD_PRESETS = [
-  { label: '🔥🔥🔥🔥', name: '超シビア', mult: 4.0 },  // 許容ズレ~19%
-  { label: '🔥🔥🔥',   name: 'シビア',   mult: 2.8 },  // 許容ズレ~27%
-  { label: '🔥🔥',     name: '普通',     mult: 2.0 },  // 許容ズレ~38%
-  { label: '🔥',       name: '甘め',     mult: 1.4 },  // 許容ズレ~55%
   { label: '✨',        name: '超甘め',   mult: 1.0 },  // 許容ズレ~77%
+  { label: '🔥',       name: '甘め',     mult: 1.4 },  // 許容ズレ~55%
+  { label: '🔥🔥',     name: '普通',     mult: 2.0 },  // 許容ズレ~38%
+  { label: '🔥🔥🔥',   name: 'シビア',   mult: 2.8 },  // 許容ズレ~27%
+  { label: '🔥🔥🔥🔥', name: '超シビア', mult: 4.0 },  // 許容ズレ~19%
 ];
 const NORMAL_PRESETS = [
-  { label: '🔥🔥🔥🔥', name: '超シビア', mult: 9.0 },  // 許容ズレ~19%
-  { label: '🔥🔥🔥',   name: 'シビア',   mult: 7.0 },  // 許容ズレ~25%
-  { label: '🔥🔥',     name: '普通',     mult: 4.5 },  // 許容ズレ~38%
-  { label: '🔥',       name: '甘め',     mult: 3.0 },  // 許容ズレ~58%
   { label: '✨',        name: '超甘め',   mult: 2.0 },  // 許容ズレ~77%
+  { label: '🔥',       name: '甘め',     mult: 3.0 },  // 許容ズレ~58%
+  { label: '🔥🔥',     name: '普通',     mult: 4.5 },  // 許容ズレ~38%
+  { label: '🔥🔥🔥',   name: 'シビア',   mult: 7.0 },  // 許容ズレ~25%
+  { label: '🔥🔥🔥🔥', name: '超シビア', mult: 9.0 },  // 許容ズレ~19%
 ];
 
 function buildPresetButtons(containerId, descId, hiddenId, presets, currentMult) {
