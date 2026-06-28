@@ -244,7 +244,15 @@ body {
   <div id="config-panel" style="display:none;max-width:480px;margin:0 auto;">
     <div style="background:#16213e;border-radius:14px;padding:18px 14px;">
       <div style="font-size:1rem;font-weight:bold;color:#3498db;margin-bottom:4px;">⚙️ 採点レベル設定</div>
-      <div style="font-size:0.72rem;color:#888;margin-bottom:14px;">レベルが高いほど🔥が多く、厳しい採点になります</div>
+
+      <!-- 仕組み説明 -->
+      <div style="background:#0a1628;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:0.75rem;line-height:1.9;color:#aaa;">
+        <div style="color:#f39c12;font-weight:bold;margin-bottom:4px;">📖 設定の仕組み</div>
+        <div>• <b style="color:white;">倍率を下げる</b> → 甘め（高得点が出やすい）✨</div>
+        <div>• <b style="color:white;">倍率を上げる</b> → シビア（正確な位置が必要）🔥</div>
+        <div>• <b style="color:white;">0.1刻み</b>で設定可能</div>
+        <div style="margin-top:4px;color:#666;">設定範囲: 鬼モード 0.5〜10 ／ 通常・イージー 0.5〜20</div>
+      </div>
 
       <div id="config-current" style="text-align:center;margin-bottom:16px;font-size:0.82rem;color:#aaa;">読み込み中...</div>
 
@@ -253,41 +261,41 @@ body {
         <div style="font-size:0.85rem;font-weight:bold;color:#e74c3c;margin-bottom:8px;">👹 鬼モード</div>
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;" id="hard-preset-btns"></div>
         <div style="font-size:0.7rem;color:#666;text-align:center;margin-top:4px;" id="hard-desc"></div>
-        <!-- 数値直接入力 -->
         <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
-          <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率を直接入力:</span>
+          <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率:</span>
           <input type="number" id="cfg-hard-num" min="0.5" max="10" step="0.1" value="2.0"
-            style="width:80px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
+            style="width:72px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
             oninput="onNumInput('hard')">
-          <span id="cfg-hard-hint" style="font-size:0.7rem;color:#f39c12;"></span>
+          <span style="font-size:0.65rem;color:#555;">（0.5〜10）</span>
+          <span id="cfg-hard-hint" style="font-size:0.72rem;color:#f39c12;"></span>
         </div>
       </div>
 
       <!-- 通常モード -->
-      <div style="margin-bottom:20px;">
+      <div style="margin-bottom:18px;">
         <div style="font-size:0.85rem;font-weight:bold;color:#e67e22;margin-bottom:8px;">😊 通常モード</div>
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;" id="normal-preset-btns"></div>
         <div style="font-size:0.7rem;color:#666;text-align:center;margin-top:4px;" id="normal-desc"></div>
-        <!-- 数値直接入力 -->
         <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
-          <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率を直接入力:</span>
+          <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率:</span>
           <input type="number" id="cfg-normal-num" min="0.5" max="20" step="0.1" value="4.5"
-            style="width:80px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
+            style="width:72px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
             oninput="onNumInput('normal')">
-          <span id="cfg-normal-hint" style="font-size:0.7rem;color:#f39c12;"></span>
+          <span style="font-size:0.65rem;color:#555;">（0.5〜20）</span>
+          <span id="cfg-normal-hint" style="font-size:0.72rem;color:#f39c12;"></span>
         </div>
       </div>
 
       <!-- イージーモード -->
       <div style="margin-bottom:20px;">
         <div style="font-size:0.85rem;font-weight:bold;color:#27ae60;margin-bottom:8px;">😄 イージーモード</div>
-        <div style="font-size:0.72rem;color:#666;margin-bottom:6px;">recall（輪郭カバー率）×倍率で採点。大きいほど甘め。</div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率を直接入力:</span>
+          <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率:</span>
           <input type="number" id="cfg-easy-num" min="0.5" max="20" step="0.1" value="3.0"
-            style="width:80px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
+            style="width:72px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
             oninput="onNumInput('easy')">
-          <span id="cfg-easy-hint" style="font-size:0.7rem;color:#f39c12;"></span>
+          <span style="font-size:0.65rem;color:#555;">（0.5〜20）</span>
+          <span id="cfg-easy-hint" style="font-size:0.72rem;color:#f39c12;"></span>
         </div>
       </div>
 
@@ -560,14 +568,20 @@ function onNumInput(mode) {
 function updateHint(mode, mult) {
   const hintEl = document.getElementById(`cfg-${mode}-hint`);
   if (!hintEl) return;
-  // 採点方式: 重心距離ベース。threshold = base / (mult/defaultMult)
-  // base: easy=90px, normal/hard=70px  defaultMult: easy=3.0, normal=4.5, hard=2.0
   const defaultMults = { easy: 3.0, normal: 4.5, hard: 2.0 };
   const bases        = { easy: 90,  normal: 70,   hard: 70  };
   const base = bases[mode] || 70;
   const def  = defaultMults[mode] || 3.0;
   const threshold = Math.round(base / Math.max(0.5, mult / def));
-  hintEl.textContent = `許容半径: ${threshold}px（大きいほど甘め）`;
+  // 顔の半径が約182pxなので割合で感覚を表示
+  const pct = Math.round(threshold / 182 * 100);
+  let feel;
+  if (pct >= 60) feel = '✨ かなり甘め';
+  else if (pct >= 40) feel = '😊 甘め';
+  else if (pct >= 25) feel = '😐 普通';
+  else if (pct >= 15) feel = '🔥 シビア';
+  else feel = '🔥🔥 超シビア';
+  hintEl.textContent = `→ ${feel}（ズレ許容 ${pct}%）`;
 }
 
 async function loadConfigPanel() {
