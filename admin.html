@@ -704,8 +704,8 @@ function renderCards() {
   }
   document.getElementById('empty').style.display = 'none';
 
-  const diffLabels = { hard: '👹 鬼モード', normal: '😊 通常', easy: '😄 イージー' };
-  const diffColors = { hard: '#e74c3c', normal: '#e67e22', easy: '#27ae60' };
+  const diffLabels = { hard: '👹 鬼モード', normal: '😊 通常', easy: '😄 イージー', hell: '😈 地獄モード' };
+  const diffColors = { hard: '#e74c3c', normal: '#e67e22', easy: '#27ae60', hell: '#8e44ad' };
 
   filtered.forEach(entry => {
     const statusClass = { '審査中': 'pending', '承認済み': 'approved', '却下': 'rejected' };
