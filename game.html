@@ -413,7 +413,7 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
     <!-- 採点基準（折りたたみ風のINFOエリア） -->
     <div style="border-left:3px solid rgba(230,126,34,0.5);padding-left:10px;margin-bottom:12px;font-size:0.78rem;line-height:1.8;color:#ccc;">
       <div style="font-weight:bold;color:#f39c12;margin-bottom:4px;">📐 採点基準</div>
-      <div>髪・左目・右目・鼻・口の <b style="color:white;">5パーツ × 各20点 = 100点満点</b></div>
+      <div>髪・左目（向かって右）・右目（向かって左）・鼻・口の <b style="color:white;">5パーツ × 各20点 = 100点満点</b></div>
       <div style="color:#999;font-size:0.72rem;margin-top:4px;">各パーツは「描いた線と見本の重なり具合」で自動採点。正確な位置・形に描くほど高得点！</div>
     </div>
 
@@ -831,7 +831,7 @@ const PARTS = {
   },
 
   reye: {
-    label: '左目', w: 110, h: 80,
+    label: '左目（向かって右）', w: 110, h: 80,
     hotspot: { x: 55, y: 40 },
     target: toPlay(352, 292),
     targetScale: 1.0,
@@ -839,7 +839,7 @@ const PARTS = {
   },
 
   leye: {
-    label: '右目', w: 150, h: 50,
+    label: '右目（向かって左）', w: 150, h: 50,
     hotspot: { x: 75, y: 25 },
     target: toPlay(152, 313),
     targetScale: 1.0,
@@ -1186,7 +1186,7 @@ function scaleSelected(factor) {
 }
 
 function updateRotUI() {
-  const labels = {hair:'髪',reye:'左目',leye:'右目',nose:'鼻',mouth:'口'};
+  const labels = {hair:'髪',reye:'左目（向かって右）',leye:'右目（向かって左）',nose:'鼻',mouth:'口'};
   const has = !!selectedPart;
   ['rot-ccw','rot-cw','rot-ccw10','rot-cw10','sz-down','sz-up'].forEach(id => {
     const el = document.getElementById(id);
@@ -1215,7 +1215,7 @@ function updateScoreBtn() {
   btn.title = allPlaced ? '' : '全パーツを顔に置いてから採点！';
 }
 function updatePlacedStatus() {
-  const icons = {hair:'髪',reye:'左目',leye:'右目',nose:'鼻',mouth:'口'};
+  const icons = {hair:'髪',reye:'左目(右)',leye:'右目(左)',nose:'鼻',mouth:'口'};
   document.getElementById('placed-status').textContent =
     '配置: ' + PART_KEYS.map(k => (partOnFace[k]?'✅':'⬜') + icons[k]).join(' ');
 }
@@ -1335,7 +1335,7 @@ async function doScore() {
   if (Object.keys(fhStrokes).length > 0) {
     total = 0; html = '';
     const fhScores = await Promise.all(FH_PART_ORDER.map(k => scoreFreehandOverlap(k)));
-    const fhLabels = {hair:'髪',reye:'左目',leye:'右目',nose:'鼻',mouth:'口'};
+    const fhLabels = {hair:'髪',reye:'左目(右)',leye:'右目(左)',nose:'鼻',mouth:'口'};
     // パーツ毎の採点結果テーブル
     html += '<table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-bottom:4px;">';
     html += '<tr style="background:#f0f0f0;"><th style="padding:4px 6px;text-align:left;">パーツ</th><th style="padding:4px 6px;text-align:center;">得点</th><th style="padding:4px 6px;text-align:center;">グラフ</th></tr>';
@@ -1424,7 +1424,7 @@ let fhPartIndex = 0;
 let fhDrawing = false;
 let fhCurrentStroke = [];
 
-const FH_PART_ORDER = ['hair','reye','leye','nose','mouth'];
+const FH_PART_ORDER = ['hair','leye','reye','nose','mouth'];
 
 
 function startFreehandMode() {
@@ -1478,7 +1478,7 @@ async function startFhPart(index) {
   const ctx    = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const labels    = {hair:'髪', reye:'左目', leye:'右目', nose:'鼻', mouth:'口'};
+  const labels    = {hair:'髪', reye:'左目（向かって右）', leye:'右目（向かって左）', nose:'鼻', mouth:'口'};
   const remaining = FH_PART_ORDER.length - index;
   const instr     = document.getElementById('fh-instruction');
 
