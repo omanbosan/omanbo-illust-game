@@ -1542,7 +1542,7 @@ async function startFhPart(index) {
     instr.style.background = 'rgba(255,235,190,0.92)';
     instr.innerHTML =
       `😄 【${labels[fhCurrentKey]}】を見本の上に描いてください`
-      + ` <small style="color:#a0522d;">残り${remaining}パーツ</small>`;
+      + ` <small style="color:#a0522d;">残り${remaining}パーツ・線は何本引いてもOK</small>`;
 
   } else if (currentDifficulty === 'normal') {
     // 通常: 白背景・顔の輪郭・自分の過去ストロークのみ
@@ -1552,7 +1552,7 @@ async function startFhPart(index) {
     instr.style.background = 'rgba(200,200,200,0.88)';
     instr.innerHTML =
       `😊 【${labels[fhCurrentKey]}】を描いてください`
-      + ` <small style="color:#555;">残り${remaining}パーツ</small>`;
+      + ` <small style="color:#555;">残り${remaining}パーツ・線は何本引いてもOK</small>`;
 
   } else {
     // 鬼・地獄: 最初のパーツのみ0.5秒だけ輪郭位置をチラ見せ → その後は即真っ暗
@@ -1575,7 +1575,7 @@ async function startFhPart(index) {
     instr.style.background = 'rgba(0,0,0,0.55)';
     instr.innerHTML =
       `${hellIcon} 【${labels[fhCurrentKey]}】を描いてください`
-      + ` <small style="opacity:0.5;">残り${remaining}パーツ</small>`;
+      + ` <small style="opacity:0.5;">残り${remaining}パーツ・線は何本引いてもOK</small>`;
   }
 
   // 現在の描画スタイルをセット
@@ -1770,7 +1770,7 @@ async function renderResultCanvas() {
   ctx.fill();
   ctx.stroke();
 
-  const answerMatch = ANSWER_SVG.match(/href="(data:image\/png;base64,[^"]+)"/);
+  const answerMatch = activeAnswerSVG().match(/href="(data:image\/png;base64,[^"]+)"/);
   if (answerMatch) {
     await new Promise(resolve => {
       const img = new Image();
