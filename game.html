@@ -1781,6 +1781,26 @@ function renderFreehandStrokes() {
 }
 
 // 地獄モード: 描画中はズーム座標で記録されたストロークを、全身表示用の座標に変換して描く
+function drawFreehandStrokesFiltered(targetCtx, excludeKeys, useHellTransform) {
+  const colors = {hair:'#e74c3c',reye:'#3498db',leye:'#2ecc71',nose:'#f39c12',mouth:'#9b59b6',crown:'#FF8C00',glasses:'#8e44ad'};
+  activeFhOrder().forEach(key => {
+    if (excludeKeys.includes(key)) return;
+    const strokes = fhStrokes[key] || [];
+    targetCtx.strokeStyle = colors[key] || '#333';
+    targetCtx.lineWidth = 6;
+    targetCtx.lineCap = 'round';
+    targetCtx.lineJoin = 'round';
+    strokes.forEach(stroke => {
+      if (stroke.length < 2) return;
+      const pts = useHellTransform ? stroke.map(p => hellZoomToFull(p.x, p.y)) : stroke;
+      targetCtx.beginPath();
+      targetCtx.moveTo(pts[0].x, pts[0].y);
+      pts.forEach(p => targetCtx.lineTo(p.x, p.y));
+      targetCtx.stroke();
+    });
+  });
+}
+
 function drawHellStrokesFullBody(targetCtx) {
   const colors = {hair:'#e74c3c',reye:'#3498db',leye:'#2ecc71',nose:'#f39c12',mouth:'#9b59b6',glasses:'#8e44ad'};
   activeFhOrder().forEach(key => {
@@ -1902,14 +1922,10 @@ async function renderResultCanvas() {
   sCtx.fill();
   sCtx.strokeStyle = '#222'; sCtx.lineWidth = 4;
   sCtx.stroke();
-  // パーツ or フリーハンド線だけ転写（見本なし）
+  // パーツ or フリーハンド線だけ転写（見本なし）。目・メガネ・口は保存画像から除外し、輪郭のみ残す。
+  const SAVE_EXCLUDE_KEYS = ['reye', 'leye', 'glasses', 'mouth'];
   if (isFreehand) {
-    if (isHellMode()) {
-      drawHellStrokesFullBody(sCtx);
-    } else {
-      const fhResultC = document.getElementById('fh-result-canvas');
-      if (fhResultC) sCtx.drawImage(fhResultC, 0, 0);
-    }
+    drawFreehandStrokesFiltered(sCtx, SAVE_EXCLUDE_KEYS, isHellMode());
   } else {
     for (const key of PART_KEYS) {
       if (!partCenters[key]) continue;
