@@ -267,7 +267,8 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
   <div id="canvas-wrap"><div id="play-canvas">
     <svg id="face-bg" width="460" height="500" viewBox="0 0 460 500"
          style="position:absolute;top:0;left:0;pointer-events:none;z-index:1;">
-      <circle cx="230" cy="193" r="182" fill="white" stroke="#111" stroke-width="11"/>
+      <circle id="face-bg-circle" cx="230" cy="193" r="182" fill="white" stroke="#111" stroke-width="11"/>
+      <image id="face-bg-hell" x="0" y="0" width="0" height="0" style="display:none;"/>
     </svg>
     <div id="tray">
       <div class="tray-slot" id="slot-hair"></div>
@@ -962,6 +963,30 @@ async function drawHellOutlineFullBody(ctx) {
   const imgX = FACE_CX - 270 * SC;
   const imgY = FACE_CY - 270 * SC;
   ctx.drawImage(_outlineImgHellEl, imgX, imgY, imgW, imgH);
+}
+
+// プレイ画面背景: 地獄モードは丸輪郭ではなくキャラクターの全身輪郭線を表示する
+function updateFaceBgForDifficulty() {
+  const circle  = document.getElementById('face-bg-circle');
+  const hellImg = document.getElementById('face-bg-hell');
+  if (!circle || !hellImg) return;
+  if (isHellMode()) {
+    circle.style.display = 'none';
+    const SC   = FACE_R / 255;
+    const imgW = 540 * SC;
+    const imgH = 540 * SC;
+    const imgX = FACE_CX - 270 * SC;
+    const imgY = FACE_CY - 270 * SC;
+    hellImg.setAttribute('href', OUTLINE_IMG_HELL_SRC);
+    hellImg.setAttribute('x', imgX);
+    hellImg.setAttribute('y', imgY);
+    hellImg.setAttribute('width', imgW);
+    hellImg.setAttribute('height', imgH);
+    hellImg.style.display = '';
+  } else {
+    circle.style.display = '';
+    hellImg.style.display = 'none';
+  }
 }
 
 function isHellMode() { return currentDifficulty === 'hell'; }
@@ -1987,10 +2012,9 @@ async function renderResultCanvas() {
     sCtx.strokeStyle = '#222'; sCtx.lineWidth = 4;
     sCtx.stroke();
   }
-  // パーツ or フリーハンド線だけ転写（見本なし）。目・メガネ・口は保存画像から除外し、輪郭のみ残す。
-  const SAVE_EXCLUDE_KEYS = ['reye', 'leye', 'glasses', 'mouth'];
+  // パーツ or フリーハンド線を転写（見本なし）。書いた線は全て表示する。
   if (isFreehand) {
-    drawFreehandStrokesFiltered(sCtx, SAVE_EXCLUDE_KEYS, isHellMode());
+    drawFreehandStrokesFiltered(sCtx, [], isHellMode());
   } else {
     for (const key of PART_KEYS) {
       if (!partCenters[key]) continue;
@@ -2430,6 +2454,8 @@ function setDifficulty(diff, btn) {
       ? `${HELL_ZOOM.cropX} ${HELL_ZOOM.cropY} ${HELL_ZOOM.cropSize} ${HELL_ZOOM.cropSize}`
       : '0 0 540 540');
   }
+  // プレイ画面の背景（丸輪郭 or 地獄モードのキャラクター輪郭）を切り替え
+  updateFaceBgForDifficulty();
   // サブタイトルも切り替え
   const subtitle = document.getElementById('subtitle');
   if (subtitle) {
