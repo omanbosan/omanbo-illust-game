@@ -251,7 +251,7 @@ body {
         <div>• <b style="color:white;">倍率を下げる</b> → 甘め（高得点が出やすい）✨</div>
         <div>• <b style="color:white;">倍率を上げる</b> → シビア（正確な位置が必要）🔥</div>
         <div>• <b style="color:white;">0.1刻み</b>で設定可能</div>
-        <div style="margin-top:4px;color:#666;">設定範囲: 鬼モード 0.5〜10 ／ 通常・イージー 0.5〜20</div>
+        <div style="margin-top:4px;color:#666;">設定範囲: 鬼・地獄モード 0.5〜10 ／ 通常・イージー 0.5〜20</div>
       </div>
 
       <div id="config-current" style="text-align:center;margin-bottom:16px;font-size:0.82rem;color:#aaa;">読み込み中...</div>
@@ -268,6 +268,21 @@ body {
             oninput="onNumInput('hard')">
           <span style="font-size:0.65rem;color:#555;">（0.5〜10）</span>
           <span id="cfg-hard-hint" style="font-size:0.72rem;color:#f39c12;"></span>
+        </div>
+      </div>
+
+      <!-- 地獄モード -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:0.85rem;font-weight:bold;color:#8e44ad;margin-bottom:8px;">😈 地獄モード</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;" id="hell-preset-btns"></div>
+        <div style="font-size:0.7rem;color:#666;text-align:center;margin-top:4px;" id="hell-desc"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+          <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率:</span>
+          <input type="number" id="cfg-hell-num" min="0.5" max="10" step="0.1" value="2.0"
+            style="width:72px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
+            oninput="onNumInput('hell')">
+          <span style="font-size:0.65rem;color:#555;">（0.5〜10）</span>
+          <span id="cfg-hell-hint" style="font-size:0.72rem;color:#f39c12;"></span>
         </div>
       </div>
 
@@ -301,6 +316,7 @@ body {
 
       <!-- 隠し数値（実際に保存される値） -->
       <input type="hidden" id="cfg-hard" value="2.0">
+      <input type="hidden" id="cfg-hell" value="2.0">
       <input type="hidden" id="cfg-normal" value="4.5">
       <input type="hidden" id="cfg-easy" value="3.0">
 
@@ -499,6 +515,13 @@ const HARD_PRESETS = [
   { label: '🔥🔥🔥',   name: 'シビア',   mult: 2.8 },  // 許容ズレ~27%
   { label: '🔥🔥🔥🔥', name: '超シビア', mult: 4.0 },  // 許容ズレ~19%
 ];
+const HELL_PRESETS = [
+  { label: '✨',        name: '超甘め',   mult: 1.0 },  // 許容ズレ~77%
+  { label: '🔥',       name: '甘め',     mult: 1.4 },  // 許容ズレ~55%
+  { label: '🔥🔥',     name: '普通',     mult: 2.0 },  // 許容ズレ~38%
+  { label: '🔥🔥🔥',   name: 'シビア',   mult: 2.8 },  // 許容ズレ~27%
+  { label: '🔥🔥🔥🔥', name: '超シビア', mult: 4.0 },  // 許容ズレ~19%
+];
 const NORMAL_PRESETS = [
   { label: '✨',        name: '超甘め',   mult: 2.0 },  // 許容ズレ~77%
   { label: '🔥',       name: '甘め',     mult: 3.0 },  // 許容ズレ~58%
@@ -507,7 +530,7 @@ const NORMAL_PRESETS = [
   { label: '🔥🔥🔥🔥', name: '超シビア', mult: 9.0 },  // 許容ズレ~19%
 ];
 
-function buildPresetButtons(containerId, descId, hiddenId, presets, currentMult) {
+function buildPresetButtons(containerId, descId, hiddenId, presets, currentMult, mode) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
   const closest = presets.reduce((a, b) =>
@@ -522,12 +545,11 @@ function buildPresetButtons(containerId, descId, hiddenId, presets, currentMult)
       color:${active ? 'white' : '#888'};`;
     btn.innerHTML = `${p.label}<br><span style="font-size:0.65rem;">${p.name}</span>`;
     btn.onclick = () => {
-      const numId = hiddenId === 'cfg-hard' ? 'cfg-hard-num' : 'cfg-normal-num';
-      const mode  = hiddenId === 'cfg-hard' ? 'hard' : 'normal';
+      const numId = `cfg-${mode}-num`;
       document.getElementById(hiddenId).value = p.mult;
       document.getElementById(numId).value    = p.mult;
       document.getElementById(descId).textContent = `選択中: ${p.name}（${p.label}）`;
-      buildPresetButtons(containerId, descId, hiddenId, presets, p.mult);
+      buildPresetButtons(containerId, descId, hiddenId, presets, p.mult, mode);
       updateHint(mode, p.mult);
     };
     container.appendChild(btn);
@@ -547,12 +569,12 @@ function onNumInput(mode) {
   updateHint(mode, val);
   // easy はプリセットボタンなし
   if (mode === 'easy') return;
-  const presets = mode === 'hard' ? HARD_PRESETS : NORMAL_PRESETS;
+  const presets = mode === 'hard' ? HARD_PRESETS : mode === 'hell' ? HELL_PRESETS : NORMAL_PRESETS;
   const descId  = `${mode}-desc`;
   const btnId   = `${mode}-preset-btns`;
   const exact = presets.find(p => Math.abs(p.mult - val) < 0.01);
   if (exact) {
-    buildPresetButtons(btnId, descId, `cfg-${mode}`, presets, val);
+    buildPresetButtons(btnId, descId, `cfg-${mode}`, presets, val, mode);
   } else {
     const container = document.getElementById(btnId);
     if (container) container.querySelectorAll('button').forEach(b => {
@@ -569,8 +591,8 @@ function onNumInput(mode) {
 function updateHint(mode, mult) {
   const hintEl = document.getElementById(`cfg-${mode}-hint`);
   if (!hintEl) return;
-  const defaultMults = { easy: 3.0, normal: 4.5, hard: 2.0 };
-  const bases        = { easy: 90,  normal: 70,   hard: 70  };
+  const defaultMults = { easy: 3.0, normal: 4.5, hard: 2.0, hell: 2.0 };
+  const bases        = { easy: 90,  normal: 70,   hard: 70,  hell: 70  };
   const base = bases[mode] || 70;
   const def  = defaultMults[mode] || 3.0;
   const threshold = Math.round(base / Math.max(0.5, mult / def));
@@ -588,37 +610,44 @@ function updateHint(mode, mult) {
 async function loadConfigPanel() {
   document.getElementById('config-current').textContent = '読み込み中...';
   document.getElementById('config-msg').textContent = '';
-  let h = 2.0, n = 4.5, e = 3.0;
+  let h = 2.0, n = 4.5, e = 3.0, he = 2.0;
   try {
     const res = await fetch(WEBHOOK_URL + '?type=config', { redirect: 'follow' });
     const cfg = await res.json();
-    h = cfg.hardMult   ?? 2.0;
-    n = cfg.normalMult ?? 4.5;
-    e = cfg.easyMult   ?? 3.0;
+    h  = cfg.hardMult   ?? 2.0;
+    n  = cfg.normalMult ?? 4.5;
+    e  = cfg.easyMult   ?? 3.0;
+    he = cfg.hellMult   ?? 2.0;
     document.getElementById('config-current').textContent = '現在の設定を読み込みました';
   } catch(err) {
     document.getElementById('config-current').textContent = '読み込み失敗（デフォルト値で表示）';
   }
   document.getElementById('cfg-hard').value   = h;
+  document.getElementById('cfg-hell').value   = he;
   document.getElementById('cfg-normal').value = n;
   document.getElementById('cfg-easy').value   = e;
   document.getElementById('cfg-hard-num').value   = h;
+  document.getElementById('cfg-hell-num').value   = he;
   document.getElementById('cfg-normal-num').value = n;
   document.getElementById('cfg-easy-num').value   = e;
   document.getElementById('hard-desc').textContent   = '';
+  document.getElementById('hell-desc').textContent   = '';
   document.getElementById('normal-desc').textContent = '';
-  buildPresetButtons('hard-preset-btns',   'hard-desc',   'cfg-hard',   HARD_PRESETS,   h);
-  buildPresetButtons('normal-preset-btns', 'normal-desc', 'cfg-normal', NORMAL_PRESETS, n);
+  buildPresetButtons('hard-preset-btns',   'hard-desc',   'cfg-hard',   HARD_PRESETS,   h,  'hard');
+  buildPresetButtons('hell-preset-btns',   'hell-desc',   'cfg-hell',   HELL_PRESETS,   he, 'hell');
+  buildPresetButtons('normal-preset-btns', 'normal-desc', 'cfg-normal', NORMAL_PRESETS, n,  'normal');
   updateHint('hard', h);
+  updateHint('hell', he);
   updateHint('normal', n);
   updateHint('easy', e);
 }
 
 async function saveConfig() {
-  const h = parseFloat(document.getElementById('cfg-hard').value);
-  const n = parseFloat(document.getElementById('cfg-normal').value);
-  const e = parseFloat(document.getElementById('cfg-easy').value);
-  if (isNaN(h) || isNaN(n) || isNaN(e)) {
+  const h  = parseFloat(document.getElementById('cfg-hard').value);
+  const he = parseFloat(document.getElementById('cfg-hell').value);
+  const n  = parseFloat(document.getElementById('cfg-normal').value);
+  const e  = parseFloat(document.getElementById('cfg-easy').value);
+  if (isNaN(h) || isNaN(he) || isNaN(n) || isNaN(e)) {
     document.getElementById('config-msg').style.color = '#e74c3c';
     document.getElementById('config-msg').textContent = '❌ 値を入力してください';
     return;
@@ -629,7 +658,7 @@ async function saveConfig() {
     const res = await fetch(WEBHOOK_URL, {
       method: 'POST', redirect: 'follow',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ type: 'setConfig', hardMult: h, normalMult: n, easyMult: e })
+      body: JSON.stringify({ type: 'setConfig', hardMult: h, normalMult: n, easyMult: e, hellMult: he })
     });
     const text = await res.text();
     let parsed;
@@ -649,21 +678,27 @@ async function saveConfig() {
 }
 
 function randomizeConfig() {
-  const hi = Math.floor(Math.random() * HARD_PRESETS.length);
-  const ni = Math.floor(Math.random() * NORMAL_PRESETS.length);
-  const hp = HARD_PRESETS[hi], np = NORMAL_PRESETS[ni];
+  const hi  = Math.floor(Math.random() * HARD_PRESETS.length);
+  const hei = Math.floor(Math.random() * HELL_PRESETS.length);
+  const ni  = Math.floor(Math.random() * NORMAL_PRESETS.length);
+  const hp = HARD_PRESETS[hi], hep = HELL_PRESETS[hei], np = NORMAL_PRESETS[ni];
   document.getElementById('cfg-hard').value        = hp.mult;
+  document.getElementById('cfg-hell').value        = hep.mult;
   document.getElementById('cfg-normal').value      = np.mult;
   document.getElementById('cfg-hard-num').value    = hp.mult;
+  document.getElementById('cfg-hell-num').value    = hep.mult;
   document.getElementById('cfg-normal-num').value  = np.mult;
   document.getElementById('hard-desc').textContent   = '';
+  document.getElementById('hell-desc').textContent   = '';
   document.getElementById('normal-desc').textContent = '';
-  buildPresetButtons('hard-preset-btns',   'hard-desc',   'cfg-hard',   HARD_PRESETS,   hp.mult);
-  buildPresetButtons('normal-preset-btns', 'normal-desc', 'cfg-normal', NORMAL_PRESETS, np.mult);
+  buildPresetButtons('hard-preset-btns',   'hard-desc',   'cfg-hard',   HARD_PRESETS,   hp.mult,  'hard');
+  buildPresetButtons('hell-preset-btns',   'hell-desc',   'cfg-hell',   HELL_PRESETS,   hep.mult, 'hell');
+  buildPresetButtons('normal-preset-btns', 'normal-desc', 'cfg-normal', NORMAL_PRESETS, np.mult,  'normal');
   updateHint('hard', hp.mult);
+  updateHint('hell', hep.mult);
   updateHint('normal', np.mult);
   document.getElementById('config-msg').style.color = '#e67e22';
-  document.getElementById('config-msg').textContent = `🎲 鬼: ${hp.name} ／ 通常: ${np.name} — 保存ボタンで確定`;
+  document.getElementById('config-msg').textContent = `🎲 鬼: ${hp.name} ／ 地獄: ${hep.name} ／ 通常: ${np.name} — 保存ボタンで確定`;
 }
 
 function updateBadges() {

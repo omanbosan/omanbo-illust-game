@@ -517,6 +517,32 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
   <div id="peek-label">⏱ 2秒だけ見えるよ！</div>
 </div>
 
+<!-- 採点前ニックネーム入力モーダル（鬼・地獄モードのみ） -->
+<div class="modal-bg" id="prescore-modal">
+  <div class="modal-box">
+    <h2>📋 採点前の登録</h2>
+    <div style="background:#e8f4fd;border-radius:8px;padding:8px 10px;font-size:0.75rem;color:#2980b9;margin-bottom:10px;line-height:1.6;">
+      📌 採点と同時に<b>図鑑登録の申請</b>が行われます。<br>参加番号が発行されるので、画像を保存しておいてね🎫
+    </div>
+    <input type="text" id="name-input" placeholder="ニックネーム（最大8文字）" maxlength="8"/>
+    <input type="text" id="score-instagram" placeholder="Instagramアカウント（任意・@なしでOK）"
+      style="width:100%;padding:9px 10px;font-size:0.9rem;border:2px solid #ddd;border-radius:8px;margin-bottom:6px;font-family:inherit;"/>
+    <!-- フォロー任意チェック -->
+    <label id="follow-check-label" style="display:flex;align-items:flex-start;gap:8px;font-size:0.82rem;color:#888;font-weight:normal;margin-bottom:4px;background:#f9f9f9;border:1.5px solid #ddd;border-radius:8px;padding:8px 10px;cursor:pointer;">
+      <input type="checkbox" id="follow-check" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;" onchange="updateScoreRegisterBtn()">
+      <span><a href="https://www.instagram.com/omanbosan.lv/" target="_blank" style="color:#e74c3c;font-weight:bold;">@omanbosan.lv</a> をフォロー済みです（任意）</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:#555;margin-bottom:10px;margin-top:6px;">
+      <input type="checkbox" id="consent-check" onchange="updateScoreRegisterBtn()">
+      この作品の商業利用に同意する（必須）
+    </label>
+    <div class="btn-row">
+      <button id="prescore-submit-btn" onclick="confirmPrescoreAndScore()" disabled style="background:#95a5a6;color:white;cursor:not-allowed;opacity:0.5;">✅ 採点する！</button>
+      <button onclick="closePrescoreModal()" style="background:#95a5a6;color:white;">キャンセル</button>
+    </div>
+  </div>
+</div>
+
 <!-- 採点モーダル -->
 <div class="modal-bg" id="score-modal">
   <div class="modal-box">
@@ -535,29 +561,9 @@ h1 { font-size: 2rem; color: #c0392b; margin-bottom: 6px; text-shadow: 2px 2px 0
     <!-- パーツ内訳 -->
     <div id="part-breakdown" style="font-size:0.86rem;background:#f8f9fa;border-radius:8px;padding:10px 12px;line-height:2.1;margin:8px 0;"></div>
 
-    <!-- 登録フォーム（スクロール不要の位置） -->
-    <div id="score-register-section" style="border-top:1px solid #eee;margin-top:12px;padding-top:12px;">
-      <div style="font-size:0.82rem;color:#555;margin-bottom:6px;text-align:center;">📋 ランキングに登録する</div>
-      <div style="background:#e8f4fd;border-radius:8px;padding:8px 10px;font-size:0.75rem;color:#2980b9;margin-bottom:8px;line-height:1.6;">
-        📌 投稿すると<b>参加番号</b>が発行されます。<br>画像を保存しておくと番号が確認できます🎫
-      </div>
-      <input type="text" id="name-input" placeholder="ニックネーム（最大8文字）" maxlength="8"/>
-      <input type="text" id="score-instagram" placeholder="Instagramアカウント（任意・@なしでOK）"
-        style="width:100%;padding:9px 10px;font-size:0.9rem;border:2px solid #ddd;border-radius:8px;margin-bottom:6px;font-family:inherit;"
-        oninput="updateScoreRegisterBtn()"/>
-      <!-- フォロー任意チェック -->
-      <label id="follow-check-label" style="display:flex;align-items:flex-start;gap:8px;font-size:0.82rem;color:#888;font-weight:normal;margin-bottom:4px;background:#f9f9f9;border:1.5px solid #ddd;border-radius:8px;padding:8px 10px;cursor:pointer;">
-        <input type="checkbox" id="follow-check" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;" onchange="updateScoreRegisterBtn()">
-        <span><a href="https://www.instagram.com/omanbosan.lv/" target="_blank" style="color:#e74c3c;font-weight:bold;">@omanbosan.lv</a> をフォロー済みです（任意）</span>
-      </label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:#555;margin-bottom:10px;margin-top:6px;">
-        <input type="checkbox" id="consent-check" onchange="updateScoreRegisterBtn()">
-        この作品の商業利用に同意する（必須）
-      </label>
-      <div class="btn-row">
-        <button id="score-register-btn" onclick="saveScore()" disabled style="background:#95a5a6;color:white;cursor:not-allowed;opacity:0.5;">🏆 登録！</button>
-        <button onclick="closeScoreModal()" style="background:#95a5a6;color:white;">戻る</button>
-      </div>
+    <!-- 登録ステータス（鬼・地獄モードのみ・採点と同時に自動で図鑑登録申請） -->
+    <div id="score-register-section" style="border-top:1px solid #eee;margin-top:12px;padding-top:12px;text-align:center;font-size:0.85rem;color:#888;">
+      📮 図鑑登録を申請中...
     </div>
 
     <!-- 結果画像（下部） -->
@@ -1014,7 +1020,7 @@ let lastScore     = 0;
 const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycby0q8MVbN-Dk_fio8XOAqZW4XnxJC4_RNw4__XQOt57RgQUfAEjqkirPBHCHlZ30D4JoA/exec';
 
 // 採点 multiplier（管理者が GAS config シートで変更可能。起動時に取得）
-let _scoringMultipliers = { hard: 2.0, normal: 4.5, easy: 3.0 };
+let _scoringMultipliers = { hard: 2.0, normal: 4.5, easy: 3.0, hell: 2.0 };
 
 function getLuckLevel(hardMult) {
   // 数値が高いほどシビア（🔥が多い）
@@ -1066,6 +1072,7 @@ function updateScoringLuckUI(hardMult) {
     if (typeof cfg.hardMult   === 'number') _scoringMultipliers.hard   = cfg.hardMult;
     if (typeof cfg.normalMult === 'number') _scoringMultipliers.normal = cfg.normalMult;
     if (typeof cfg.easyMult  === 'number') _scoringMultipliers.easy   = cfg.easyMult;
+    if (typeof cfg.hellMult  === 'number') _scoringMultipliers.hell   = cfg.hellMult;
   } catch(e) { /* ネットワーク失敗時はデフォルト値を維持 */ }
   updateScoringLuckUI(_scoringMultipliers.hard);
 })();
@@ -1433,7 +1440,36 @@ document.getElementById('peek-btn').addEventListener('click', () => {
 // 採点（100点満点）
 // 各パーツ最大20点：位置10点 + 回転5点 + サイズ5点
 // ================================================================
-document.getElementById('score-btn').addEventListener('click', () => { doScore(); });
+document.getElementById('score-btn').addEventListener('click', () => {
+  // 鬼モード・地獄モードは採点前にニックネームを聞き、採点と同時に図鑑登録申請する
+  if (currentDifficulty === 'hard' || isHellMode()) {
+    openPrescoreModal();
+  } else {
+    doScore();
+  }
+});
+
+function openPrescoreModal() {
+  document.getElementById('name-input').value = '';
+  document.getElementById('score-instagram').value = '';
+  const followCheck = document.getElementById('follow-check');
+  const consentCheck = document.getElementById('consent-check');
+  if (followCheck) followCheck.checked = false;
+  if (consentCheck) consentCheck.checked = false;
+  updateScoreRegisterBtn();
+  document.getElementById('prescore-modal').classList.add('show');
+}
+
+function closePrescoreModal() {
+  document.getElementById('prescore-modal').classList.remove('show');
+}
+
+async function confirmPrescoreAndScore() {
+  document.getElementById('prescore-modal').classList.remove('show');
+  await doScore();
+  await saveScore();
+}
+
 async function doScore() {
   let total = 0, html = '';
   PART_KEYS.forEach(key => {
@@ -1507,18 +1543,10 @@ async function doScore() {
   document.getElementById('score-sub').textContent = `/ ${fullScore2}点満点（${diffLabels2[currentDifficulty] || '通常モード'}）`;
   document.getElementById('score-comment').textContent    = comment;
   document.getElementById('part-breakdown').innerHTML     = html;
-  document.getElementById('name-input').value = '';
-  document.getElementById('score-instagram').value = '';
   lastScore = total;
-  // 登録フォームは鬼モード・地獄モードのみ表示
+  // 登録ステータスは鬼モード・地獄モードのみ表示（ニックネームは採点前に取得済み）
   const registerSection = document.getElementById('score-register-section');
   if (registerSection) registerSection.style.display = (currentDifficulty === 'hard' || isHellMode()) ? '' : 'none';
-  // チェックボックスとボタンをリセット
-  const followCheck = document.getElementById('follow-check');
-  const consentCheck = document.getElementById('consent-check');
-  if (followCheck) followCheck.checked = false;
-  if (consentCheck) consentCheck.checked = false;
-  updateScoreRegisterBtn();
   // 賞品表示（鬼モード・地獄モードのみ・月末締め）
   const prizeSection = document.getElementById('prize-section');
   const prizeCode = document.getElementById('prize-code');
@@ -1909,13 +1937,18 @@ async function renderResultCanvas() {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, 460, 500);
 
+  // 地獄モードは丸輪郭ではなく白背景（全身キャラクターに丸枠が被らないように）
   ctx.fillStyle = 'white';
-  ctx.strokeStyle = '#222';
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.arc(FACE_CX, FACE_CY, FACE_R, 0, Math.PI*2);
-  ctx.fill();
-  ctx.stroke();
+  if (isHellMode()) {
+    ctx.fillRect(0, 0, 460, 500);
+  } else {
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(FACE_CX, FACE_CY, FACE_R, 0, Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+  }
 
   const answerMatch = activeAnswerSVG().match(/href="(data:image\/png;base64,[^"]+)"/);
   if (answerMatch) {
@@ -2088,6 +2121,8 @@ async function scoreFreehandOverlap(key) {
     threshold = 90 / Math.max(0.5, (m.easy   ?? 3.0) / 3.0);
   else if (currentDifficulty === 'normal')
     threshold = 70 / Math.max(0.5, (m.normal ?? 4.5) / 4.5);
+  else if (isHellMode())
+    threshold = 70 / Math.max(0.5, (m.hell   ?? 2.0) / 2.0);
   else
     threshold = 70 / Math.max(0.5, (m.hard   ?? 2.0) / 2.0);
 
@@ -2137,7 +2172,7 @@ function closeScoreModal() {
 // ================================================================
 function updateScoreRegisterBtn() {
   const consent = document.getElementById('consent-check').checked;
-  const btn     = document.getElementById('score-register-btn');
+  const btn     = document.getElementById('prescore-submit-btn');
   if (!btn) return;
   btn.disabled = !consent;
   btn.style.background  = consent ? '#27ae60' : '#95a5a6';
@@ -2188,8 +2223,8 @@ async function saveScore() {
   local.splice(20);
   localStorage.setItem('omanbo_illust_v1', JSON.stringify(local));
 
-  const btn = document.getElementById('score-register-btn');
-  if (btn) { btn.textContent = '送信中...'; btn.disabled = true; }
+  const registerSectionEl = document.getElementById('score-register-section');
+  if (registerSectionEl) registerSectionEl.textContent = '📮 図鑑登録を申請中...';
 
   let entryId = null;
   if (WEBHOOK_URL) {
@@ -2221,8 +2256,6 @@ async function saveScore() {
       resultImg.src = await stampEntryId(resultImg.src, entryId);
     }
   }
-
-  if (btn) { btn.textContent = '🏆 登録！'; btn.disabled = false; }
 
   const registerSection = document.getElementById('score-register-section');
   if (registerSection) {
