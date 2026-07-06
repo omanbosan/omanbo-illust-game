@@ -1867,6 +1867,7 @@ function renderFreehandStrokes() {
   const ctx = resultCanvas.getContext('2d');
   ctx.clearRect(0, 0, 460, 500);
   const colors = {hair:'#e74c3c',reye:'#3498db',leye:'#2ecc71',nose:'#f39c12',mouth:'#9b59b6',crown:'#FF8C00',glasses:'#8e44ad'};
+  const useHellTransform = isHellMode();
   activeFhOrder().forEach(key => {
     const strokes = fhStrokes[key] || [];
     ctx.strokeStyle = colors[key] || '#333';
@@ -1875,13 +1876,14 @@ function renderFreehandStrokes() {
     ctx.lineJoin = 'round';
     strokes.forEach(stroke => {
       if (stroke.length < 2) return;
+      const pts = useHellTransform ? stroke.map(p => hellZoomToFull(p.x, p.y)) : stroke;
       ctx.beginPath();
-      ctx.moveTo(stroke[0].x, stroke[0].y);
-      stroke.forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.moveTo(pts[0].x, pts[0].y);
+      pts.forEach(p => ctx.lineTo(p.x, p.y));
       ctx.stroke();
     });
     if (strokes.length > 0) {
-      const allPoints = strokes.flat();
+      const allPoints = (useHellTransform ? strokes.map(s => s.map(p => hellZoomToFull(p.x, p.y))) : strokes).flat();
       const cx = allPoints.reduce((s,p)=>s+p.x,0)/allPoints.length;
       const cy = allPoints.reduce((s,p)=>s+p.y,0)/allPoints.length;
       partCenters[key] = {x: cx, y: cy};
