@@ -28,6 +28,8 @@ function doGet(e) {
     if (type === 'pendingScores')  return buildResponse(getPendingScores());
     if (type === 'voteRanking')    return buildResponse(getVoteRanking());
     if (type === 'config')         return buildResponse(getConfig());
+    if (type === 'stats')                return buildResponse(getStats());
+    if (type === 'unlinkedScoreImages')  return buildResponse(getUnlinkedScoreImages());
     return buildResponse({ ok: true, message: 'おまんぼさんイラストゲームAPI v1.9' });
   } catch(err) {
     return buildResponse({ error: err.message });
@@ -46,6 +48,8 @@ function doPost(e) {
     if (data.type === 'vote')       return buildResponse(castVote(data));
     if (data.type === 'unvote')     return buildResponse(castVote({ ...data, delta: -1 }));
     if (data.type === 'setConfig')  return buildResponse(setConfig(data));
+    if (data.type === 'play')             return buildResponse(logPlay(data));
+    if (data.type === 'recoverScoreImage') return buildResponse(recoverScoreImage(data));
     return buildResponse({ ok: true });
   } catch(err) {
     return buildResponse({ error: err.message });
@@ -146,24 +150,44 @@ function saveScore(data) {
 
 // ----------------------------------------------------------------
 // 採点チャレンジ図鑑取得（承認済みのみ）
+// 月次アーカイブ（scores_zukan_archive・過去分）+ scoresシート（今月分）を
+// 古い順に結合して返す。月が変わってscoresがクリアされても画像が消えないようにする
 // ----------------------------------------------------------------
 function getZukanScoring() {
-  const ss    = SpreadsheetApp.openById(CONFIG.sheetId);
+  const ss = SpreadsheetApp.openById(CONFIG.sheetId);
+  const results = [];
+
+  // 過去分（永久保存・承認済みのみ）
+  const archSheet = ss.getSheetByName('scores_zukan_archive');
+  if (archSheet && archSheet.getLastRow() >= 2) {
+    archSheet.getRange(2, 1, archSheet.getLastRow() - 1, 7).getValues()
+      .filter(r => r[0])
+      .forEach(r => results.push({
+        name:       r[0] || '名無し',
+        score:      Number(r[1]) || 0,
+        date:       r[2] ? String(r[2]).slice(0, 10) : '',
+        imageUrl:   driveUrlToThumb(r[3]),
+        difficulty: r[4] || 'normal',
+        luckLevel:  Number(r[5]) || 2
+      }));
+  }
+
+  // 今月分（scoresシート、承認済みのみ）
   const sheet = ss.getSheetByName('scores');
-  if (!sheet || sheet.getLastRow() < 2) return [];
+  if (sheet && sheet.getLastRow() >= 2) {
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).getValues()
+      .filter(r => r[0] && (r[6] || '') === '承認済み')
+      .forEach(r => results.push({
+        name:       r[0] || '名無し',
+        score:      Number(r[1]) || 0,
+        date:       r[2] ? String(r[2]).slice(0, 10) : '',
+        imageUrl:   driveUrlToThumb(r[4]),
+        difficulty: r[5] || 'normal',
+        luckLevel:  Number(r[8]) || 2
+      }));
+  }
 
-  const approved = sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).getValues()
-    .filter(r => r[0] && (r[6] || '') === '承認済み');
-
-  return approved.map((r, i) => ({
-    no:         i + 1,
-    name:       r[0] || '名無し',
-    score:      Number(r[1]) || 0,
-    date:       r[2] ? String(r[2]).slice(0, 10) : '',
-    imageUrl:   driveUrlToThumb(r[4]),
-    difficulty: r[5] || 'normal',
-    luckLevel:  Number(r[8]) || 2
-  })); // 登録順（古い順 = No.1が最初）
+  return results.map((r, i) => Object.assign({ no: i + 1 }, r)); // 登録順（古い順 = No.1が最初）
 }
 
 // ----------------------------------------------------------------
@@ -454,23 +478,38 @@ function archiveMonthlyRanking() {
   lastMonth.setMonth(lastMonth.getMonth() - 1);
   const label = `${lastMonth.getFullYear()}年${lastMonth.getMonth() + 1}月`;
 
-  // アーカイブシートに保存
+  const allRows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).getValues();
+
+  // 上位ランキングアーカイブ（メール通知・先月ランキング表示用）
   let archSheet = ss.getSheetByName('scores_archive');
   if (!archSheet) {
     archSheet = ss.insertSheet('scores_archive');
-    archSheet.appendRow(['月', '順位', '名前', 'スコア', 'Instagram']);
+    archSheet.appendRow(['月', '順位', '名前', 'スコア', 'Instagram', '難易度']);
     archSheet.setFrozenRows(1);
   }
 
-  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 4).getValues()
-    .map(r => ({ name: r[0], score: Number(r[1]), instagram: r[3] || '' }))
+  const rows = allRows
+    .map(r => ({ name: r[0], score: Number(r[1]), instagram: r[3] || '', difficulty: r[5] || 'normal' }))
     .filter(r => r.name && r.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
 
   rows.forEach((r, i) => {
-    archSheet.appendRow([label, i + 1, r.name, r.score, r.instagram]);
+    archSheet.appendRow([label, i + 1, r.name, r.score, r.instagram, r.difficulty]);
   });
+
+  // 採点図鑑用の永久アーカイブ：承認済みの画像・難易度は月をまたいでも消えないよう保存
+  let zukanArchSheet = ss.getSheetByName('scores_zukan_archive');
+  if (!zukanArchSheet) {
+    zukanArchSheet = ss.insertSheet('scores_zukan_archive');
+    zukanArchSheet.appendRow(['名前', 'スコア', '日付', '画像URL', '難易度', '採点レベル', '参加番号']);
+    zukanArchSheet.setFrozenRows(1);
+  }
+  allRows
+    .filter(r => r[0] && (r[6] || '') === '承認済み')
+    .forEach(r => {
+      zukanArchSheet.appendRow([r[0], Number(r[1]) || 0, r[2], r[4] || '', r[5] || 'normal', Number(r[8]) || 2, r[7] || '']);
+    });
 
   // 先月結果をメールで送信
   const medals = ['🥇', '🥈', '🥉'];
@@ -561,7 +600,8 @@ function getConfig() {
     hardMult:   parseFloat(cfg['hardMult'])   || 2.0,
     normalMult: parseFloat(cfg['normalMult']) || 4.5,
     easyMult:   parseFloat(cfg['easyMult'])   || 3.0,
-    hellMult:   parseFloat(cfg['hellMult'])   || 2.0
+    hellMult:   parseFloat(cfg['hellMult'])   || 2.0,
+    theme:      cfg['theme'] ? String(cfg['theme']) : ''
   };
 }
 
@@ -576,17 +616,185 @@ function setConfig(data) {
   const rows = lastRow >= 2
     ? sheet.getRange(2, 1, lastRow - 1, 2).getValues()
     : [];
-  const keys = ['hardMult', 'normalMult', 'easyMult', 'hellMult'];
-  keys.forEach(key => {
-    if (data[key] === undefined) return;
-    const val = parseFloat(data[key]);
-    if (isNaN(val)) return;
+
+  const setValue = (key, val) => {
     const idx = rows.findIndex(r => String(r[0]) === key);
     if (idx >= 0) {
       sheet.getRange(idx + 2, 2).setValue(val);
     } else {
       sheet.appendRow([key, val]);
+      rows.push([key, val]); // 同じリクエスト内で複数キーを追加する際の重複行を防ぐ
     }
+  };
+
+  const keys = ['hardMult', 'normalMult', 'easyMult', 'hellMult'];
+  keys.forEach(key => {
+    if (data[key] === undefined) return;
+    const val = parseFloat(data[key]);
+    if (isNaN(val)) return;
+    setValue(key, val);
   });
-  return { ok: true, hardMult: data.hardMult, normalMult: data.normalMult, easyMult: data.easyMult, hellMult: data.hellMult };
+
+  // お絵描きモードの「今月のお題」（自由入力テキスト・空欄も許可）
+  if (data.theme !== undefined) {
+    setValue('theme', String(data.theme).slice(0, 60));
+  }
+
+  return { ok: true, hardMult: data.hardMult, normalMult: data.normalMult, easyMult: data.easyMult, hellMult: data.hellMult, theme: data.theme };
+}
+
+// ----------------------------------------------------------------
+// プレイ統計（軽量ログ・集計）
+// ----------------------------------------------------------------
+function logPlay(data) {
+  const ss  = SpreadsheetApp.openById(CONFIG.sheetId);
+  let sheet = ss.getSheetByName('plays');
+  if (!sheet) {
+    sheet = ss.insertSheet('plays');
+    sheet.appendRow(['日時', 'イベント', '難易度', 'スコア']);
+    sheet.setFrozenRows(1);
+  }
+  sheet.appendRow([new Date(), String(data.event || ''), String(data.difficulty || ''), Number(data.score) || 0]);
+  return { ok: true };
+}
+
+function getStats() {
+  const ss  = SpreadsheetApp.openById(CONFIG.sheetId);
+  const tz  = Session.getScriptTimeZone() || 'Asia/Tokyo';
+
+  // 難易度選択・採点完了の回数
+  const select   = { hard: 0, hell: 0, normal: 0, easy: 0 };
+  const complete = { hard: 0, hell: 0, normal: 0, easy: 0 };
+  const dailyMap = {}; // 'yyyy-MM-dd' -> 選択回数
+
+  const playsSheet = ss.getSheetByName('plays');
+  if (playsSheet && playsSheet.getLastRow() >= 2) {
+    playsSheet.getRange(2, 1, playsSheet.getLastRow() - 1, 4).getValues().forEach(r => {
+      const date  = r[0];
+      const event = r[1];
+      const diff  = r[2] || 'normal';
+      if (event === 'select') {
+        if (select[diff] !== undefined) select[diff]++;
+        if (date instanceof Date) {
+          const key = Utilities.formatDate(date, tz, 'yyyy-MM-dd');
+          dailyMap[key] = (dailyMap[key] || 0) + 1;
+        }
+      } else if (event === 'complete') {
+        if (complete[diff] !== undefined) complete[diff]++;
+      }
+    });
+  }
+
+  // 直近14日間（データが無い日は0件で埋める）
+  const daily = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = Utilities.formatDate(d, tz, 'yyyy-MM-dd');
+    daily.push({ date: key, count: dailyMap[key] || 0 });
+  }
+
+  // 図鑑登録数（お友達・採点＝今月分+永久アーカイブ）
+  let zukanFriend = 0;
+  const drawingsSheet = ss.getSheetByName('drawings');
+  if (drawingsSheet && drawingsSheet.getLastRow() >= 2) {
+    zukanFriend = drawingsSheet.getRange(2, 8, drawingsSheet.getLastRow() - 1, 1).getValues()
+      .filter(r => r[0] === '承認済み').length;
+  }
+  let zukanScoring = 0;
+  const scoresSheet = ss.getSheetByName('scores');
+  if (scoresSheet && scoresSheet.getLastRow() >= 2) {
+    zukanScoring += scoresSheet.getRange(2, 7, scoresSheet.getLastRow() - 1, 1).getValues()
+      .filter(r => r[0] === '承認済み').length;
+  }
+  const zukanArchSheet = ss.getSheetByName('scores_zukan_archive');
+  if (zukanArchSheet && zukanArchSheet.getLastRow() >= 2) {
+    zukanScoring += zukanArchSheet.getLastRow() - 1;
+  }
+
+  // 投票（総票数・投票された村人数）
+  let voteTotal = 0, votedCharacters = 0;
+  const votesSheet = ss.getSheetByName('votes');
+  if (votesSheet && votesSheet.getLastRow() >= 2) {
+    votesSheet.getRange(2, 3, votesSheet.getLastRow() - 1, 1).getValues().forEach(r => {
+      const c = Number(r[0]) || 0;
+      voteTotal += c;
+      if (c > 0) votedCharacters++;
+    });
+  }
+
+  return { select, complete, daily, zukanFriend, zukanScoring, voteTotal, votedCharacters };
+}
+
+// ----------------------------------------------------------------
+// 過去に消えた鬼/地獄モード画像の復旧（管理画面用）
+// scores・scores_zukan_archiveのどちらにも紐付いていないDrive内のscore_画像を一覧化し、
+// 管理者が難易度を手動指定して図鑑に登録し直せるようにする
+// ----------------------------------------------------------------
+function getUnlinkedScoreImages() {
+  const ss = SpreadsheetApp.openById(CONFIG.sheetId);
+  const linkedIds = new Set();
+
+  const extractId = (url) => {
+    const m = String(url || '').match(/[-\w]{25,}/);
+    return m ? m[0] : '';
+  };
+
+  const scoresSheet = ss.getSheetByName('scores');
+  if (scoresSheet && scoresSheet.getLastRow() >= 2) {
+    scoresSheet.getRange(2, 5, scoresSheet.getLastRow() - 1, 1).getValues()
+      .forEach(r => { const id = extractId(r[0]); if (id) linkedIds.add(id); });
+  }
+  const zukanArchSheet = ss.getSheetByName('scores_zukan_archive');
+  if (zukanArchSheet && zukanArchSheet.getLastRow() >= 2) {
+    zukanArchSheet.getRange(2, 4, zukanArchSheet.getLastRow() - 1, 1).getValues()
+      .forEach(r => { const id = extractId(r[0]); if (id) linkedIds.add(id); });
+  }
+
+  const folder = DriveApp.getFolderById(CONFIG.driveFolderId);
+  const it = folder.getFiles();
+  const found = [];
+  while (it.hasNext()) {
+    const f = it.next();
+    const name = f.getName();
+    if (!name.startsWith('score_')) continue;
+    if (linkedIds.has(f.getId())) continue;
+    const m = name.match(/^score_(.+)_(\d+)\.png$/);
+    found.push({
+      fileId:    f.getId(),
+      name:      m ? m[1] : '',
+      imageUrl:  'https://drive.google.com/thumbnail?id=' + f.getId() + '&sz=w300',
+      createdAt: f.getDateCreated()
+    });
+  }
+  found.sort((a, b) => b.createdAt - a.createdAt); // 新しい順（確認しやすい）
+  return found.map(r => ({
+    fileId:   r.fileId,
+    name:     r.name,
+    imageUrl: r.imageUrl,
+    date:     r.createdAt.toLocaleDateString('ja-JP')
+  }));
+}
+
+// 管理者が難易度・名前・スコアを指定して、孤立画像を図鑑（永久アーカイブ）に手動登録
+function recoverScoreImage(data) {
+  const fileId     = String(data.fileId || '');
+  const name       = String(data.name || '名無し').slice(0, 20);
+  const score      = Number(data.score) || 0;
+  const difficulty = String(data.difficulty || '');
+  if (!fileId)     return { error: 'fileId is required' };
+  if (!difficulty) return { error: 'difficulty is required' };
+
+  const file     = DriveApp.getFileById(fileId);
+  const imageUrl = file.getUrl();
+
+  const ss  = SpreadsheetApp.openById(CONFIG.sheetId);
+  let sheet = ss.getSheetByName('scores_zukan_archive');
+  if (!sheet) {
+    sheet = ss.insertSheet('scores_zukan_archive');
+    sheet.appendRow(['名前', 'スコア', '日付', '画像URL', '難易度', '採点レベル', '参加番号']);
+    sheet.setFrozenRows(1);
+  }
+  sheet.appendRow([name, score, file.getDateCreated().toLocaleDateString('ja-JP'), imageUrl, difficulty, 2, '']);
+  return { ok: true };
 }

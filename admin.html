@@ -144,6 +144,13 @@ body {
 .badge-approved { background: #27ae60; color: #fff; }
 .badge-rejected { background: #e74c3c; color: #fff; }
 
+/* 統計タイル */
+.stat-tile {
+  background: #16213e; border-radius: 12px; padding: 14px 10px; text-align: center;
+}
+.stat-num   { font-size: 1.6rem; font-weight: bold; color: #f39c12; }
+.stat-label { font-size: 0.72rem; color: #aaa; margin-top: 4px; }
+
 /* toast */
 #toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
@@ -178,8 +185,8 @@ body {
   <div class="admin-header">
     <h2>📖 図鑑 承認管理</h2>
     <div style="display:flex;flex-direction:column;gap:8px;">
-      <!-- モード切替（2×2グリッド） -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+      <!-- モード切替（3×2グリッド） -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;">
         <button id="mode-drawing" onclick="switchMode('drawing')"
           style="padding:8px 6px;border:2px solid #27ae60;background:#27ae60;color:white;border-radius:8px;font-size:0.82rem;font-weight:bold;cursor:pointer;text-align:center;">🎨 お友達</button>
         <button id="mode-scoring" onclick="switchMode('scoring')"
@@ -188,6 +195,10 @@ body {
           style="padding:8px 6px;border:2px solid #9b59b6;background:transparent;color:#9b59b6;border-radius:8px;font-size:0.82rem;font-weight:bold;cursor:pointer;text-align:center;">🏆 投票</button>
         <button id="mode-config" onclick="switchMode('config')"
           style="padding:8px 6px;border:2px solid #3498db;background:transparent;color:#3498db;border-radius:8px;font-size:0.82rem;font-weight:bold;cursor:pointer;text-align:center;">⚙️ 採点設定</button>
+        <button id="mode-stats" onclick="switchMode('stats')"
+          style="padding:8px 6px;border:2px solid #f39c12;background:transparent;color:#f39c12;border-radius:8px;font-size:0.82rem;font-weight:bold;cursor:pointer;text-align:center;">📊 統計</button>
+        <button id="mode-recover" onclick="switchMode('recover')"
+          style="padding:8px 6px;border:2px solid #16a085;background:transparent;color:#16a085;border-radius:8px;font-size:0.82rem;font-weight:bold;cursor:pointer;text-align:center;">🗂 復旧</button>
       </div>
       <!-- タブバー＋更新・ログアウト -->
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
@@ -242,6 +253,17 @@ body {
 
   <!-- ⚙️ 採点設定パネル -->
   <div id="config-panel" style="display:none;max-width:480px;margin:0 auto;">
+    <!-- 🎨 お絵描きお題設定 -->
+    <div style="background:#16213e;border-radius:14px;padding:18px 14px;margin-bottom:14px;">
+      <div style="font-size:1rem;font-weight:bold;color:#27ae60;margin-bottom:8px;">🎨 お絵描きモードの今月のお題</div>
+      <div style="font-size:0.72rem;color:#888;margin-bottom:8px;line-height:1.6;">
+        お絵描きチャレンジ画面に表示されます。空欄にすると非表示になります。
+      </div>
+      <input type="text" id="cfg-theme" maxlength="60"
+        placeholder="例: おまんぼさん（または地獄キャラのぽっぴー）が花火を見ている絵"
+        style="width:100%;padding:9px 10px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.85rem;box-sizing:border-box;">
+    </div>
+
     <div style="background:#16213e;border-radius:14px;padding:18px 14px;">
       <div style="font-size:1rem;font-weight:bold;color:#3498db;margin-bottom:4px;">⚙️ 採点レベル設定</div>
 
@@ -331,6 +353,52 @@ body {
     </div>
   </div>
 
+  <!-- 📊 統計パネル -->
+  <div id="stats-panel" style="display:none;max-width:520px;margin:0 auto;">
+    <div id="stats-loading" style="text-align:center;padding:40px;color:#888;">読み込み中...</div>
+    <div id="stats-content" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+        <div class="stat-tile">
+          <div class="stat-num" id="stat-total-select">0</div>
+          <div class="stat-label">難易度選択数（全期間）</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-num" id="stat-total-complete">0</div>
+          <div class="stat-label">採点完了数（全期間）</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-num" id="stat-zukan-total">0</div>
+          <div class="stat-label">図鑑登録数（お友達＋採点）</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-num" id="stat-vote-total">0</div>
+          <div class="stat-label">投票総数</div>
+        </div>
+      </div>
+
+      <div style="background:#16213e;border-radius:14px;padding:16px 14px;margin-bottom:14px;">
+        <div style="font-size:0.9rem;font-weight:bold;color:#f39c12;margin-bottom:10px;">👹 難易度別の選択数 / 採点完了数</div>
+        <div id="stats-diff-bars"></div>
+      </div>
+
+      <div style="background:#16213e;border-radius:14px;padding:16px 14px;">
+        <div style="font-size:0.9rem;font-weight:bold;color:#f39c12;margin-bottom:10px;">📅 直近14日間の難易度選択数</div>
+        <div id="stats-daily-bars" style="font-family:monospace;font-size:0.78rem;line-height:1.9;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🗂 復旧パネル -->
+  <div id="recover-panel" style="display:none;max-width:600px;margin:0 auto;">
+    <div style="background:#0a1628;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:0.78rem;line-height:1.7;color:#aaa;">
+      📌 過去の月次リセットでシートから消えてしまった採点チャレンジ画像を、Driveフォルダから直接探して図鑑に登録し直せます。<br>
+      <b style="color:#f39c12;">難易度は自動判定できないため、画像を見て必ず手動で選択してください。</b>
+    </div>
+    <div id="recover-loading" style="text-align:center;padding:40px;color:#888;">読み込み中...</div>
+    <div id="recover-empty" style="display:none;text-align:center;padding:40px;color:#666;">未登録の画像は見つかりませんでした。</div>
+    <div id="recover-list" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+  </div>
+
 </div>
 
 <div id="toast"></div>
@@ -341,7 +409,7 @@ const ADMIN_PW    = 'luke1227mb'; // ← 管理者パスワード
 
 let allData    = [];
 let currentTab  = 'pending';
-let currentMode = 'drawing'; // 'drawing' | 'scoring' | 'vote' | 'config'
+let currentMode = 'drawing'; // 'drawing' | 'scoring' | 'vote' | 'config' | 'stats' | 'recover'
 
 // ================================================================
 // ログイン（セッション保持対応）
@@ -469,23 +537,31 @@ function switchMode(mode) {
   const sm = document.getElementById('mode-scoring');
   const vm = document.getElementById('mode-vote');
   const cm = document.getElementById('mode-config');
+  const tm = document.getElementById('mode-stats');
+  const rm = document.getElementById('mode-recover');
   // ボタン状態リセット
   dm.style.background = 'transparent'; dm.style.color = '#27ae60';
   sm.style.background = 'transparent'; sm.style.color = '#e67e22';
   vm.style.background = 'transparent'; vm.style.color = '#9b59b6';
   cm.style.background = 'transparent'; cm.style.color = '#3498db';
+  tm.style.background = 'transparent'; tm.style.color = '#f39c12';
+  rm.style.background = 'transparent'; rm.style.color = '#16a085';
   if (mode === 'drawing') { dm.style.background = '#27ae60'; dm.style.color = 'white'; }
   if (mode === 'scoring') { sm.style.background = '#e67e22'; sm.style.color = 'white'; }
   if (mode === 'vote')    { vm.style.background = '#9b59b6'; vm.style.color = 'white'; }
   if (mode === 'config')  { cm.style.background = '#3498db'; cm.style.color = 'white'; }
+  if (mode === 'stats')   { tm.style.background = '#f39c12'; tm.style.color = 'white'; }
+  if (mode === 'recover') { rm.style.background = '#16a085'; rm.style.color = 'white'; }
 
-  // カード/テーブル/設定パネルの表示切替
+  // カード/テーブル/設定/統計/復旧パネルの表示切替
   const showCards = mode === 'drawing' || mode === 'scoring';
   document.getElementById('card-grid').style.display        = showCards ? '' : 'none';
   document.getElementById('loading').style.display          = 'none';
   document.getElementById('empty').style.display            = 'none';
-  document.getElementById('vote-table-wrap').style.display  = mode === 'vote'   ? '' : 'none';
-  document.getElementById('config-panel').style.display     = mode === 'config' ? '' : 'none';
+  document.getElementById('vote-table-wrap').style.display  = mode === 'vote'    ? '' : 'none';
+  document.getElementById('config-panel').style.display     = mode === 'config'  ? '' : 'none';
+  document.getElementById('stats-panel').style.display      = mode === 'stats'   ? '' : 'none';
+  document.getElementById('recover-panel').style.display    = mode === 'recover' ? '' : 'none';
 
   const showTabs = showCards;
   document.querySelector('.tab-bar').style.display = showTabs ? '' : 'none';
@@ -494,6 +570,14 @@ function switchMode(mode) {
 
   if (mode === 'config') {
     loadConfigPanel();
+    return;
+  }
+  if (mode === 'stats') {
+    loadStatsPanel();
+    return;
+  }
+  if (mode === 'recover') {
+    loadRecoverPanel();
     return;
   }
 
@@ -610,7 +694,7 @@ function updateHint(mode, mult) {
 async function loadConfigPanel() {
   document.getElementById('config-current').textContent = '読み込み中...';
   document.getElementById('config-msg').textContent = '';
-  let h = 2.0, n = 4.5, e = 3.0, he = 2.0;
+  let h = 2.0, n = 4.5, e = 3.0, he = 2.0, theme = '';
   try {
     const res = await fetch(WEBHOOK_URL + '?type=config', { redirect: 'follow' });
     const cfg = await res.json();
@@ -618,10 +702,12 @@ async function loadConfigPanel() {
     n  = cfg.normalMult ?? 4.5;
     e  = cfg.easyMult   ?? 3.0;
     he = cfg.hellMult   ?? 2.0;
+    theme = cfg.theme || '';
     document.getElementById('config-current').textContent = '現在の設定を読み込みました';
   } catch(err) {
     document.getElementById('config-current').textContent = '読み込み失敗（デフォルト値で表示）';
   }
+  document.getElementById('cfg-theme').value = theme;
   document.getElementById('cfg-hard').value   = h;
   document.getElementById('cfg-hell').value   = he;
   document.getElementById('cfg-normal').value = n;
@@ -643,10 +729,11 @@ async function loadConfigPanel() {
 }
 
 async function saveConfig() {
-  const h  = parseFloat(document.getElementById('cfg-hard').value);
-  const he = parseFloat(document.getElementById('cfg-hell').value);
-  const n  = parseFloat(document.getElementById('cfg-normal').value);
-  const e  = parseFloat(document.getElementById('cfg-easy').value);
+  const h     = parseFloat(document.getElementById('cfg-hard').value);
+  const he    = parseFloat(document.getElementById('cfg-hell').value);
+  const n     = parseFloat(document.getElementById('cfg-normal').value);
+  const e     = parseFloat(document.getElementById('cfg-easy').value);
+  const theme = document.getElementById('cfg-theme').value.trim();
   if (isNaN(h) || isNaN(he) || isNaN(n) || isNaN(e)) {
     document.getElementById('config-msg').style.color = '#e74c3c';
     document.getElementById('config-msg').textContent = '❌ 値を入力してください';
@@ -658,7 +745,7 @@ async function saveConfig() {
     const res = await fetch(WEBHOOK_URL, {
       method: 'POST', redirect: 'follow',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ type: 'setConfig', hardMult: h, normalMult: n, easyMult: e, hellMult: he })
+      body: JSON.stringify({ type: 'setConfig', hardMult: h, normalMult: n, easyMult: e, hellMult: he, theme })
     });
     const text = await res.text();
     let parsed;
@@ -910,6 +997,148 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ================================================================
+// 📊 統計パネル
+// ================================================================
+const DIFF_STAT_LABELS = { hard: '👹 鬼モード', hell: '😈 地獄モード', normal: '😊 通常モード', easy: '😄 イージー' };
+const DIFF_STAT_COLORS = { hard: '#e74c3c', hell: '#8e44ad', normal: '#e67e22', easy: '#27ae60' };
+
+async function loadStatsPanel() {
+  document.getElementById('stats-loading').style.display = 'block';
+  document.getElementById('stats-content').style.display = 'none';
+  try {
+    const res  = await fetch(WEBHOOK_URL + '?type=stats', { redirect: 'follow' });
+    const data = await res.json();
+    renderStats(data);
+  } catch(e) {
+    document.getElementById('stats-loading').textContent = '読み込みに失敗しました';
+  }
+}
+
+function renderStats(data) {
+  document.getElementById('stats-loading').style.display = 'none';
+  document.getElementById('stats-content').style.display = 'block';
+
+  const sel  = data.select   || {};
+  const comp = data.complete || {};
+  const totalSelect   = Object.values(sel).reduce((a,b) => a + b, 0);
+  const totalComplete = Object.values(comp).reduce((a,b) => a + b, 0);
+
+  document.getElementById('stat-total-select').textContent   = totalSelect;
+  document.getElementById('stat-total-complete').textContent = totalComplete;
+  document.getElementById('stat-zukan-total').textContent    = (data.zukanFriend || 0) + (data.zukanScoring || 0);
+  document.getElementById('stat-vote-total').textContent     = data.voteTotal || 0;
+
+  // 難易度別バー（選択数を母数にした横棒）
+  const maxSel = Math.max(1, ...Object.values(sel));
+  const diffBars = document.getElementById('stats-diff-bars');
+  diffBars.innerHTML = Object.keys(DIFF_STAT_LABELS).map(d => {
+    const s = sel[d] || 0, c = comp[d] || 0;
+    const barLen = Math.round((s / maxSel) * 20);
+    const bar = '█'.repeat(barLen) + '░'.repeat(20 - barLen);
+    return `
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:#ddd;margin-bottom:2px;">
+          <span>${DIFF_STAT_LABELS[d]}</span>
+          <span>選択${s}回 ／ 完了${c}回</span>
+        </div>
+        <div style="font-family:monospace;font-size:0.75rem;color:${DIFF_STAT_COLORS[d]};">${bar}</div>
+      </div>
+    `;
+  }).join('');
+
+  // 直近14日間の日別選択数
+  const daily = data.daily || [];
+  const maxDaily = Math.max(1, ...daily.map(d => d.count));
+  const dailyBars = document.getElementById('stats-daily-bars');
+  dailyBars.innerHTML = daily.map(d => {
+    const barLen = Math.round((d.count / maxDaily) * 20);
+    const bar = '█'.repeat(barLen);
+    const label = d.date.slice(5); // MM-dd
+    return `<div style="display:flex;gap:8px;align-items:center;">
+      <span style="color:#888;width:44px;">${label}</span>
+      <span style="color:#f39c12;">${bar}</span>
+      <span style="color:#ddd;">${d.count}</span>
+    </div>`;
+  }).join('');
+}
+
+// ================================================================
+// 🗂 過去画像の復旧パネル
+// ================================================================
+async function loadRecoverPanel() {
+  document.getElementById('recover-loading').style.display = 'block';
+  document.getElementById('recover-empty').style.display   = 'none';
+  document.getElementById('recover-list').innerHTML = '';
+  try {
+    const res  = await fetch(WEBHOOK_URL + '?type=unlinkedScoreImages', { redirect: 'follow' });
+    const data = await res.json();
+    document.getElementById('recover-loading').style.display = 'none';
+    renderRecoverList(Array.isArray(data) ? data : []);
+  } catch(e) {
+    document.getElementById('recover-loading').textContent = '読み込みに失敗しました';
+  }
+}
+
+function renderRecoverList(items) {
+  const list = document.getElementById('recover-list');
+  list.innerHTML = '';
+  if (items.length === 0) {
+    document.getElementById('recover-empty').style.display = 'block';
+    return;
+  }
+  document.getElementById('recover-empty').style.display = 'none';
+
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.style.cssText = 'background:#16213e;border:2px solid #16a085;border-radius:10px;padding:10px;';
+    card.innerHTML = `
+      <img src="${item.imageUrl}" loading="lazy" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:8px;" onerror="this.style.display='none'">
+      <div style="font-size:0.68rem;color:#888;margin-bottom:6px;">保存日: ${item.date}</div>
+      <input type="text" value="${item.name}" placeholder="名前" id="rec-name-${item.fileId}"
+        style="width:100%;padding:6px 8px;margin-bottom:6px;border-radius:6px;border:1px solid #2a2a4a;background:#0f3460;color:white;font-size:0.82rem;">
+      <input type="number" placeholder="スコア" id="rec-score-${item.fileId}"
+        style="width:100%;padding:6px 8px;margin-bottom:6px;border-radius:6px;border:1px solid #2a2a4a;background:#0f3460;color:white;font-size:0.82rem;">
+      <select id="rec-diff-${item.fileId}"
+        style="width:100%;padding:6px 8px;margin-bottom:8px;border-radius:6px;border:1px solid #2a2a4a;background:#0f3460;color:white;font-size:0.82rem;">
+        <option value="">難易度を選択（必須）</option>
+        <option value="hard">👹 鬼モード</option>
+        <option value="hell">😈 地獄モード</option>
+        <option value="normal">😊 通常モード</option>
+        <option value="easy">😄 イージーモード</option>
+      </select>
+      <button onclick="submitRecover('${item.fileId}')"
+        style="width:100%;padding:8px;background:#16a085;color:white;border:none;border-radius:8px;font-size:0.82rem;font-weight:bold;cursor:pointer;">📖 図鑑に登録</button>
+    `;
+    list.appendChild(card);
+  });
+}
+
+async function submitRecover(fileId) {
+  const name       = document.getElementById('rec-name-' + fileId).value.trim() || '名無し';
+  const score      = Number(document.getElementById('rec-score-' + fileId).value) || 0;
+  const difficulty = document.getElementById('rec-diff-' + fileId).value;
+  if (!difficulty) {
+    showToast('❌ 難易度を選択してください');
+    return;
+  }
+  try {
+    const res  = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      body: JSON.stringify({ type: 'recoverScoreImage', fileId, name, score, difficulty })
+    });
+    const data = await res.json();
+    if (data.error) {
+      showToast('❌ 失敗: ' + data.error);
+      return;
+    }
+    showToast('📖 図鑑に登録しました！');
+    loadRecoverPanel(); // 再読み込みで登録済みの画像を一覧から除外
+  } catch(e) {
+    showToast('❌ 通信エラーが発生しました');
+  }
 }
 </script>
 </body>
