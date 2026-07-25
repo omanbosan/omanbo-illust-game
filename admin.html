@@ -255,10 +255,12 @@ body {
   <div id="config-panel" style="display:none;max-width:480px;margin:0 auto;">
     <!-- 🎨 お絵描きお題設定 -->
     <div style="background:#16213e;border-radius:14px;padding:18px 14px;margin-bottom:14px;">
-      <div style="font-size:1rem;font-weight:bold;color:#27ae60;margin-bottom:8px;">🎨 お絵描きモードの今月のお題</div>
+      <div style="font-size:1rem;font-weight:bold;color:#27ae60;margin-bottom:8px;">🎨 お絵描きモードのお題</div>
       <div style="font-size:0.72rem;color:#888;margin-bottom:8px;line-height:1.6;">
-        お絵描きチャレンジ画面に表示されます。空欄にすると非表示になります。
+        毎月1〜7日/8〜14日/15〜21日/22日以降で自動的に週替わりします（<code>themes</code>シートを参照）。
       </div>
+      <div id="cfg-theme-auto" style="font-size:0.78rem;color:#f39c12;background:#0a1628;border-radius:6px;padding:8px 10px;margin-bottom:10px;">読み込み中...</div>
+      <div style="font-size:0.72rem;color:#888;margin-bottom:4px;">手動で上書き（特別な日用・空欄なら自動のお題に戻ります）</div>
       <input type="text" id="cfg-theme" maxlength="60"
         placeholder="例: おまんぼさん（または地獄キャラのぽっぴー）が花火を見ている絵"
         style="width:100%;padding:9px 10px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.85rem;box-sizing:border-box;">
@@ -694,7 +696,7 @@ function updateHint(mode, mult) {
 async function loadConfigPanel() {
   document.getElementById('config-current').textContent = '読み込み中...';
   document.getElementById('config-msg').textContent = '';
-  let h = 2.0, n = 4.5, e = 3.0, he = 2.0, theme = '';
+  let h = 2.0, n = 4.5, e = 3.0, he = 2.0, themeOverride = '', autoTheme = '';
   try {
     const res = await fetch(WEBHOOK_URL + '?type=config', { redirect: 'follow' });
     const cfg = await res.json();
@@ -702,12 +704,16 @@ async function loadConfigPanel() {
     n  = cfg.normalMult ?? 4.5;
     e  = cfg.easyMult   ?? 3.0;
     he = cfg.hellMult   ?? 2.0;
-    theme = cfg.theme || '';
+    themeOverride = cfg.themeOverride || '';
+    autoTheme     = cfg.autoTheme || '';
     document.getElementById('config-current').textContent = '現在の設定を読み込みました';
   } catch(err) {
     document.getElementById('config-current').textContent = '読み込み失敗（デフォルト値で表示）';
   }
-  document.getElementById('cfg-theme').value = theme;
+  document.getElementById('cfg-theme').value = themeOverride;
+  document.getElementById('cfg-theme-auto').textContent = autoTheme
+    ? '📅 今週の自動お題：' + autoTheme
+    : '📅 今週の自動お題：未設定（themesシートが空、またはsetupThemesSheet()未実行）';
   document.getElementById('cfg-hard').value   = h;
   document.getElementById('cfg-hell').value   = he;
   document.getElementById('cfg-normal').value = n;

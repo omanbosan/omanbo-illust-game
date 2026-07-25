@@ -590,19 +590,79 @@ function setupApprovalColumn() {
 function getConfig() {
   const ss = SpreadsheetApp.openById(CONFIG.sheetId);
   let sheet = ss.getSheetByName('config');
+  const autoTheme = getCurrentWeeklyTheme();
   if (!sheet || sheet.getLastRow() < 2) {
-    return { hardMult: 2.0, normalMult: 4.5, easyMult: 3.0, hellMult: 2.0 }; // デフォルト値
+    return { hardMult: 2.0, normalMult: 4.5, easyMult: 3.0, hellMult: 2.0, theme: autoTheme, themeOverride: '', autoTheme: autoTheme }; // デフォルト値
   }
   const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
   const cfg = {};
   rows.forEach(r => { if (r[0]) cfg[String(r[0])] = r[1]; });
+  const themeOverride = cfg['theme'] ? String(cfg['theme']) : '';
   return {
     hardMult:   parseFloat(cfg['hardMult'])   || 2.0,
     normalMult: parseFloat(cfg['normalMult']) || 4.5,
     easyMult:   parseFloat(cfg['easyMult'])   || 3.0,
     hellMult:   parseFloat(cfg['hellMult'])   || 2.0,
-    theme:      cfg['theme'] ? String(cfg['theme']) : ''
+    theme:         themeOverride || autoTheme, // 実際に画面へ出す値（手動上書き優先）
+    themeOverride: themeOverride,              // 管理画面の入力欄用（生の上書き値）
+    autoTheme:     autoTheme                   // 週替わりで自動計算された今週のお題
   };
+}
+
+// ----------------------------------------------------------------
+// お絵描きモードの週替わりお題（月×週の自動計算・themesシート参照）
+// 1〜7日=第1週, 8〜14日=第2週, 15〜21日=第3週, 22日以降=第4週
+// ----------------------------------------------------------------
+function getCurrentWeeklyTheme() {
+  const ss    = SpreadsheetApp.openById(CONFIG.sheetId);
+  const sheet = ss.getSheetByName('themes');
+  if (!sheet || sheet.getLastRow() < 2) return '';
+
+  const tz    = Session.getScriptTimeZone() || 'Asia/Tokyo';
+  const now   = new Date();
+  const month = Number(Utilities.formatDate(now, tz, 'M'));
+  const day   = Number(Utilities.formatDate(now, tz, 'd'));
+  const week  = Math.min(4, Math.ceil(day / 7));
+
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, 3).getValues();
+  const match = rows.find(r => Number(r[0]) === month && Number(r[1]) === week);
+  return match ? String(match[2]) : '';
+}
+
+// ----------------------------------------------------------------
+// 【初回のみ実行】themesシートを作成し、12ヶ月×4週分のお題を投入する
+// ----------------------------------------------------------------
+function setupThemesSheet() {
+  const ss = SpreadsheetApp.openById(CONFIG.sheetId);
+  let sheet = ss.getSheetByName('themes');
+  if (sheet) { Logger.log('⚠️ themesシートは既に存在します。処理をスキップしました。'); return; }
+
+  sheet = ss.insertSheet('themes');
+  sheet.appendRow(['月', '週', 'お題']);
+  sheet.setFrozenRows(1);
+
+  const THEMES = {
+    1:  ['おまんぼさんが着物でお雑煮を食べている絵', 'ぽっぴーが書き初めに挑戦している絵', 'おまんぼさんが雪だるまを作っている絵', 'ぽっぴーが鬼のお面で豆まきしている絵'],
+    2:  ['おまんぼさんがチョコレートを作っている絵', 'ぽっぴーがマフラーを巻いて雪遊びしている絵', 'おまんぼさんがこたつでみかんを食べている絵', 'ぽっぴーがひな人形を眺めている絵'],
+    3:  ['おまんぼさんがひな祭りの着物を着ている絵', 'ぽっぴーが桜の下で卒業証書を持っている絵', 'おまんぼさんがお花見団子を食べている絵', 'ぽっぴーが新しいランドセルを背負っている絵'],
+    4:  ['おまんぼさんが満開の桜の下でお花見している絵', 'ぽっぴーが入学式でランドセルを背負っている絵', 'おまんぼさんがこいのぼりを見上げている絵', 'ぽっぴーが傘をさして水たまりで遊んでいる絵'],
+    5:  ['おまんぼさんが兜をかぶってこどもの日を祝っている絵', 'ぽっぴーが遠足でお弁当を食べている絵', 'おまんぼさんが母の日にカーネーションを渡している絵', 'ぽっぴーが新緑の中でピクニックしている絵'],
+    6:  ['おまんぼさんが紫陽花と一緒に写っている絵', 'ぽっぴーがレインコートでカタツムリと遊んでいる絵', 'おまんぼさんが父の日にネクタイを渡している絵', 'ぽっぴーがてるてる坊主を作っている絵'],
+    7:  ['おまんぼさんが七夕の短冊に願い事を書いている絵', 'ぽっぴーが浴衣で花火大会に行っている絵', 'おまんぼさんがひまわり畑で麦わら帽子をかぶっている絵', 'ぽっぴーがかき氷を食べている絵'],
+    8:  ['おまんぼさんが夏祭りで金魚すくいをしている絵', 'ぽっぴーが盆踊りを踊っている絵', 'おまんぼさんが浜辺でスイカ割りをしている絵', 'ぽっぴーが花火を見上げている絵'],
+    9:  ['おまんぼさんがお月見団子とすすきを飾っている絵', 'ぽっぴーが運動会でハチマキを巻いている絵', 'おまんぼさんが栗ご飯を食べている絵', 'ぽっぴーが読書の秋で本を読んでいる絵'],
+    10: ['おまんぼさんが紅葉狩りをしている絵', 'ぽっぴーがかぼちゃの仮装でハロウィンをしている絵', 'おまんぼさんが芋掘りをしている絵', 'ぽっぴーがお化けの仮装でトリックオアトリートしている絵'],
+    11: ['おまんぼさんが七五三で着物を着ている絵', 'ぽっぴーが落ち葉の山にダイブしている絵', 'おまんぼさんが焼き芋を食べている絵', 'ぽっぴーが暖かいマフラーを巻いている絵'],
+    12: ['おまんぼさんがクリスマスツリーを飾っている絵', 'ぽっぴーがサンタの帽子をかぶっている絵', 'おまんぼさんが年越しそばを食べている絵', 'ぽっぴーが紅白を見ながら年越ししている絵']
+  };
+
+  Object.keys(THEMES).forEach(month => {
+    THEMES[month].forEach((theme, i) => {
+      sheet.appendRow([Number(month), i + 1, theme]);
+    });
+  });
+
+  Logger.log('✅ themesシートに48件のお題を投入しました！');
 }
 
 function setConfig(data) {
@@ -635,7 +695,7 @@ function setConfig(data) {
     setValue(key, val);
   });
 
-  // お絵描きモードの「今月のお題」（自由入力テキスト・空欄も許可）
+  // お絵描きモードの週替わりお題の手動上書き（自由入力テキスト・空欄なら自動お題に戻る）
   if (data.theme !== undefined) {
     setValue('theme', String(data.theme).slice(0, 60));
   }
