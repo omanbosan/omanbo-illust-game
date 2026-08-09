@@ -1068,7 +1068,10 @@ function updateScoringLuckUI(hardMult) {
 
 let _monthlyTheme = '';
 
-(async function fetchScoringConfig() {
+// 採点時に「設定読み込みがまだ終わっていない」せいでデフォルト倍率のまま
+// 採点されてしまう（管理画面の変更が反映されない）事故を防ぐため、
+// 読み込み完了を待てるようPromiseを外に保持しておく。
+let _scoringConfigReady = (async function fetchScoringConfig() {
   try {
     const res = await fetch(WEBHOOK_URL + '?type=config', { redirect: 'follow' });
     const cfg = await res.json();
@@ -1488,6 +1491,13 @@ async function confirmPrescoreAndScore() {
 }
 
 async function doScore() {
+  // 管理画面の採点倍率の読み込みが終わるまで待つ（最大3秒。失敗/遅延時は
+  // デフォルト倍率にフォールバックして採点自体は止めない）
+  await Promise.race([
+    _scoringConfigReady,
+    new Promise(resolve => setTimeout(resolve, 3000))
+  ]);
+
   let total = 0, html = '';
   PART_KEYS.forEach(key => {
     const cfg = PARTS[key];
@@ -1600,7 +1610,11 @@ async function doScore() {
   const cleanImg = document.getElementById('result-img-clean');
   lastFreehandImage = (cleanImg && cleanImg.src && cleanImg.src.startsWith('data:')) ? cleanImg.src : null;
 
-  document.getElementById('score-modal').classList.add('show');
+  const scoreModalEl = document.getElementById('score-modal');
+  scoreModalEl.classList.add('show');
+  scoreModalEl.scrollTop = 0;
+  const scoreModalBox = scoreModalEl.querySelector('.modal-box');
+  if (scoreModalBox) scoreModalBox.scrollTop = 0;
   trackPlay('complete', currentDifficulty, total);
 }
 
