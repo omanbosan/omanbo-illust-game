@@ -503,14 +503,18 @@ h1 {
       <div style="color:#999;font-size:0.72rem;margin-top:4px;">各パーツは「描いた線と見本の重なり具合」で自動採点。正確な位置・形に描くほど高得点！</div>
     </div>
 
-    <!-- 景品情報（左ボーダーINFOエリア） -->
+    <!-- 順位情報（左ボーダーINFOエリア）※1〜3等の景品は一旦なし・順位のみ発表 -->
     <div style="border-left:3px solid rgba(231,76,60,0.6);padding-left:10px;margin-bottom:16px;">
-      <div style="font-size:0.78rem;font-weight:bold;color:#ff6b6b;margin-bottom:6px;">👹 鬼モードのみプレゼント対象（月末締め）</div>
+      <div style="font-size:0.78rem;font-weight:bold;color:#ff6b6b;margin-bottom:6px;">👹 鬼モード・😈 地獄モードは順位発表の対象</div>
       <div style="display:flex;flex-direction:column;gap:2px;font-size:0.78rem;color:#ccc;">
         <div>🏆 <b style="color:#ffd700;">特賞</b>　<span style="color:#ffd700;">95点以上</span>　スペシャルプレゼント</div>
-        <div>🥇 <b style="color:#f39c12;">1等賞</b>　銘木キーホルダー</div>
-        <div>🥈 <b style="color:#bdc3c7;">2等賞</b>　コースター</div>
-        <div>🥉 <b style="color:#cd6133;">3等賞</b>　500円オフクーポン</div>
+        <div>🥇 <b style="color:#f39c12;">1等賞</b></div>
+        <div>🥈 <b style="color:#bdc3c7;">2等賞</b></div>
+        <div>🥉 <b style="color:#cd6133;">3等賞</b></div>
+      </div>
+      <div style="font-size:0.72rem;color:#999;margin-top:6px;line-height:1.6;">
+        ※ 1〜3等は順位の発表のみです（景品はありません）<br>
+        ※ 結果は<b style="color:#ffb86b;">不定期</b>にインスタで発表します
       </div>
     </div>
 
@@ -948,7 +952,7 @@ h1 {
       <button id="rank-diff-hell" onclick="switchRankDiff('hell')"
         style="flex:1;padding:5px 4px;border:2px solid #8e44ad;background:white;color:#8e44ad;border-radius:8px;cursor:pointer;font-size:0.78rem;font-weight:bold;">😈 地獄</button>
     </div>
-    <div id="rank-note" style="font-size:0.75rem;color:#888;margin-bottom:6px;text-align:center;">毎月1日にリセット＆結果発表</div>
+    <div id="rank-note" style="font-size:0.75rem;color:#888;margin-bottom:6px;text-align:center;">毎月1日にリセット（結果発表は不定期）</div>
     <table id="ranking-table">
       <thead><tr><th>順位</th><th>名前</th><th>スコア</th><th>Instagram</th></tr></thead>
       <tbody id="ranking-tbody"></tbody>
@@ -1759,32 +1763,35 @@ async function doScore() {
   // 登録ステータスは鬼モード・地獄モードのみ表示（ニックネームは採点前に取得済み）
   const registerSection = document.getElementById('score-register-section');
   if (registerSection) registerSection.style.display = (currentDifficulty === 'hard' || isHellMode()) ? '' : 'none';
-  // 賞品表示（鬼モード・地獄モードのみ・月末締め）
+  // 順位表示（鬼モード・地獄モードのみ）
+  // 1〜3等は景品なしの「順位のみ発表」。特賞のみスペシャルプレゼントあり。
+  // 発表時期は投稿数が少ない月に順位が成立しないため、月次ではなく不定期。
   const prizeSection = document.getElementById('prize-section');
   const prizeCode = document.getElementById('prize-code');
   prizeCode.style.display = 'none';
   const prizeFullScore = isHellMode() ? activeFhOrder().length * 20 : 100;
   const prizePct = total / prizeFullScore * 100;
+  const ANNOUNCE = '不定期にインスタにて結果発表！';
   if (currentDifficulty !== 'hard' && !isHellMode()) {
     prizeSection.style.display = 'none';
   } else if (prizePct >= 95) {
     document.getElementById('prize-rank').textContent = '🏆 特賞圏内！！';
-    document.getElementById('prize-name').textContent = '来月頭にインスタにて結果発表！';
+    document.getElementById('prize-name').textContent = 'スペシャルプレゼント／' + ANNOUNCE;
     prizeSection.style.background = 'linear-gradient(135deg,#f6d365,#fda085)';
     prizeSection.style.display = 'block';
   } else if (prizePct >= 80) {
     document.getElementById('prize-rank').textContent = '🥇 1等賞圏内！';
-    document.getElementById('prize-name').textContent = '来月頭にインスタにて結果発表！';
+    document.getElementById('prize-name').textContent = ANNOUNCE;
     prizeSection.style.background = 'linear-gradient(135deg,#fff9c4,#ffe082)';
     prizeSection.style.display = 'block';
   } else if (prizePct >= 65) {
     document.getElementById('prize-rank').textContent = '🥈 2等賞圏内！';
-    document.getElementById('prize-name').textContent = '来月頭にインスタにて結果発表！';
+    document.getElementById('prize-name').textContent = ANNOUNCE;
     prizeSection.style.background = 'linear-gradient(135deg,#eceff1,#cfd8dc)';
     prizeSection.style.display = 'block';
   } else if (prizePct >= 50) {
     document.getElementById('prize-rank').textContent = '🥉 3等賞圏内！';
-    document.getElementById('prize-name').textContent = '来月頭にインスタにて結果発表！';
+    document.getElementById('prize-name').textContent = ANNOUNCE;
     prizeSection.style.background = 'linear-gradient(135deg,#ffe0b2,#ffcc80)';
     prizeSection.style.display = 'block';
   } else {
@@ -2586,7 +2593,7 @@ function switchRankTab(tab, reload = true) {
   if (tab === 'current') {
     cur.style.background = '#9b59b6'; cur.style.color = 'white';
     arc.style.background = 'white';   arc.style.color = '#9b59b6';
-    note.textContent = '毎月1日にリセット＆結果発表';
+    note.textContent = '毎月1日にリセット（結果発表は不定期）';
   } else {
     arc.style.background = '#9b59b6'; arc.style.color = 'white';
     cur.style.background = 'white';   cur.style.color = '#9b59b6';
