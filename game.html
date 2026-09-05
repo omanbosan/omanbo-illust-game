@@ -554,7 +554,11 @@ h1 {
       <div style="background:rgba(39,174,96,0.3);border-radius:8px;padding:5px 8px;font-size:0.7rem;color:#dfd;text-align:center;min-width:52px;">🎭<br>キャラクターに！</div>
     </div>
 
-    <img src="odekaki-description.png" alt="おまんぼさんを探そう" style="display:block;width:100%;border-radius:12px;object-fit:cover;margin-bottom:8px;">
+    <!-- 「おまんぼさんを探そう」のイラスト（テーマパーク編・ビーチ編の2枚） -->
+    <img src="odekaki-description.png" alt="おまんぼさんを探そう（テーマパーク）" loading="lazy"
+      style="display:block;width:100%;border-radius:12px;object-fit:cover;margin-bottom:8px;">
+    <img src="odekaki-description2.png" alt="おまんぼさんを探そう（ビーチ）" loading="lazy"
+      style="display:block;width:100%;border-radius:12px;object-fit:cover;margin-bottom:8px;">
     <div style="border-left:3px solid rgba(231,76,60,0.5);padding-left:8px;margin-bottom:14px;font-size:0.72rem;color:#f1948a;line-height:1.6;">
       ⚠️ アニメキャラクターなどに似せた絵はご遠慮ください。おまんぼさんのオリジナルのお友達を描いてね🎨
     </div>
@@ -706,20 +710,33 @@ h1 {
       style="flex:1;padding:7px 10px;background:white;color:#27ae60;border:2px solid #27ae60;border-radius:20px;font-size:0.85rem;font-weight:bold;cursor:pointer;">🔲 フリースタイル</button>
   </div>
 
-  <!-- キャンバスエリア（3レイヤー・形状切替対応） -->
-  <div style="position:relative;width:300px;height:300px;flex-shrink:0;margin-bottom:4px;">
-    <div id="odekaki-clip-container" style="position:absolute;top:0;left:0;width:300px;height:300px;border-radius:50%;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
-      <canvas id="odekaki-canvas-bg" width="300" height="300"
-        style="position:absolute;top:0;left:0;pointer-events:none;"></canvas>
-      <canvas id="odekaki-canvas-fill" width="300" height="300"
-        style="position:absolute;top:0;left:0;pointer-events:none;"></canvas>
-      <canvas id="odekaki-canvas" width="300" height="300"
-        style="position:absolute;top:0;left:0;touch-action:none;cursor:crosshair;"></canvas>
+  <!-- キャンバスエリア（3レイヤー・形状切替対応・2本指ピンチズーム対応） -->
+  <!-- #odekaki-viewport が固定枠、#odekaki-zoom-area に transform をかけて拡大する -->
+  <div id="odekaki-viewport" style="position:relative;width:300px;height:300px;flex-shrink:0;margin-bottom:4px;overflow:hidden;touch-action:none;">
+    <div id="odekaki-zoom-area" style="position:absolute;top:0;left:0;width:300px;height:300px;transform-origin:0 0;will-change:transform;">
+      <div id="odekaki-clip-container" style="position:absolute;top:0;left:0;width:300px;height:300px;border-radius:50%;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
+        <canvas id="odekaki-canvas-bg" width="300" height="300"
+          style="position:absolute;top:0;left:0;pointer-events:none;"></canvas>
+        <canvas id="odekaki-canvas-fill" width="300" height="300"
+          style="position:absolute;top:0;left:0;pointer-events:none;"></canvas>
+        <canvas id="odekaki-canvas" width="300" height="300"
+          style="position:absolute;top:0;left:0;touch-action:none;cursor:crosshair;"></canvas>
+      </div>
+      <svg id="odekaki-outline-svg" width="300" height="300" style="position:absolute;top:0;left:0;pointer-events:none;z-index:5;">
+        <circle cx="150" cy="150" r="148" fill="none" stroke="#333" stroke-width="3"/>
+      </svg>
     </div>
-    <svg id="odekaki-outline-svg" width="300" height="300" style="position:absolute;top:0;left:0;pointer-events:none;z-index:5;">
-      <circle cx="150" cy="150" r="148" fill="none" stroke="#333" stroke-width="3"/>
-    </svg>
+    <!-- ズーム倍率バッジ（拡大中のみ表示） -->
+    <div id="odekaki-zoom-badge" style="display:none;position:absolute;top:6px;right:6px;z-index:10;background:rgba(0,0,0,0.55);color:#fff;font-size:0.68rem;font-weight:bold;padding:3px 9px;border-radius:20px;pointer-events:none;">100%</div>
   </div>
+
+  <!-- ズーム操作（スマホ=2本指ピンチ / PC=ボタン） -->
+  <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+    <button onclick="odekakiZoomStep(-1)" style="padding:5px 12px;background:white;color:#27ae60;border:1.5px solid #27ae60;border-radius:16px;font-size:0.9rem;font-weight:bold;cursor:pointer;line-height:1;">－</button>
+    <button id="odekaki-zoom-reset" onclick="odekakiZoomReset()" style="padding:5px 12px;background:white;color:#27ae60;border:1.5px solid #27ae60;border-radius:16px;font-size:0.72rem;font-weight:bold;cursor:pointer;">🔍 等倍に戻す</button>
+    <button onclick="odekakiZoomStep(1)" style="padding:5px 12px;background:white;color:#27ae60;border:1.5px solid #27ae60;border-radius:16px;font-size:0.9rem;font-weight:bold;cursor:pointer;line-height:1;">＋</button>
+  </div>
+  <div style="font-size:0.68rem;color:#7a9a85;margin-bottom:6px;text-align:center;">✌️ 2本指でひろげると拡大、2本指でなぞると移動できます</div>
 
   <!-- ツール選択 + アンドゥ/リドゥ -->
   <div style="display:flex;gap:6px;margin-bottom:4px;flex-wrap:wrap;justify-content:center;">
@@ -1980,14 +1997,28 @@ function setupFhCanvas() {
 
   // ── 座標変換: play-canvas の getBoundingClientRect + _gameScale を使用
   // （iOS Safari でも親要素の CSS transform を正しく反映させるため）
+  //
+  // 注意: #play-canvas は box-sizing:border-box + border:3px なので、
+  // getBoundingClientRect() が返す枠線込みの箱(460x500)と、実際にキャンバスが
+  // 表示される枠線の内側(454x494)がズレる。これを補正しないと、指と線が
+  // 端で最大3pxずれ、採点座標にも同じだけ誤差が乗る。
   function getPos(e) {
-    const rect = document.getElementById('play-canvas').getBoundingClientRect();
+    const pc   = document.getElementById('play-canvas');
+    const rect = pc.getBoundingClientRect();
+    const cs   = getComputedStyle(pc);
+    const bl   = parseFloat(cs.borderLeftWidth) || 0;
+    const bt   = parseFloat(cs.borderTopWidth)  || 0;
+    const innerW = pc.clientWidth  || 460;  // 枠線の内側の幅(454)
+    const innerH = pc.clientHeight || 500;  // 枠線の内側の高さ(494)
     const src  = (e.touches && e.touches.length > 0) ? e.touches[0]
                : (e.changedTouches && e.changedTouches.length > 0) ? e.changedTouches[0]
                : e;
+    // 画面座標 → 枠線込みの箱の座標 → 枠線の内側の座標 → キャンバス460x500座標
+    const px = (src.clientX - rect.left) / _gameScale - bl;
+    const py = (src.clientY - rect.top)  / _gameScale - bt;
     return {
-      x: (src.clientX - rect.left) / _gameScale,
-      y: (src.clientY - rect.top)  / _gameScale
+      x: px / innerW * 460,
+      y: py / innerH * 500
     };
   }
 
@@ -3564,7 +3595,77 @@ function closeOdekakiOverlay() {
   showHtwPlay();
 }
 
+// ================================================================
+// お絵描きモード ピンチズーム
+// 細かい部分を描けるよう、2本指でのピンチ拡大／2本指ドラッグでの移動に対応する。
+// #odekaki-zoom-area に transform をかけるだけなので、描画用の getPos()
+// （canvas自身のgetBoundingClientRectから算出）は変更不要で座標が一致する。
+// ================================================================
+const ODK_VIEW = 300;          // ビューポート（＝キャンバス）の一辺
+const ODK_ZOOM_MIN = 1, ODK_ZOOM_MAX = 5;
+let odkZoom = 1, odkPanX = 0, odkPanY = 0;
+let odkPinch = null;           // ピンチ中の状態（nullなら非ピンチ）
+
+function odkClampPan() {
+  // 拡大した中身がビューポートから離れないよう平行移動量を制限する
+  const min = ODK_VIEW - ODK_VIEW * odkZoom; // 例: zoom=2 なら -300
+  odkPanX = Math.min(0, Math.max(min, odkPanX));
+  odkPanY = Math.min(0, Math.max(min, odkPanY));
+}
+
+function odkApplyTransform(animate) {
+  const area  = document.getElementById('odekaki-zoom-area');
+  const badge = document.getElementById('odekaki-zoom-badge');
+  if (!area) return;
+  odkClampPan();
+  // ピンチ中は transition を付けない（付けると指に追従せずカクつくため）
+  area.style.transition = animate ? 'transform 0.18s ease-out' : 'none';
+  area.style.transform  = `translate(${odkPanX}px, ${odkPanY}px) scale(${odkZoom})`;
+  if (badge) {
+    const pct = Math.round(odkZoom * 100);
+    badge.textContent = pct + '%';
+    badge.style.display = odkZoom > 1.01 ? 'block' : 'none';
+  }
+}
+
+function odekakiZoomReset() {
+  odkZoom = 1; odkPanX = 0; odkPanY = 0;
+  odkApplyTransform(true);
+}
+
+// ビューポート中心を固定したままズーム倍率を1段階変える（PC用の＋／－ボタン）
+function odekakiZoomStep(dir) {
+  odkZoomAt(odkZoom * (dir > 0 ? 1.4 : 1 / 1.4), ODK_VIEW / 2, ODK_VIEW / 2, true);
+}
+
+// ビューポート座標 (vx, vy) の点を動かさずに newZoom へ変更する
+function odkZoomAt(newZoom, vx, vy, animate) {
+  const z0 = odkZoom;
+  const z1 = Math.min(ODK_ZOOM_MAX, Math.max(ODK_ZOOM_MIN, newZoom));
+  // (vx,vy) の下にある中身の座標を保ったまま拡大率だけ変える
+  const cx = (vx - odkPanX) / z0;
+  const cy = (vy - odkPanY) / z0;
+  odkZoom = z1;
+  odkPanX = vx - cx * z1;
+  odkPanY = vy - cy * z1;
+  odkApplyTransform(animate);
+}
+
+// 2本指の距離と中点（ビューポート左上を原点としたローカル座標）を求める
+function odkTouchInfo(e) {
+  const vp = document.getElementById('odekaki-viewport').getBoundingClientRect();
+  const a = e.touches[0], b = e.touches[1];
+  const dx = a.clientX - b.clientX, dy = a.clientY - b.clientY;
+  return {
+    dist: Math.hypot(dx, dy) || 1,
+    mx: (a.clientX + b.clientX) / 2 - vp.left,
+    my: (a.clientY + b.clientY) / 2 - vp.top
+  };
+}
+
 function setupOdekakiCanvas() {
+  // ズーム状態をリセット
+  odekakiZoomReset();
   // 白背景レイヤー初期化（1回だけ）
   initBgCanvas();
   // 塗り・線レイヤーはクリア
@@ -3603,6 +3704,14 @@ function setupOdekakiCanvas() {
 
   function onStart(e) {
     e.preventDefault();
+    // 指が2本以上 → 描画ではなくピンチズーム操作として扱う
+    if (e.touches && e.touches.length >= 2) {
+      odekakiDrawing = false;
+      const info = odkTouchInfo(e);
+      odkPinch = { dist: info.dist, zoom: odkZoom, mx: info.mx, my: info.my,
+                   panX: odkPanX, panY: odkPanY };
+      return;
+    }
     const pos = getPos(e);
 
     if (odekakiTool === 'bucket') {
@@ -3650,6 +3759,29 @@ function setupOdekakiCanvas() {
 
   function onMove(e) {
     e.preventDefault();
+    // 2本目の指がキャンバスの外から置かれた場合は touchstart がここに来ないため、
+    // 移動中に2本指を検知したらこの時点でピンチを開始する
+    if (!odkPinch && e.touches && e.touches.length >= 2) {
+      odekakiDrawing = false;
+      const info0 = odkTouchInfo(e);
+      odkPinch = { dist: info0.dist, zoom: odkZoom, mx: info0.mx, my: info0.my,
+                   panX: odkPanX, panY: odkPanY };
+      return;
+    }
+    // ピンチ中: 2本指の距離で拡大率、中点の移動で平行移動をまとめて反映する
+    if (odkPinch && e.touches && e.touches.length >= 2) {
+      const info = odkTouchInfo(e);
+      const z1 = Math.min(ODK_ZOOM_MAX, Math.max(ODK_ZOOM_MIN,
+                   odkPinch.zoom * (info.dist / odkPinch.dist)));
+      // ピンチ開始時に中点の下にあった中身の点を、いまの中点に合わせ続ける
+      const cx = (odkPinch.mx - odkPinch.panX) / odkPinch.zoom;
+      const cy = (odkPinch.my - odkPinch.panY) / odkPinch.zoom;
+      odkZoom = z1;
+      odkPanX = info.mx - cx * z1;
+      odkPanY = info.my - cy * z1;
+      odkApplyTransform(false);   // transitionなし = 指に即追従
+      return;
+    }
     if (!odekakiDrawing || odekakiTool === 'bucket') return;
     const pos = getPos(e);
 
@@ -3686,6 +3818,13 @@ function setupOdekakiCanvas() {
 
   function onEnd(e) {
     e.preventDefault();
+    // 指が2本未満に戻ったらピンチ終了。
+    // 残った1本でそのまま線を描き始めてしまわないよう、描画は再開しない。
+    if (odkPinch && (!e.touches || e.touches.length < 2)) {
+      odkPinch = null;
+      odekakiDrawing = false;
+      return;
+    }
     if (odekakiDrawing) {
       // compositeOperation をリセット
       document.getElementById('odekaki-canvas').getContext('2d').globalCompositeOperation = 'source-over';
