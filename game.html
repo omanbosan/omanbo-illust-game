@@ -886,10 +886,6 @@ h1 {
       ⚠️ アニメキャラクターなどに似せた絵は著作権の問題があるため、オリジナルの絵を描いてね💛<br>
       🎨 これまでにそういった絵を投稿してくれた方の作品は、管理者の思い出図鑑に大切に残しています💛
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
-      <span id="vote-counter" style="font-size:0.78rem;color:#e67e22;font-weight:bold;">残り投票: 3 / 3票</span>
-      <button onclick="openPodium()" style="padding:5px 12px;background:#f39c12;color:white;border:none;border-radius:20px;font-size:0.78rem;cursor:pointer;">🏆 人気ランキング</button>
-    </div>
     <div id="zukan-list" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;"></div>
     <div id="zukan-loading" style="text-align:center;padding:20px;color:#888;font-size:0.9rem;">読み込み中...</div>
     <div id="zukan-empty" style="display:none;text-align:center;padding:20px;color:#aaa;font-size:0.85rem;">まだキャラクターがいません。<br>最初のキャラクターになろう！</div>
@@ -921,16 +917,6 @@ h1 {
   </div>
 </div>
 
-<!-- 表彰台モーダル -->
-<div class="modal-bg" id="podium-modal">
-  <div class="modal-box" style="max-width:400px;">
-    <h2 style="color:#f39c12;margin-bottom:4px;">🏆 人気ランキング</h2>
-    <p style="font-size:0.75rem;color:#aaa;margin-bottom:16px;">今月のみんなの一票が集まりました</p>
-    <div id="podium-content" style="margin-bottom:16px;"></div>
-    <p style="font-size:0.7rem;color:#bbb;margin-bottom:12px;">※ 投票数は非公開です / 毎月最終週に投票・月末締め</p>
-    <button onclick="document.getElementById('podium-modal').classList.remove('show')" style="padding:10px 24px;background:#95a5a6;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">← 戻る</button>
-  </div>
-</div>
 
 <!-- ランキングモーダル -->
 <div class="modal-bg" id="rank-modal">
@@ -3260,7 +3246,6 @@ async function openZukan() {
   if (zukanCache && Date.now() - zukanFetchedAt < ZUKAN_TTL) {
     loading.style.display = 'none';
     renderZukanList(list, empty, zukanCache);
-    updateVoteCounter();
     // バックグラウンドで静かに更新（次回用）
     setTimeout(prefetchZukan, 500);
     return;
@@ -3277,7 +3262,6 @@ async function openZukan() {
     await zukanPromise;
     loading.style.display = 'none';
     renderZukanList(list, empty, zukanCache);
-    updateVoteCounter();
   } catch(e) {
     loading.textContent = '読み込みに失敗しました';
   }
@@ -3307,15 +3291,8 @@ function renderZukanList(list, empty, data) {
   }
   empty.style.display = 'none';
 
-  // 投票状態を取得
-  const myVotes = getMyVotes();
-  const totalCast = Object.values(myVotes).reduce((s,v)=>s+v,0);
-  const MAX_VOTES = 3;
-
   data.forEach((entry, index) => {
     const displayNo = index + 1; // 連番（却下分は含まない）
-    const alreadyVoted = myVotes[entry.no] || 0;
-    const canVote = totalCast < MAX_VOTES && !alreadyVoted;
 
     const card = document.createElement('div');
     card.style.cssText = 'background:#fffbf0;border:2px solid #f39c12;border-radius:10px;padding:10px;text-align:center;position:relative;';
@@ -3329,20 +3306,9 @@ function renderZukanList(list, empty, data) {
       <div style="font-size:0.72rem;color:#888;margin-bottom:2px;">by ${entry.penname || '?'}</div>
       ${entry.comment ? `<div style="font-size:0.72rem;color:#666;margin-bottom:2px;">「${entry.comment}」</div>` : ''}
       ${entry.igShow && entry.instagram ? `<div style="font-size:0.65rem;color:#aaa;margin-bottom:4px;">@${entry.instagram}</div>` : ''}
-      <button onclick="castZukanVote(${entry.no}, this)"
-        style="margin-top:4px;padding:5px 10px;border:none;border-radius:20px;font-size:0.72rem;cursor:${canVote ? 'pointer' : 'default'};
-        background:${alreadyVoted ? '#e67e22' : (canVote ? '#fff3e0' : '#eee')};
-        color:${alreadyVoted ? 'white' : (canVote ? '#e67e22' : '#aaa')};
-        border:1px solid ${alreadyVoted ? '#e67e22' : (canVote ? '#e67e22' : '#ddd')};"
-        ${(!canVote && !alreadyVoted) ? 'disabled' : ''}>
-        ${alreadyVoted ? '❤️ 取り消す' : (canVote ? '🤍 投票する' : '🤍 投票')}
-      </button>
     `;
     list.appendChild(card);
   });
-
-  // 残り投票数を表示
-  updateVoteCounter();
 }
 
 // ================================================================
@@ -3493,120 +3459,6 @@ function renderScoringZukanList(list, empty, rawData) {
     };
     list.appendChild(moreBtn);
   }
-}
-
-// ================================================================
-// 図鑑 投票機能（localStorage・月次リセット）
-// ================================================================
-function voteKey() {
-  const d = new Date();
-  return `omanbo_votes_${d.getFullYear()}_${String(d.getMonth()+1).padStart(2,'0')}`;
-}
-
-function getMyVotes() {
-  try { return JSON.parse(localStorage.getItem(voteKey()) || '{}'); } catch(e) { return {}; }
-}
-
-function saveMyVotes(v) { localStorage.setItem(voteKey(), JSON.stringify(v)); }
-
-function castZukanVote(entryNo, btn) {
-  const votes = getMyVotes();
-  const entry = zukanCache && zukanCache.find(e => e.no === entryNo);
-
-  if (votes[entryNo]) {
-    // 取り消し
-    delete votes[entryNo];
-    saveMyVotes(votes);
-    fetch(WEBHOOK_URL, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ type: 'unvote', no: entryNo, villageName: entry ? entry.villageName : '' })
-    }).catch(() => {});
-    // ボタンを未投票状態に戻す
-    btn.textContent = '🤍 投票する';
-    btn.style.background = '#fff3e0';
-    btn.style.color = '#e67e22';
-    btn.style.borderColor = '#e67e22';
-    btn.disabled = false;
-    // 他の無効ボタンも復活
-    document.querySelectorAll('#zukan-list button').forEach(b => {
-      if (!b.style.background.includes('e67e22')) {
-        b.disabled = false;
-        b.style.background = '#fff3e0';
-        b.style.color = '#e67e22';
-        b.style.borderColor = '#e67e22';
-      }
-    });
-  } else {
-    // 新規投票
-    const total = Object.values(votes).reduce((s,v)=>s+v,0);
-    if (total >= 3) return;
-    votes[entryNo] = 1;
-    saveMyVotes(votes);
-    fetch(WEBHOOK_URL, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ type: 'vote', no: entryNo, villageName: entry ? entry.villageName : '' })
-    }).catch(() => {});
-    btn.textContent = '❤️ 取り消す';
-    btn.style.background = '#e67e22';
-    btn.style.color = 'white';
-    btn.style.borderColor = '#e67e22';
-    // 3票使い切ったら他のボタンも無効化
-    const newTotal = Object.values(votes).reduce((s,v)=>s+v,0);
-    if (newTotal >= 3) {
-      document.querySelectorAll('#zukan-list button').forEach(b => {
-        if (!b.style.background.includes('e67e22')) {
-          b.disabled = true;
-          b.style.background = '#eee';
-          b.style.color = '#aaa';
-          b.style.borderColor = '#ddd';
-        }
-      });
-    }
-  }
-  updateVoteCounter();
-}
-
-function updateVoteCounter() {
-  const votes = getMyVotes();
-  const used  = Object.values(votes).reduce((s,v)=>s+v,0);
-  const el = document.getElementById('vote-counter');
-  if (el) el.textContent = `残り投票: ${3 - used} / 3票`;
-}
-
-function openPodium() {
-  document.getElementById('podium-modal').classList.add('show');
-  const votes = getMyVotes();
-  const data  = zukanCache || [];
-
-  // 投票数でソート（上位3件）
-  const ranked = data
-    .map(e => ({ ...e, voteCount: votes[e.no] || 0 }))
-    .filter(e => e.voteCount > 0)
-    .sort((a,b) => b.voteCount - a.voteCount)
-    .slice(0, 3);
-
-  const content = document.getElementById('podium-content');
-  if (ranked.length === 0) {
-    content.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;font-size:0.85rem;">まだ投票がありません🗳️</div>';
-    return;
-  }
-
-  const medals  = ['🥇','🥈','🥉'];
-  const bgColors = ['rgba(255,215,0,0.15)','rgba(192,192,192,0.15)','rgba(205,97,51,0.15)'];
-  const borders  = ['#ffd700','#c0c0c0','#cd6133'];
-
-  content.innerHTML = ranked.map((e, i) => `
-    <div style="display:flex;align-items:center;gap:10px;background:${bgColors[i]};border:1.5px solid ${borders[i]};border-radius:12px;padding:10px;margin-bottom:8px;">
-      <div style="font-size:2rem;flex-shrink:0;">${medals[i]}</div>
-      ${e.imageUrl ? `<img src="${e.imageUrl}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;flex-shrink:0;">` : '<div style="width:50px;height:50px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">🎨</div>'}
-      <div style="text-align:left;">
-        <div style="font-size:0.95rem;font-weight:bold;color:#c0392b;">${e.villageName}</div>
-        <div style="font-size:0.75rem;color:#888;">by ${e.penname || '?'}</div>
-      </div>
-    </div>
-  `).join('');
 }
 
 function closeOdekakiOverlay() {

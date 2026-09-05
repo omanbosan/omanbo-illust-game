@@ -191,8 +191,6 @@ body {
           style="padding:8px 6px;border:2px solid #27ae60;background:#27ae60;color:white;border-radius:8px;font-size:0.82rem;font-weight:bold;cursor:pointer;text-align:center;">🎨 お友達</button>
         <button id="mode-scoring" onclick="switchMode('scoring')"
           style="padding:8px 6px;border:2px solid #e67e22;background:transparent;color:#e67e22;border-radius:8px;font-size:0.82rem;font-weight:bold;cursor:pointer;text-align:center;">🎯 採点</button>
-        <button id="mode-vote" onclick="switchMode('vote')"
-          style="padding:8px 6px;border:2px solid #9b59b6;background:transparent;color:#9b59b6;border-radius:8px;font-size:0.82rem;font-weight:bold;cursor:pointer;text-align:center;">🏆 投票</button>
         <button id="mode-config" onclick="switchMode('config')"
           style="padding:8px 6px;border:2px solid #3498db;background:transparent;color:#3498db;border-radius:8px;font-size:0.82rem;font-weight:bold;cursor:pointer;text-align:center;">⚙️ 採点設定</button>
         <button id="mode-stats" onclick="switchMode('stats')"
@@ -232,24 +230,6 @@ body {
   <div id="loading">読み込み中...</div>
   <div id="empty">該当するデータがありません</div>
   <div class="card-grid" id="card-grid"></div>
-
-  <!-- 投票ランキングテーブル -->
-  <div id="vote-table-wrap" style="display:none;">
-    <div id="vote-loading" style="text-align:center;padding:40px;color:#888;">読み込み中...</div>
-    <table id="vote-table" style="display:none;width:100%;border-collapse:collapse;font-size:0.9rem;">
-      <thead>
-        <tr style="background:#16213e;color:#e67e22;text-align:left;">
-          <th style="padding:10px 8px;border-bottom:2px solid #2a2a4a;">順位</th>
-          <th style="padding:10px 8px;border-bottom:2px solid #2a2a4a;">村人名</th>
-          <th style="padding:10px 8px;border-bottom:2px solid #2a2a4a;">No.</th>
-          <th style="padding:10px 8px;border-bottom:2px solid #2a2a4a;text-align:right;">票数</th>
-          <th style="padding:10px 8px;border-bottom:2px solid #2a2a4a;">最終投票日</th>
-        </tr>
-      </thead>
-      <tbody id="vote-tbody"></tbody>
-    </table>
-    <div id="vote-empty" style="display:none;text-align:center;padding:40px;color:#666;">まだ投票データがありません</div>
-  </div>
 
   <!-- ⚙️ 採点設定パネル -->
   <div id="config-panel" style="display:none;max-width:480px;margin:0 auto;">
@@ -372,10 +352,6 @@ body {
           <div class="stat-num" id="stat-zukan-total">0</div>
           <div class="stat-label">図鑑登録数（お友達＋採点）</div>
         </div>
-        <div class="stat-tile">
-          <div class="stat-num" id="stat-vote-total">0</div>
-          <div class="stat-label">投票総数</div>
-        </div>
       </div>
 
       <div style="background:#16213e;border-radius:14px;padding:16px 14px;margin-bottom:14px;">
@@ -411,7 +387,7 @@ const ADMIN_PW    = 'luke1227mb'; // ← 管理者パスワード
 
 let allData    = [];
 let currentTab  = 'pending';
-let currentMode = 'drawing'; // 'drawing' | 'scoring' | 'vote' | 'config' | 'stats' | 'recover'
+let currentMode = 'drawing'; // 'drawing' | 'scoring' | 'config' | 'stats' | 'recover'
 
 // ================================================================
 // ログイン（セッション保持対応）
@@ -467,14 +443,9 @@ function adminLogout() {
 // データ取得
 // ================================================================
 async function loadData() {
-  if (currentMode === 'vote') {
-    loadVoteRanking();
-    return;
-  }
   document.getElementById('loading').style.display = 'block';
   document.getElementById('card-grid').innerHTML = '';
   document.getElementById('empty').style.display = 'none';
-  document.getElementById('vote-table-wrap').style.display = 'none';
   try {
     const type = currentMode === 'scoring' ? 'pendingScores' : 'pending';
     const res  = await fetch(WEBHOOK_URL + '?type=' + type, { redirect: 'follow' });
@@ -489,68 +460,21 @@ async function loadData() {
   }
 }
 
-async function loadVoteRanking() {
-  document.getElementById('card-grid').innerHTML = '';
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('empty').style.display = 'none';
-  document.getElementById('vote-table-wrap').style.display = 'block';
-  document.getElementById('vote-loading').style.display = 'block';
-  document.getElementById('vote-table').style.display = 'none';
-  document.getElementById('vote-empty').style.display = 'none';
-  // タブバー非表示
-  document.querySelector('.tab-bar').style.display = 'none';
-  document.getElementById('search-entry').parentElement.style.display = 'none';
-  try {
-    const res  = await fetch(WEBHOOK_URL + '?type=voteRanking', { redirect: 'follow' });
-    const data = await res.json();
-    document.getElementById('vote-loading').style.display = 'none';
-    if (!Array.isArray(data) || data.length === 0) {
-      document.getElementById('vote-empty').style.display = 'block';
-      return;
-    }
-    const medals = ['🥇','🥈','🥉'];
-    const tbody = document.getElementById('vote-tbody');
-    tbody.innerHTML = '';
-    data.forEach((r, i) => {
-      const tr = document.createElement('tr');
-      tr.style.cssText = `background:${i%2===0?'#16213e':'#1a1a2e'};border-bottom:1px solid #2a2a4a;`;
-      const bar = '█'.repeat(Math.min(r.count, 20));
-      tr.innerHTML = `
-        <td style="padding:10px 8px;font-size:1.1rem;">${medals[i] || (i+1)}</td>
-        <td style="padding:10px 8px;font-weight:bold;color:#f39c12;">${r.villageName || '（名前なし）'}</td>
-        <td style="padding:10px 8px;color:#888;font-family:monospace;">No.${r.no}</td>
-        <td style="padding:10px 8px;text-align:right;">
-          <span style="color:#e67e22;font-size:0.75rem;font-family:monospace;">${bar}</span>
-          <span style="color:white;font-weight:bold;margin-left:6px;">${r.count}票</span>
-        </td>
-        <td style="padding:10px 8px;color:#666;font-size:0.8rem;">${r.lastVote}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-    document.getElementById('vote-table').style.display = 'table';
-  } catch(e) {
-    document.getElementById('vote-loading').textContent = '読み込みに失敗しました';
-  }
-}
-
 function switchMode(mode) {
   currentMode = mode;
   const dm = document.getElementById('mode-drawing');
   const sm = document.getElementById('mode-scoring');
-  const vm = document.getElementById('mode-vote');
   const cm = document.getElementById('mode-config');
   const tm = document.getElementById('mode-stats');
   const rm = document.getElementById('mode-recover');
   // ボタン状態リセット
   dm.style.background = 'transparent'; dm.style.color = '#27ae60';
   sm.style.background = 'transparent'; sm.style.color = '#e67e22';
-  vm.style.background = 'transparent'; vm.style.color = '#9b59b6';
   cm.style.background = 'transparent'; cm.style.color = '#3498db';
   tm.style.background = 'transparent'; tm.style.color = '#f39c12';
   rm.style.background = 'transparent'; rm.style.color = '#16a085';
   if (mode === 'drawing') { dm.style.background = '#27ae60'; dm.style.color = 'white'; }
   if (mode === 'scoring') { sm.style.background = '#e67e22'; sm.style.color = 'white'; }
-  if (mode === 'vote')    { vm.style.background = '#9b59b6'; vm.style.color = 'white'; }
   if (mode === 'config')  { cm.style.background = '#3498db'; cm.style.color = 'white'; }
   if (mode === 'stats')   { tm.style.background = '#f39c12'; tm.style.color = 'white'; }
   if (mode === 'recover') { rm.style.background = '#16a085'; rm.style.color = 'white'; }
@@ -560,7 +484,6 @@ function switchMode(mode) {
   document.getElementById('card-grid').style.display        = showCards ? '' : 'none';
   document.getElementById('loading').style.display          = 'none';
   document.getElementById('empty').style.display            = 'none';
-  document.getElementById('vote-table-wrap').style.display  = mode === 'vote'    ? '' : 'none';
   document.getElementById('config-panel').style.display     = mode === 'config'  ? '' : 'none';
   document.getElementById('stats-panel').style.display      = mode === 'stats'   ? '' : 'none';
   document.getElementById('recover-panel').style.display    = mode === 'recover' ? '' : 'none';
@@ -1049,7 +972,6 @@ function renderStats(data) {
   document.getElementById('stat-total-select').textContent   = totalSelect;
   document.getElementById('stat-total-complete').textContent = totalComplete;
   document.getElementById('stat-zukan-total').textContent    = (data.zukanFriend || 0) + (data.zukanScoring || 0);
-  document.getElementById('stat-vote-total').textContent     = data.voteTotal || 0;
 
   // 難易度別バー（選択数を母数にした横棒）
   const maxSel = Math.max(1, ...Object.values(sel));
