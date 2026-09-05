@@ -495,3 +495,23 @@ const multipliers = { hard: 3.8, normal: 5.46 };
 **対象外・注意点:**
 - お絵描きチャレンジカード側は難易度選択が無く「▼タップしてはじめる」の案内が既にあったため、文言・デザインとも変更なし
 - ボタンの`onclick`ロジック（`selectModeAndStart`/`openScoringZukan`/`openZukan`）自体は変更なし、見た目と配置のみの変更
+
+---
+
+### [2026-09-05] モード選択画面を「あそぶ／図鑑を見る」の2択→詳細の2階層構成に変更＋戻るボタンを全画面に統一
+
+**発端:** 「図鑑とゲームは手前の画面で選べるようにしてください。また、どのページにも戻るボタンで前のページに戻れるようにしてください」という要望。前回([2026-09-05]の1つ前のエントリ)は同一画面内で見出し区切り＋デザイン差別化のみの対応だったが、今回は画面そのものを階層分割する。
+
+**game.html変更（`how-to-overlay`の構造刷新）:**
+- `how-to-overlay`直下を3つのdivに再構成し、JS(`showHtwHome()`/`showHtwPlay()`/`showHtwZukan()`)でdisplay切り替えする2階層UIに変更
+  - `#htw-home`（第1階層）: 「🎮 あそぶ」「📚 図鑑・記録を見る」の大きなカード2つのみを表示
+  - `#htw-play`（第2階層A）: 「← 戻る」＋従来の採点チャレンジ/お絵描きチャレンジカード（前回実装のまま）
+  - `#htw-zukan`（第2階層B）: 「← 戻る」＋「🎯みんなのおまんぼさん」「🎨お友達図鑑」に加え、**新たに「🏆ランキング」もここに追加**（`showRanking('current')`を呼び出し、従来`#controls`内の`rank-btn`からしか開けなかったランキングをモード選択画面からも開けるように）
+- `how-to-overlay`を再表示する既存4箇所（`closeScoreModal()`/`home-btn`クリック/`closeOdekakiOverlay()`/初回表示）のうち、再表示系3箇所を`showHtwHome()`呼び出しに統一し、常に第1階層（ホーム選択）に戻るようにした
+- CSS新規クラス`.htw-back-btn`（共通の「戻る」ボタンデザイン）・`.htw-zukan-btn`（第2階層Bの3択ボタン共通デザイン、`flex:1;min-width:0`を子要素に適用してテキストでボタン自体がはみ出さないようにする実装上の注意点あり）を追加
+- **各モーダルの「戻る」ボタン文言を統一**: `zukan-modal`/`scoring-zukan-modal`/`podium-modal`/`rank-modal`の「閉じる」、`prescore-modal`の「キャンセル」を、いずれも**「← 戻る」**に統一（`score-modal`/`odekaki-overlay`は元々「← 戻る」だったため無変更）
+- `how-to-overlay`に`overflow-x:hidden`・`box-sizing:border-box`を追加（`display:flex;flex-direction:column`のコンテナで、子要素の内容量によって横幅が親のinset:0で決まる幅を超えて広がる不具合の再発防止）
+
+**対象外・注意点:**
+- 採点チャレンジプレイ中の`#controls`内「🏠トップ」ボタンは文言・機能とも変更なし（押すと`showHtwHome()`経由でモード選択の第1階層に戻る）
+- 検証時、ローカルのheadless Chromeでは`--window-size`に430pxなど小さい値を指定してもビューポート実幅が500px相当に強制される挙動が確認された（ヘッドレス環境固有の制約、実機のスマホブラウザでは発生しない想定）。今後同様の検証を行う際は撮影幅をビューポート実幅に合わせること

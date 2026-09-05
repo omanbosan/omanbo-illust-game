@@ -187,6 +187,22 @@ h1 {
   50% { transform: translateY(-4px); }
 }
 .mode-card-glow { animation: mode-card-float 3.2s ease-in-out infinite; }
+
+/* ─── モード選択画面：どの階層でも共通の「戻る」ボタン ─── */
+.htw-back-btn {
+  align-self: flex-start; margin-bottom: 12px; padding: 8px 18px;
+  background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: 20px; color: white; font-size: 0.85rem; font-weight: bold;
+  cursor: pointer; transition: transform var(--transition-fast);
+}
+.htw-back-btn:active { transform: scale(0.96); }
+.htw-zukan-btn {
+  width: 100%; text-align: left; border-radius: 16px; padding: 14px 16px;
+  cursor: pointer; display: flex; align-items: center; gap: 14px;
+  transition: transform var(--transition-fast);
+}
+.htw-zukan-btn:active { transform: scale(0.98); }
+.htw-zukan-btn > div:last-child { flex: 1; min-width: 0; }
 #total-score-disp { font-size: 3.8rem; font-weight: bold; color: #f39c12; line-height: 1.1; }
 #score-sub { font-size: 0.85rem; color: #888; margin-bottom: 4px; }
 #score-comment { font-size: 1.05rem; color: #555; margin: 4px 0 10px; }
@@ -404,7 +420,7 @@ h1 {
 </div>
 
 <!-- モード選択オーバーレイ -->
-<div id="how-to-overlay" style="position:fixed;inset:0;background:linear-gradient(160deg,#1a0a00 0%,#2d1200 35%,#1a2000 70%,#001a0d 100%);z-index:900;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:20px 16px;color:white;text-align:center;">
+<div id="how-to-overlay" style="position:fixed;inset:0;background:linear-gradient(160deg,#1a0a00 0%,#2d1200 35%,#1a2000 70%,#001a0d 100%);z-index:900;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-x:hidden;overflow-y:auto;padding:20px 16px;color:white;text-align:center;box-sizing:border-box;">
 
   <!-- ヘッダー -->
   <div style="margin-bottom:12px;padding-top:8px;">
@@ -414,14 +430,42 @@ h1 {
     <div id="streak-badge"></div>
   </div>
 
-  <!-- あそぶセクション見出し -->
-  <div style="width:100%;text-align:center;margin-bottom:14px;">
-    <div style="display:inline-block;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.25);border-radius:20px;padding:6px 18px;font-size:0.82rem;color:#fff;font-weight:bold;letter-spacing:0.03em;">
-      🎮 まずは下の2枚から選んであそぼう！
-    </div>
+  <!-- ============ 第1階層: ホーム選択（あそぶ / 図鑑を見る） ============ -->
+  <div id="htw-home" style="width:100%;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;align-items:center;margin-top:6px;">
+    <button onclick="showHtwPlay()" class="mode-card-glow" style="width:100%;text-align:left;background:linear-gradient(135deg,rgba(230,126,34,0.28),rgba(192,57,43,0.2));border:2px solid rgba(230,126,34,0.6);border-radius:20px;padding:20px;color:white;cursor:pointer;box-shadow:0 6px 24px rgba(230,126,34,0.25);display:flex;align-items:center;gap:16px;"
+      onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform=''"
+      ontouchstart="this.style.transform='scale(0.98)'" ontouchend="this.style.transform=''">
+      <div style="font-size:2.6rem;flex-shrink:0;">🎮</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:1.15rem;font-weight:bold;">あそぶ</div>
+        <div style="font-size:0.75rem;color:#eee;margin-top:2px;">採点チャレンジ・お絵描きチャレンジ</div>
+      </div>
+      <div style="font-size:1.3rem;flex-shrink:0;opacity:0.8;">→</div>
+    </button>
+    <button onclick="showHtwZukan()" class="mode-card-glow" style="animation-delay:1.6s;width:100%;text-align:left;background:linear-gradient(135deg,rgba(155,89,182,0.25),rgba(39,174,96,0.18));border:2px solid rgba(155,89,182,0.5);border-radius:20px;padding:20px;color:white;cursor:pointer;box-shadow:0 6px 24px rgba(155,89,182,0.2);display:flex;align-items:center;gap:16px;"
+      onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform=''"
+      ontouchstart="this.style.transform='scale(0.98)'" ontouchend="this.style.transform=''">
+      <div style="font-size:2.6rem;flex-shrink:0;">📚</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:1.15rem;font-weight:bold;">図鑑・記録を見る</div>
+        <div style="font-size:0.75rem;color:#eee;margin-top:2px;">みんなの作品・ランキング</div>
+      </div>
+      <div style="font-size:1.3rem;flex-shrink:0;opacity:0.8;">→</div>
+    </button>
   </div>
 
-  <!-- 採点チャレンジカード -->
+  <!-- ============ 第2階層A: あそぶ選択（採点/お絵描きカード） ============ -->
+  <div id="htw-play" style="width:100%;min-width:0;box-sizing:border-box;display:none;flex-direction:column;align-items:center;margin-top:6px;">
+    <button onclick="showHtwHome()" class="htw-back-btn">← 戻る</button>
+
+    <!-- あそぶセクション見出し -->
+    <div style="width:100%;text-align:center;margin-bottom:14px;">
+      <div style="display:inline-block;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.25);border-radius:20px;padding:6px 18px;font-size:0.82rem;color:#fff;font-weight:bold;letter-spacing:0.03em;">
+        🎮 下の2枚から選んであそぼう！
+      </div>
+    </div>
+
+    <!-- 採点チャレンジカード -->
   <div class="mode-card-glow" style="background:linear-gradient(135deg,rgba(230,126,34,0.18) 0%,rgba(192,57,43,0.14) 100%);border:2px solid rgba(230,126,34,0.7);border-radius:16px;padding:16px;margin-bottom:14px;width:100%;text-align:left;box-shadow:0 4px 24px rgba(230,126,34,0.25);">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
       <div style="font-size:2rem;">🎯</div>
@@ -528,25 +572,42 @@ h1 {
     </div>
   </div>
 
-  <!-- 見る・振り返るセクション見出し -->
-  <div style="width:100%;text-align:center;margin:6px 0 10px;">
-    <div style="font-size:0.7rem;color:rgba(255,255,255,0.45);letter-spacing:0.1em;">── 📚 今までの記録を見る ──</div>
   </div>
+  <!-- ↑ #htw-play 終了 -->
 
-  <!-- 図鑑ボタン群（閲覧専用・あえて控えめなデザインにしてゲーム開始ボタンと区別） -->
-  <div style="display:flex;gap:8px;width:100%;margin-bottom:16px;">
-    <button onclick="openScoringZukan()" style="flex:1;padding:12px 8px;background:rgba(230,126,34,0.08);color:#e67e22;border:1.5px solid rgba(230,126,34,0.5);border-radius:14px;font-size:0.78rem;font-weight:bold;cursor:pointer;line-height:1.5;transition:transform 0.1s;"
-      onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''"
-      ontouchstart="this.style.transform='scale(0.97)'" ontouchend="this.style.transform=''">
-      <div style="font-size:1.1rem;margin-bottom:2px;">🎯</div>
-      みんなのおまんぼさん<br><span style="font-size:0.65rem;font-weight:normal;opacity:0.8;">採点チャレンジ結果を見る</span>
-    </button>
-    <button onclick="openZukan()" style="flex:1;padding:12px 8px;background:rgba(39,174,96,0.08);color:#2ecc71;border:1.5px solid rgba(39,174,96,0.5);border-radius:14px;font-size:0.78rem;font-weight:bold;cursor:pointer;line-height:1.5;transition:transform 0.1s;"
-      onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''"
-      ontouchstart="this.style.transform='scale(0.97)'" ontouchend="this.style.transform=''">
-      <div style="font-size:1.1rem;margin-bottom:2px;">🎨</div>
-      お友達図鑑<br><span style="font-size:0.65rem;font-weight:normal;opacity:0.8;">お絵描きチャレンジ</span>
-    </button>
+  <!-- ============ 第2階層B: 図鑑・記録を見る ============ -->
+  <div id="htw-zukan" style="width:100%;min-width:0;box-sizing:border-box;display:none;flex-direction:column;align-items:center;margin-top:6px;">
+    <button onclick="showHtwHome()" class="htw-back-btn">← 戻る</button>
+
+    <div style="width:100%;text-align:center;margin-bottom:14px;">
+      <div style="display:inline-block;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.25);border-radius:20px;padding:6px 18px;font-size:0.82rem;color:#fff;font-weight:bold;letter-spacing:0.03em;">
+        📚 見たいものを選んでね
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%;margin-bottom:16px;">
+      <button onclick="openScoringZukan()" class="htw-zukan-btn" style="background:rgba(230,126,34,0.1);border:1.5px solid rgba(230,126,34,0.5);color:#f39c12;">
+        <div style="font-size:1.6rem;flex-shrink:0;">🎯</div>
+        <div style="flex:1;">
+          <div style="font-size:0.92rem;font-weight:bold;">みんなのおまんぼさん</div>
+          <div style="font-size:0.68rem;opacity:0.8;font-weight:normal;">採点チャレンジ結果を見る</div>
+        </div>
+      </button>
+      <button onclick="openZukan()" class="htw-zukan-btn" style="background:rgba(39,174,96,0.1);border:1.5px solid rgba(39,174,96,0.5);color:#2ecc71;">
+        <div style="font-size:1.6rem;flex-shrink:0;">🎨</div>
+        <div style="flex:1;">
+          <div style="font-size:0.92rem;font-weight:bold;">お友達図鑑</div>
+          <div style="font-size:0.68rem;opacity:0.8;font-weight:normal;">お絵描きチャレンジの作品を見る</div>
+        </div>
+      </button>
+      <button onclick="showRanking('current')" class="htw-zukan-btn" style="background:rgba(155,89,182,0.1);border:1.5px solid rgba(155,89,182,0.5);color:#bb8fce;">
+        <div style="font-size:1.6rem;flex-shrink:0;">🏆</div>
+        <div style="flex:1;">
+          <div style="font-size:0.92rem;font-weight:bold;">ランキング</div>
+          <div style="font-size:0.68rem;opacity:0.8;font-weight:normal;">今月のスコアランキングを見る</div>
+        </div>
+      </button>
+    </div>
   </div>
 
   <div style="height:12px;"></div>
@@ -588,7 +649,7 @@ h1 {
     </label>
     <div class="btn-row">
       <button id="prescore-submit-btn" onclick="confirmPrescoreAndScore()" disabled style="background:#95a5a6;color:white;cursor:not-allowed;opacity:0.5;">✅ 採点する！</button>
-      <button onclick="closePrescoreModal()" style="background:#95a5a6;color:white;">キャンセル</button>
+      <button onclick="closePrescoreModal()" style="background:#95a5a6;color:white;">← 戻る</button>
     </div>
   </div>
 </div>
@@ -798,7 +859,7 @@ h1 {
     <div id="zukan-list" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;"></div>
     <div id="zukan-loading" style="text-align:center;padding:20px;color:#888;font-size:0.9rem;">読み込み中...</div>
     <div id="zukan-empty" style="display:none;text-align:center;padding:20px;color:#aaa;font-size:0.85rem;">まだキャラクターがいません。<br>最初のキャラクターになろう！</div>
-    <button onclick="document.getElementById('zukan-modal').classList.remove('show')" style="padding:10px 24px;background:#95a5a6;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">閉じる</button>
+    <button onclick="document.getElementById('zukan-modal').classList.remove('show')" style="padding:10px 24px;background:#95a5a6;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">← 戻る</button>
   </div>
 </div>
 
@@ -822,7 +883,7 @@ h1 {
     <div id="zukan-scoring-list" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;"></div>
     <div id="zukan-scoring-loading" style="text-align:center;padding:20px;color:#888;font-size:0.9rem;">読み込み中...</div>
     <div id="zukan-scoring-empty" style="display:none;text-align:center;padding:20px;color:#aaa;font-size:0.85rem;">まだ採点結果がありません。</div>
-    <button onclick="document.getElementById('scoring-zukan-modal').classList.remove('show')" style="padding:10px 24px;background:#95a5a6;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">閉じる</button>
+    <button onclick="document.getElementById('scoring-zukan-modal').classList.remove('show')" style="padding:10px 24px;background:#95a5a6;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">← 戻る</button>
   </div>
 </div>
 
@@ -833,7 +894,7 @@ h1 {
     <p style="font-size:0.75rem;color:#aaa;margin-bottom:16px;">今月のみんなの一票が集まりました</p>
     <div id="podium-content" style="margin-bottom:16px;"></div>
     <p style="font-size:0.7rem;color:#bbb;margin-bottom:12px;">※ 投票数は非公開です / 毎月最終週に投票・月末締め</p>
-    <button onclick="document.getElementById('podium-modal').classList.remove('show')" style="padding:10px 24px;background:#95a5a6;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">閉じる</button>
+    <button onclick="document.getElementById('podium-modal').classList.remove('show')" style="padding:10px 24px;background:#95a5a6;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">← 戻る</button>
   </div>
 </div>
 
@@ -864,7 +925,7 @@ h1 {
     </table>
     <div class="btn-row" style="margin-top:12px;">
       <button onclick="document.getElementById('rank-modal').classList.remove('show')"
-              style="background:#95a5a6;color:white;">閉じる</button>
+              style="background:#95a5a6;color:white;">← 戻る</button>
     </div>
   </div>
 </div>
@@ -2301,7 +2362,7 @@ function drawAnswerComparison() {
 let _scoreRegisterSectionHTML = null;
 function closeScoreModal() {
   document.getElementById('score-modal').classList.remove('show');
-  document.getElementById('how-to-overlay').style.display = 'flex';
+  showHtwHome();
   // 登録フォームを元のHTMLに戻す
   const sec = document.getElementById('score-register-section');
   if (sec && _scoreRegisterSectionHTML) sec.innerHTML = _scoreRegisterSectionHTML;
@@ -2586,8 +2647,7 @@ document.getElementById('reset-btn').addEventListener('click', () => {
 // トップへ戻る
 document.getElementById('home-btn').addEventListener('click', () => {
   resetGameState();
-  window.scrollTo(0, 0);
-  document.getElementById('how-to-overlay').style.display = 'flex';
+  showHtwHome();
 });
 
 // ================================================================
@@ -2648,6 +2708,29 @@ function trackPlay(event, difficulty, score) {
     method: 'POST',
     body: JSON.stringify({ type: 'play', event, difficulty, score: score || 0 })
   }).catch(() => {});
+}
+
+// ================================================================
+// モード選択画面（あそぶ/図鑑を見るの2択→各詳細）の階層切り替え
+// ================================================================
+function showHtwHome() {
+  document.getElementById('how-to-overlay').style.display = 'flex';
+  document.getElementById('htw-home').style.display = 'flex';
+  document.getElementById('htw-play').style.display = 'none';
+  document.getElementById('htw-zukan').style.display = 'none';
+  window.scrollTo(0, 0);
+}
+function showHtwPlay() {
+  document.getElementById('htw-home').style.display = 'none';
+  document.getElementById('htw-play').style.display = 'flex';
+  document.getElementById('htw-zukan').style.display = 'none';
+  window.scrollTo(0, 0);
+}
+function showHtwZukan() {
+  document.getElementById('htw-home').style.display = 'none';
+  document.getElementById('htw-play').style.display = 'none';
+  document.getElementById('htw-zukan').style.display = 'flex';
+  window.scrollTo(0, 0);
 }
 
 // ================================================================
@@ -3464,7 +3547,7 @@ function openPodium() {
 
 function closeOdekakiOverlay() {
   document.getElementById('odekaki-overlay').style.display = 'none';
-  document.getElementById('how-to-overlay').style.display = 'flex';
+  showHtwHome();
 }
 
 function setupOdekakiCanvas() {
