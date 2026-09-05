@@ -26,6 +26,19 @@
   --transition-fast: 0.15s ease;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ─── ダブルタップでページが拡大されるのを防ぐ ───
+   iOS Safari は iOS 10 以降 <meta viewport> の user-scalable=no を無視するため、
+   メタタグだけではダブルタップ拡大を止められない。
+   touch-action:manipulation はダブルタップ拡大だけを無効にし、
+   スクロールと2本指ピンチ（アクセシビリティ用）は残す。
+   描画キャンバス側は個別に touch-action:none を指定しているのでそちらが優先される。 */
+html, body { touch-action: manipulation; }
+button, a, img, label, input, canvas, svg { touch-action: manipulation; }
+/* 全画面オーバーレイは body の上に重なるので個別にも指定しておく */
+#opening-screen, #how-to-overlay, #odekaki-overlay, #start-overlay,
+#peek-overlay, #maintenance-screen, .modal-bg { touch-action: manipulation; }
+
 body {
   background: linear-gradient(135deg, var(--color-bg-start), var(--color-bg-end));
   font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;

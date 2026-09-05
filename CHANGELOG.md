@@ -589,3 +589,24 @@ const multipliers = { hard: 3.8, normal: 5.46 };
 **対象外・注意点:**
 - 採点モード（フリーハンド）側にはピンチズームを入れていない。採点は「見本との位置の一致」で採点するため、拡大すると難易度バランスが変わってしまうため
 - GASバックエンドは変更していないため再デプロイ不要
+
+---
+
+### [2026-09-05] ダブルタップでページが拡大されてしまう不具合を修正
+
+**発端:** 「ダブルタップするとズームされてしまうのはなぜ」という指摘。
+
+**原因:** `<meta name="viewport" ... user-scalable=no, maximum-scale=1.0>` は指定済みだったが、**iOS Safari は iOS 10 以降アクセシビリティ上の理由でこれらを無視する**ため、iPhone/iPad ではダブルタップ拡大が有効なままだった。`touch-action` の指定が描画キャンバス2つ（`#fh-canvas` / `#odekaki-canvas`・`#odekaki-viewport`）にしか無く、それ以外（ボタン・画像・カード・オーバーレイ）は既定の `auto` だったため、そこをダブルタップするとページ全体が拡大していた。
+
+**game.html変更:**
+- `html, body` に `touch-action: manipulation` を指定。`manipulation` は**ダブルタップ拡大だけを無効化**し、スクロールと2本指ピンチ（アクセシビリティ用の拡大）は残すため、閲覧性を損なわずに誤爆だけを防げる
+- ボタン・リンク・画像・入力欄・canvas・svg、および全画面オーバーレイ（`#opening-screen` / `#how-to-overlay` / `#odekaki-overlay` / `#start-overlay` / `#peek-overlay` / `#maintenance-screen` / `.modal-bg`）にも明示的に指定。仕様上は `body` への指定が祖先として効くが、エンジン差の保険として個別にも入れた
+- 描画キャンバス側の `touch-action:none`（インラインstyle）はそのまま優先されるため、お絵描きの自前ピンチズームと採点モードの描画は影響なし
+
+**検証:**
+- 計算後の `touch-action` が html/body/各オーバーレイ/ボタン/画像で `manipulation`、描画キャンバスで `none` になることを確認
+- 2本指ピンチ（等倍→2倍）、ピンチ終了処理、1本指での描画がいずれも従来どおり動作することを確認
+
+**対象外・注意点:**
+- `<meta viewport>` の `user-scalable=no` はAndroid Chromeでは有効なため、そのまま残している
+- admin.html は管理者のみが使う画面のため今回は対象外
