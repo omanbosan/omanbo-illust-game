@@ -1134,12 +1134,14 @@ const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycby0q8MVbN-Dk_fio8XO
 // 採点 multiplier（管理者が GAS config シートで変更可能。起動時に取得）
 let _scoringMultipliers = { hard: 2.0, normal: 4.5, easy: 3.0, hell: 2.0 };
 
+// 数値が高いほどシビア。管理画面のプリセット（1.0 / 1.4 / 2.0 / 2.8 / 4.0）と
+// 段階数を揃えるため 1〜5 の5段階で返す（1=超甘め … 5=超シビア）。
 function getLuckLevel(hardMult) {
-  // 数値が高いほどシビア（🔥が多い）
-  if (hardMult >= 3.5) return 4;  // 🔥🔥🔥🔥 超シビア
-  if (hardMult >= 2.4) return 3;  // 🔥🔥🔥 シビア
-  if (hardMult >= 1.7) return 2;  // 🔥🔥 普通
-  return 1;                        // 🔥 ゆるめ
+  if (hardMult >= 3.4) return 5;  // 🔥🔥🔥🔥 超シビア（プリセット4.0）
+  if (hardMult >= 2.4) return 4;  // 🔥🔥🔥 シビア  （プリセット2.8）
+  if (hardMult >= 1.7) return 3;  // 🔥🔥 普通      （プリセット2.0）
+  if (hardMult >= 1.2) return 2;  // 🔥 甘め        （プリセット1.4）
+  return 1;                        // ✨ 超甘め      （プリセット1.0）
 }
 
 function updateScoringLuckUI(hardMult) {
@@ -1147,25 +1149,29 @@ function updateScoringLuckUI(hardMult) {
   const msg   = document.getElementById('scoring-luck-msg');
   if (!badge || !msg) return;
 
-  // multiplierの値によって「採点運」のレベルを決定（数値は見せない）
-  let level, badgeHTML, msgStyle, msgText;
-  if (hardMult >= 3.2) {
-    level = 4;
+  // multiplierの値によって「採点運」のレベルを決定（数値は見せない）。
+  // 重要: 数値が高いほど許容ズレが小さくなり「シビア」になる。
+  // （threshold = 70 / (hardMult / 2.0) なので hardMult が大きいほど厳しい）
+  // 管理画面のプリセット（1.0 / 1.4 / 2.0 / 2.8 / 4.0）と段階を揃えた5段階。
+  let badgeHTML, msgStyle, msgText;
+  const level = getLuckLevel(hardMult);
+  if (level === 1) {
     badgeHTML = `<div style="font-size:1.4rem;animation:luckPulse 1s ease-in-out infinite alternate;">🌈</div><div style="font-size:0.6rem;font-weight:bold;color:#ffd700;letter-spacing:0.05em;">大吉！</div>`;
     msgStyle  = 'background:linear-gradient(135deg,rgba(255,215,0,0.25),rgba(255,140,0,0.2));border:1.5px solid #ffd700;color:#ffd700;';
     msgText   = '🌈 <b>今日は大チャンスデー！！</b><br><span style="font-size:0.72rem;opacity:0.85;">採点がいつもより甘め…かも？ぜひ挑戦してみて！</span>';
-  } else if (hardMult >= 2.6) {
-    level = 3;
+  } else if (level === 2) {
     badgeHTML = `<div style="font-size:1.4rem;">✨</div><div style="font-size:0.6rem;font-weight:bold;color:#f39c12;letter-spacing:0.05em;">中吉</div>`;
     msgStyle  = 'background:rgba(243,156,18,0.15);border:1.5px solid rgba(243,156,18,0.5);color:#f5c26b;';
     msgText   = '✨ <b>今日はちょっとお得な日かも？</b><br><span style="font-size:0.72rem;opacity:0.85;">狙い目の日…かもしれない 👀</span>';
-  } else if (hardMult >= 2.0) {
-    level = 2;
+  } else if (level === 3) {
     badgeHTML = `<div style="font-size:1.4rem;">😐</div><div style="font-size:0.6rem;font-weight:bold;color:#aaa;letter-spacing:0.05em;">普通</div>`;
     msgStyle  = 'background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.15);color:#aaa;';
     msgText   = '😐 <b>今日は普通の採点日</b><br><span style="font-size:0.72rem;opacity:0.75;">実力勝負！丁寧に描こう</span>';
+  } else if (level === 4) {
+    badgeHTML = `<div style="font-size:1.4rem;">🔥</div><div style="font-size:0.6rem;font-weight:bold;color:#e67e22;letter-spacing:0.05em;">小吉</div>`;
+    msgStyle  = 'background:rgba(230,126,34,0.15);border:1.5px solid rgba(230,126,34,0.45);color:#e8a35c;';
+    msgText   = '🔥 <b>今日はちょっとシビアな日</b><br><span style="font-size:0.72rem;opacity:0.85;">位置をよ〜く狙って描こう！</span>';
   } else {
-    level = 1;
     badgeHTML = `<div style="font-size:1.4rem;">😈</div><div style="font-size:0.6rem;font-weight:bold;color:#e74c3c;letter-spacing:0.05em;">凶…</div>`;
     msgStyle  = 'background:rgba(231,76,60,0.15);border:1.5px solid rgba(231,76,60,0.4);color:#e74c3c;';
     msgText   = '😈 <b>今日はシビア採点日…</b><br><span style="font-size:0.72rem;opacity:0.85;">腕に自信がある人だけ挑戦して…！</span>';
@@ -2295,9 +2301,11 @@ async function scoreFreehandOverlap(key) {
   // ユーザーが描いたストロークの重心がどれだけ近いかで点を計算する。
   //
   // 難易度別の許容半径 (threshold):
-  //   イージー: 大きめ → 大まかに正しい位置なら満点近く
-  //   通常    : 中程度
-  //   鬼      : 小さめ → ほぼ正確な位置が必要
+  //   イージー: 90px（大きめ → 大まかに正しい位置なら満点近く）
+  //   通常/鬼/地獄: いずれも既定 70px
+  //   ※ 鬼・地獄の難しさは「チラ見せが0.5秒だけ」というゲーム性で表現しており、
+  //     採点の甘辛は既定では通常と同じ。厳しくしたい場合は管理画面から
+  //     鬼/地獄の倍率を上げる（倍率が高いほど threshold が小さくなる）。
   // ─────────────────────────────────────────────────────────────────
 
   // ① 全ストロークの点群を集める
@@ -2362,7 +2370,8 @@ function drawAnswerComparison() {
 let _scoreRegisterSectionHTML = null;
 function closeScoreModal() {
   document.getElementById('score-modal').classList.remove('show');
-  showHtwHome();
+  // すぐもう一度遊べるよう、トップではなく「あそぶ」のカード一覧へ戻す
+  showHtwPlay();
   // 登録フォームを元のHTMLに戻す
   const sec = document.getElementById('score-register-section');
   if (sec && _scoreRegisterSectionHTML) sec.innerHTML = _scoreRegisterSectionHTML;
@@ -2720,13 +2729,17 @@ function showHtwHome() {
   document.getElementById('htw-zukan').style.display = 'none';
   window.scrollTo(0, 0);
 }
+// ゲーム/お絵描きから戻ったときの復帰先にも使うため、
+// how-to-overlay 自体の表示もここで担保しておく。
 function showHtwPlay() {
+  document.getElementById('how-to-overlay').style.display = 'flex';
   document.getElementById('htw-home').style.display = 'none';
   document.getElementById('htw-play').style.display = 'flex';
   document.getElementById('htw-zukan').style.display = 'none';
   window.scrollTo(0, 0);
 }
 function showHtwZukan() {
+  document.getElementById('how-to-overlay').style.display = 'flex';
   document.getElementById('htw-home').style.display = 'none';
   document.getElementById('htw-play').style.display = 'none';
   document.getElementById('htw-zukan').style.display = 'flex';
@@ -3547,7 +3560,8 @@ function openPodium() {
 
 function closeOdekakiOverlay() {
   document.getElementById('odekaki-overlay').style.display = 'none';
-  showHtwHome();
+  // すぐもう一度遊べるよう、トップではなく「あそぶ」のカード一覧へ戻す
+  showHtwPlay();
 }
 
 function setupOdekakiCanvas() {

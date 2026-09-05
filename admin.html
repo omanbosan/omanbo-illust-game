@@ -287,10 +287,10 @@ body {
         <div style="font-size:0.7rem;color:#666;text-align:center;margin-top:4px;" id="hard-desc"></div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
           <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率:</span>
-          <input type="number" id="cfg-hard-num" min="0.5" max="10" step="0.1" value="2.0"
+          <input type="number" id="cfg-hard-num" min="1.0" max="10" step="0.1" value="2.0"
             style="width:72px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
             oninput="onNumInput('hard')">
-          <span style="font-size:0.65rem;color:#555;">（0.5〜10）</span>
+          <span style="font-size:0.65rem;color:#555;">（1.0〜10）</span>
           <span id="cfg-hard-hint" style="font-size:0.72rem;color:#f39c12;"></span>
         </div>
       </div>
@@ -302,10 +302,10 @@ body {
         <div style="font-size:0.7rem;color:#666;text-align:center;margin-top:4px;" id="hell-desc"></div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
           <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率:</span>
-          <input type="number" id="cfg-hell-num" min="0.5" max="10" step="0.1" value="2.0"
+          <input type="number" id="cfg-hell-num" min="1.0" max="10" step="0.1" value="2.0"
             style="width:72px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
             oninput="onNumInput('hell')">
-          <span style="font-size:0.65rem;color:#555;">（0.5〜10）</span>
+          <span style="font-size:0.65rem;color:#555;">（1.0〜10）</span>
           <span id="cfg-hell-hint" style="font-size:0.72rem;color:#f39c12;"></span>
         </div>
       </div>
@@ -317,10 +317,10 @@ body {
         <div style="font-size:0.7rem;color:#666;text-align:center;margin-top:4px;" id="normal-desc"></div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
           <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率:</span>
-          <input type="number" id="cfg-normal-num" min="0.5" max="20" step="0.1" value="4.5"
+          <input type="number" id="cfg-normal-num" min="2.25" max="20" step="0.1" value="4.5"
             style="width:72px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
             oninput="onNumInput('normal')">
-          <span style="font-size:0.65rem;color:#555;">（0.5〜20）</span>
+          <span style="font-size:0.65rem;color:#555;">（2.25〜20）</span>
           <span id="cfg-normal-hint" style="font-size:0.72rem;color:#f39c12;"></span>
         </div>
       </div>
@@ -330,10 +330,10 @@ body {
         <div style="font-size:0.85rem;font-weight:bold;color:#27ae60;margin-bottom:8px;">😄 イージーモード</div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:0.75rem;color:#aaa;white-space:nowrap;">倍率:</span>
-          <input type="number" id="cfg-easy-num" min="0.5" max="20" step="0.1" value="3.0"
+          <input type="number" id="cfg-easy-num" min="1.5" max="20" step="0.1" value="3.0"
             style="width:72px;padding:5px 8px;border-radius:6px;border:1px solid #3a3a5a;background:#0f3460;color:white;font-size:0.9rem;"
             oninput="onNumInput('easy')">
-          <span style="font-size:0.65rem;color:#555;">（0.5〜20）</span>
+          <span style="font-size:0.65rem;color:#555;">（1.5〜20）</span>
           <span id="cfg-easy-hint" style="font-size:0.72rem;color:#f39c12;"></span>
         </div>
       </div>
@@ -609,7 +609,7 @@ const HELL_PRESETS = [
   { label: '🔥🔥🔥🔥', name: '超シビア', mult: 4.0 },  // 許容ズレ~19%
 ];
 const NORMAL_PRESETS = [
-  { label: '✨',        name: '超甘め',   mult: 2.0 },  // 許容ズレ~77%
+  { label: '✨',        name: '超甘め',   mult: 2.25 }, // 許容ズレ~77%（これ以上下げても変わらない下限）
   { label: '🔥',       name: '甘め',     mult: 3.0 },  // 許容ズレ~58%
   { label: '🔥🔥',     name: '普通',     mult: 4.5 },  // 許容ズレ~38%
   { label: '🔥🔥🔥',   name: 'シビア',   mult: 7.0 },  // 許容ズレ~25%
@@ -645,12 +645,22 @@ function buildPresetButtons(containerId, descId, hiddenId, presets, currentMult,
   }
 }
 
+// ゲーム側の threshold 計算 `base / Math.max(0.5, mult / default)` には下限クランプが
+// あり、下記の値より小さい倍率を設定しても結果が一切変わらない（＝設定しても効かない）。
+// 混乱を避けるため、入力・読み込みの両方でこの値まで引き上げる。
+const MIN_MULTS = { easy: 1.5, normal: 2.25, hard: 1.0, hell: 1.0 };
+function clampMult(mode, val) {
+  const min = MIN_MULTS[mode] || 1.0;
+  return (isNaN(val) || val < min) ? min : val;
+}
+
 // 数値入力欄が変わったとき
 function onNumInput(mode) {
   const numEl    = document.getElementById(`cfg-${mode}-num`);
   const hiddenEl = document.getElementById(`cfg-${mode}`);
-  const val = parseFloat(numEl.value);
-  if (isNaN(val) || val <= 0) return;
+  const raw = parseFloat(numEl.value);
+  if (isNaN(raw) || raw <= 0) return;
+  const val = clampMult(mode, raw);
   hiddenEl.value = val;
   updateHint(mode, val);
   // easy はプリセットボタンなし
@@ -714,6 +724,9 @@ async function loadConfigPanel() {
   document.getElementById('cfg-theme-auto').textContent = autoTheme
     ? '📅 今週の自動お題：' + autoTheme
     : '📅 今週の自動お題：未設定（themesシートが空、またはsetupThemesSheet()未実行）';
+  // 保存済みの値が実効下限を下回っている場合は、表示上も実効値に揃える
+  h = clampMult('hard', h); he = clampMult('hell', he);
+  n = clampMult('normal', n); e = clampMult('easy', e);
   document.getElementById('cfg-hard').value   = h;
   document.getElementById('cfg-hell').value   = he;
   document.getElementById('cfg-normal').value = n;
@@ -735,10 +748,11 @@ async function loadConfigPanel() {
 }
 
 async function saveConfig() {
-  const h     = parseFloat(document.getElementById('cfg-hard').value);
-  const he    = parseFloat(document.getElementById('cfg-hell').value);
-  const n     = parseFloat(document.getElementById('cfg-normal').value);
-  const e     = parseFloat(document.getElementById('cfg-easy').value);
+  // 実効下限を下回る値は保存前に引き上げる（保存しても効かない値を残さないため）
+  const h     = clampMult('hard',   parseFloat(document.getElementById('cfg-hard').value));
+  const he    = clampMult('hell',   parseFloat(document.getElementById('cfg-hell').value));
+  const n     = clampMult('normal', parseFloat(document.getElementById('cfg-normal').value));
+  const e     = clampMult('easy',   parseFloat(document.getElementById('cfg-easy').value));
   const theme = document.getElementById('cfg-theme').value.trim();
   if (isNaN(h) || isNaN(he) || isNaN(n) || isNaN(e)) {
     document.getElementById('config-msg').style.color = '#e74c3c';
