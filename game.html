@@ -15,7 +15,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>おまんぼさんイラストゲーム</title>
+<title>おまんぼさんのイラストパーク</title>
 <style>
 :root {
   --color-bg-start: #fef3e2; --color-bg-end: #fde8d8;
@@ -292,6 +292,541 @@ h1 {
   from { transform: scale(1) rotate(-5deg); filter: brightness(1); }
   to   { transform: scale(1.18) rotate(5deg); filter: brightness(1.4); }
 }
+
+/* ==================================================================
+   おまんぼさんのイラストパーク — デザインシステム
+   ・ブランドの基準はおまんぼさんロゴ（omanbo-logo.png）
+   ・紙／クレヨン／絵の具のお絵描きモチーフ＋遊園地のワクワク感
+   ・配色はロゴから採色（クリーム肌 #FFE3B3 / 茶髪 #9E713E / 口 #FF6944）
+   ・既存のJSが参照するID・関数はそのまま使う（見た目だけの刷新）
+================================================================== */
+:root {
+  /* ロゴ由来のブランドカラー */
+  --om-face:   #FFE3B3;
+  --om-hair:   #9E713E;
+  --om-ink:    #2B1A0E;
+  --om-mouth:  #FF6944;
+
+  /* パークのパステル */
+  --pk-pink:    #FF7FA6;  --pk-pink-d:   #DC5480;
+  --pk-blue:    #4FC3F7;  --pk-blue-d:   #2196C4;
+  --pk-yellow:  #FFCE3D;  --pk-yellow-d: #E0A700;
+  --pk-green:   #7ED957;  --pk-green-d:  #52AE31;
+  --pk-orange:  #FFA45B;  --pk-orange-d: #E77C28;
+  --pk-purple:  #B49BE8;  --pk-purple-d: #8A6DD0;
+  --pk-red:     #FF6B6B;  --pk-red-d:    #D94141;
+
+  /* 紙 */
+  --pk-paper:   #FFFCF3;
+  --pk-paper-2: #FFF3DC;
+  --pk-line:    #E7D6BB;
+  --pk-text:    #4A3524;
+  --pk-text-2:  #8A7358;
+
+  --pk-r-lg: 26px;
+  --pk-r-md: 18px;
+  --pk-r-sm: 12px;
+  --pk-shadow: 0 8px 22px rgba(120,84,40,0.14);
+  --font-round: 'Hiragino Maru Gothic ProN','ヒラギノ丸ゴ ProN','Yu Gothic','YuGothic','Meiryo',sans-serif;
+}
+
+/* ── パークの背景：画用紙＋やわらかい光＋紙吹雪 ─────────────── */
+.pk-bg {
+  background-color: var(--pk-paper);
+  background-image:
+    /* 紙吹雪（小さな四角と丸） */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cg opacity='.5'%3E%3Crect x='18' y='30' width='9' height='9' rx='2' fill='%23FF7FA6' transform='rotate(22 22 34)'/%3E%3Crect x='150' y='16' width='8' height='8' rx='2' fill='%234FC3F7' transform='rotate(-18 154 20)'/%3E%3Ccircle cx='96' cy='72' r='4.5' fill='%23FFCE3D'/%3E%3Crect x='60' y='140' width='9' height='9' rx='2' fill='%237ED957' transform='rotate(35 64 144)'/%3E%3Ccircle cx='190' cy='120' r='4' fill='%23FFA45B'/%3E%3Crect x='120' y='186' width='8' height='8' rx='2' fill='%23B49BE8' transform='rotate(-25 124 190)'/%3E%3Ccircle cx='30' cy='196' r='3.5' fill='%234FC3F7'/%3E%3Crect x='196' y='176' width='7' height='7' rx='2' fill='%23FF7FA6' transform='rotate(14 199 179)'/%3E%3C/g%3E%3C/svg%3E"),
+    /* 画用紙の方眼 */
+    linear-gradient(var(--pk-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--pk-line) 1px, transparent 1px),
+    /* 上のやわらかい空の光 */
+    radial-gradient(120% 70% at 50% -10%, #DFF3FF 0%, rgba(223,243,255,0) 60%),
+    radial-gradient(80% 50% at 8% 100%, #E6F8DC 0%, rgba(230,248,220,0) 65%),
+    radial-gradient(80% 50% at 95% 96%, #FFE9F0 0%, rgba(255,233,240,0) 65%);
+  background-size: 220px 220px, 34px 34px, 34px 34px, 100% 100%, 100% 100%, 100% 100%;
+  background-attachment: scroll;
+}
+.pk-bg::before { /* 方眼を薄くするためのベール */
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: rgba(255,252,243,0.55);
+}
+.pk-bg > * { position: relative; z-index: 1; }
+
+/* ── ガーランド（三角旗）：遊園地らしさをオリジナルの図形で ───── */
+.pk-bunting {
+  height: 26px; width: 100%; flex-shrink: 0;
+  background-repeat: repeat-x; background-size: 132px 26px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='26'%3E%3Cpath d='M0 5 Q33 12 66 5 Q99 -2 132 5' stroke='%23C9A97A' stroke-width='2.4' fill='none'/%3E%3Cpath d='M6 6 L28 6 L17 24 Z' fill='%23FF7FA6'/%3E%3Cpath d='M39 5 L61 5 L50 23 Z' fill='%234FC3F7'/%3E%3Cpath d='M72 5 L94 5 L83 23 Z' fill='%23FFCE3D'/%3E%3Cpath d='M105 6 L127 6 L116 24 Z' fill='%237ED957'/%3E%3C/svg%3E");
+}
+
+/* ── マスキングテープ ─────────────────────────────── */
+.pk-tape {
+  position: absolute; top: -11px; left: 50%; transform: translateX(-50%) rotate(-2deg);
+  width: 92px; height: 22px; border-radius: 3px;
+  background: repeating-linear-gradient(45deg, rgba(255,206,61,.85) 0 7px, rgba(255,232,160,.85) 7px 14px);
+  box-shadow: 0 2px 5px rgba(120,84,40,.16);
+}
+
+/* ── 紙のカード ───────────────────────────────── */
+.pk-card {
+  position: relative;
+  background: linear-gradient(180deg, #fff 0%, var(--pk-paper) 100%);
+  border: 3px solid #fff;
+  border-radius: var(--pk-r-lg);
+  box-shadow: var(--pk-shadow), 0 0 0 2px rgba(201,169,122,.35);
+  padding: 18px 16px 16px;
+  text-align: left;
+  color: var(--pk-text);
+}
+.pk-card.pk-pin::after { /* 画びょう */
+  content: ''; position: absolute; top: 10px; right: 14px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 32%, #fff 0 22%, var(--pk-red) 24% 100%);
+  box-shadow: 0 2px 3px rgba(0,0,0,.2);
+}
+
+/* ── ぷっくり立体ボタン ───────────────────────────── */
+/* 影の色は --btn-d 変数で持たせる。こうしておくと .sm / .big などの
+   サイズ違いクラスが色バリアントの影を打ち消してしまう事故を防げる。 */
+.pk-btn {
+  --btn-c: var(--pk-pink); --btn-d: var(--pk-pink-d); --btn-t: #fff;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--font-round); font-weight: 800; color: var(--btn-t);
+  border: none; border-radius: 999px; cursor: pointer;
+  padding: 15px 26px; font-size: 1.02rem; line-height: 1.25;
+  background: var(--btn-c);
+  box-shadow: 0 6px 0 var(--btn-d), 0 10px 18px rgba(120,84,40,.2);
+  text-shadow: 0 1px 0 rgba(0,0,0,.12);
+  transition: transform .08s ease, box-shadow .08s ease;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.pk-btn:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--btn-d), 0 3px 8px rgba(120,84,40,.2); }
+.pk-btn.blue   { --btn-c: var(--pk-blue);   --btn-d: var(--pk-blue-d); }
+.pk-btn.green  { --btn-c: var(--pk-green);  --btn-d: var(--pk-green-d); }
+.pk-btn.yellow { --btn-c: var(--pk-yellow); --btn-d: var(--pk-yellow-d); --btn-t: #6A4A00; text-shadow: none; }
+.pk-btn.orange { --btn-c: var(--pk-orange); --btn-d: var(--pk-orange-d); }
+.pk-btn.purple { --btn-c: var(--pk-purple); --btn-d: var(--pk-purple-d); }
+.pk-btn.ghost  {
+  --btn-c: #fff; --btn-d: #D9C4A4; --btn-t: var(--pk-text);
+  border: 2px solid var(--pk-line); text-shadow: none;
+}
+.pk-btn.wide { width: 100%; }
+.pk-btn.big  { font-size: 1.18rem; padding: 18px 30px; }
+.pk-btn.sm   { font-size: .84rem; padding: 10px 16px; box-shadow: 0 4px 0 var(--btn-d), 0 6px 12px rgba(120,84,40,.16); }
+.pk-btn.sm:active { box-shadow: 0 1px 0 var(--btn-d); }
+
+/* ── おまんぼさんアバター（ロゴ） ──────────────────── */
+.pk-avatar {
+  border-radius: 50%; background: #fff; object-fit: contain;
+  border: 4px solid #fff; box-shadow: 0 6px 16px rgba(120,84,40,.22), 0 0 0 3px var(--pk-yellow);
+}
+
+/* ── 見出し ─────────────────────────────────── */
+.pk-h {
+  display: inline-block; font-family: var(--font-round); font-weight: 900;
+  color: var(--pk-text); background: #fff; border: 3px solid var(--pk-yellow);
+  border-radius: 999px; padding: 8px 22px; font-size: 1.02rem;
+  box-shadow: 0 4px 0 rgba(224,167,0,.35);
+}
+.pk-eyebrow {
+  font-size: .68rem; letter-spacing: .22em; font-weight: 800;
+  color: var(--pk-text-2); text-transform: uppercase;
+}
+
+/* ── 難易度チップ ──────────────────────────────── */
+.pk-diff {
+  flex: 1; min-width: 0; padding: 10px 2px; border-radius: 14px;
+  font-family: var(--font-round); font-size: .78rem; font-weight: 800; line-height: 1.35;
+  cursor: pointer; border: 2.5px solid; background: #fff;
+  box-shadow: 0 3px 0 rgba(120,84,40,.14); touch-action: manipulation;
+}
+.pk-diff:active { transform: translateY(2px); box-shadow: none; }
+
+/* ── サブコンテンツ ────────────────────────────── */
+.pk-sub {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: #fff; border: 2.5px solid var(--pk-line); border-radius: var(--pk-r-md);
+  padding: 12px 14px; cursor: pointer; text-align: left; color: var(--pk-text);
+  font-family: var(--font-round); box-shadow: 0 4px 0 rgba(201,169,122,.3);
+  touch-action: manipulation;
+}
+.pk-sub:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(201,169,122,.3); }
+.pk-sub .ic { font-size: 1.5rem; flex-shrink: 0; }
+.pk-sub .tt { font-size: .92rem; font-weight: 800; }
+.pk-sub .ds { font-size: .68rem; color: var(--pk-text-2); }
+
+/* ── BONUS 帯（メインより明確に小さく・控えめに） ──────────── */
+.pk-bonus {
+  width: 100%; margin-top: 6px; border-radius: var(--pk-r-md);
+  border: 2px dashed #C9A97A; background: rgba(255,255,255,.72);
+  padding: 10px 12px; cursor: pointer; text-align: left; color: var(--pk-text-2);
+  font-family: var(--font-round); display: flex; align-items: center; gap: 10px;
+  touch-action: manipulation;
+}
+.pk-bonus:active { transform: scale(.99); }
+.pk-bonus .badge {
+  flex-shrink: 0; font-size: .58rem; font-weight: 900; letter-spacing: .1em;
+  background: var(--pk-purple); color: #fff; border-radius: 999px; padding: 3px 8px;
+}
+
+/* ── お絵描き道具の飾り（オリジナルの図形） ─────────────── */
+.pk-tools {
+  height: 34px; width: 100%; background-repeat: repeat-x; background-size: 200px 34px; opacity: .85;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='34'%3E%3Cg transform='rotate(-8 22 17)'%3E%3Crect x='8' y='11' width='34' height='11' rx='3' fill='%23FFCE3D'/%3E%3Cpath d='M42 11 L52 16.5 L42 22 Z' fill='%23FFE3B3'/%3E%3Cpath d='M48 14.5 L52 16.5 L48 18.5 Z' fill='%232B1A0E'/%3E%3C/g%3E%3Cg transform='rotate(7 90 17)'%3E%3Crect x='72' y='12' width='30' height='11' rx='5.5' fill='%23FF7FA6'/%3E%3Crect x='100' y='13.5' width='9' height='8' rx='2' fill='%239E713E'/%3E%3C/g%3E%3Cg%3E%3Ccircle cx='140' cy='17' r='9' fill='%234FC3F7'/%3E%3Ccircle cx='140' cy='17' r='3.5' fill='%23FFFCF3'/%3E%3C/g%3E%3Cg transform='rotate(-6 176 17)'%3E%3Crect x='160' y='12' width='26' height='11' rx='3' fill='%237ED957'/%3E%3Cpath d='M186 12 L196 17.5 L186 23 Z' fill='%23FFF3DC'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ==================================================================
+   1. オープニング（トップページ）
+================================================================== */
+#opening-screen.pk-open {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 0; overflow: hidden; text-align: center; color: var(--pk-text);
+  font-family: var(--font-round);
+}
+.pk-open-inner {
+  width: 100%; max-width: 460px; padding: 8px 22px 26px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.pk-logotype { line-height: 1.06; margin-bottom: 4px; }
+.pk-logotype .l1 {
+  display: block; font-size: clamp(1.05rem, 5.2vw, 1.45rem); font-weight: 900;
+  color: var(--pk-text); letter-spacing: .04em;
+}
+.pk-logotype .l2 {
+  display: block; font-size: clamp(2.05rem, 11vw, 3.1rem); font-weight: 900; letter-spacing: .02em;
+  background: linear-gradient(100deg, var(--pk-pink) 0%, var(--pk-orange) 32%, var(--pk-yellow) 55%, var(--pk-green) 78%, var(--pk-blue) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 3px 0 #fff) drop-shadow(0 5px 6px rgba(120,84,40,.28));
+}
+@keyframes pk-bob { 0%,100%{transform:translateY(0) rotate(-2deg);} 50%{transform:translateY(-9px) rotate(2deg);} }
+.pk-hero { animation: pk-bob 3.4s ease-in-out infinite; }
+@keyframes pk-pop { 0%,100%{transform:scale(1);} 50%{transform:scale(1.045);} }
+.pk-cta { animation: pk-pop 1.7s ease-in-out infinite; }
+
+/* ==================================================================
+   2. ゲーム選択（アトラクション選び）
+================================================================== */
+#how-to-overlay.pk-hub {
+  position: fixed; inset: 0; z-index: 900;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  overflow-x: hidden; overflow-y: auto; padding: 0 0 26px;
+  color: var(--pk-text); text-align: center; font-family: var(--font-round);
+  -webkit-overflow-scrolling: touch;
+}
+.pk-hub-inner { width: 100%; max-width: 460px; padding: 4px 16px 0; }
+
+/* アトラクションカード（メイン2枚） */
+.pk-att {
+  position: relative; width: 100%; margin-bottom: 16px; overflow: hidden;
+  border-radius: var(--pk-r-lg); border: 3px solid #fff;
+  box-shadow: var(--pk-shadow), 0 0 0 2.5px rgba(201,169,122,.4);
+  background: #fff; text-align: left;
+}
+.pk-att .hd {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px 12px;
+}
+.pk-att .hd .num {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: .95rem; color: #fff; box-shadow: 0 3px 0 rgba(0,0,0,.14);
+}
+.pk-att .hd .tt { font-size: 1.2rem; font-weight: 900; line-height: 1.2; }
+.pk-att .hd .ds { font-size: .76rem; color: var(--pk-text-2); margin-top: 3px; line-height: 1.45; }
+.pk-att .bd { padding: 0 16px 16px; }
+.pk-att.score  .hd { background: linear-gradient(180deg,#FFEFD6,#fff); }
+.pk-att.score  .hd .num { background: var(--pk-orange); }
+.pk-att.score  .hd .tt  { color: var(--pk-orange-d); }
+.pk-att.draw   .hd { background: linear-gradient(180deg,#E4F7FF,#fff); }
+.pk-att.draw   .hd .num { background: var(--pk-blue); }
+.pk-att.draw   .hd .tt  { color: var(--pk-blue-d); }
+.pk-att .face {
+  flex-shrink: 0; width: 54px; height: 54px; border-radius: 50%; background: #fff;
+  border: 3px solid #fff; box-shadow: 0 0 0 2.5px currentColor; object-fit: contain;
+}
+
+/* ==================================================================
+   3. 共通：戻るボタン・パネル
+================================================================== */
+.pk-back {
+  align-self: flex-start; margin: 0 0 12px; padding: 9px 18px;
+  background: #fff; border: 2.5px solid var(--pk-line); border-radius: 999px;
+  color: var(--pk-text); font-family: var(--font-round); font-size: .84rem; font-weight: 800;
+  cursor: pointer; box-shadow: 0 3px 0 rgba(201,169,122,.35); touch-action: manipulation;
+}
+.pk-back:active { transform: translateY(2px); box-shadow: none; }
+.pk-note {
+  border-left: 4px solid var(--pk-yellow); background: #FFFBEE;
+  border-radius: 0 10px 10px 0; padding: 9px 12px; font-size: .78rem;
+  line-height: 1.75; color: var(--pk-text); text-align: left;
+}
+.pk-note.warn { border-left-color: var(--pk-red); background: #FFF1F1; }
+.pk-note.info { border-left-color: var(--pk-blue); background: #EFF9FF; }
+.pk-flow {
+  display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap;
+}
+.pk-flow .st {
+  background: var(--pk-paper-2); border: 2px solid var(--pk-line); border-radius: 12px;
+  padding: 6px 8px; font-size: .68rem; font-weight: 800; text-align: center; min-width: 56px; line-height: 1.35;
+}
+.pk-flow .ar { color: var(--pk-line); font-weight: 900; }
+
+/* ==================================================================
+   4. 採点チャレンジ プレイ画面（既存IDをそのまま活かして着せ替え）
+================================================================== */
+body {
+  font-family: var(--font-round);
+  background-color: var(--pk-paper);
+  background-image:
+    linear-gradient(var(--pk-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--pk-line) 1px, transparent 1px),
+    radial-gradient(120% 60% at 50% 0%, #E4F5FF 0%, rgba(228,245,255,0) 62%);
+  background-size: 34px 34px, 34px 34px, 100% 100%;
+  color: var(--pk-text);
+}
+h1 {
+  font-size: 1.5rem; font-weight: 900; letter-spacing: .01em;
+  background: linear-gradient(100deg, var(--pk-pink), var(--pk-orange) 40%, var(--pk-yellow) 62%, var(--pk-green));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 2px 0 #fff) drop-shadow(0 3px 4px rgba(120,84,40,.22));
+}
+#subtitle {
+  font-size: .8rem; color: var(--pk-text); background: #fff; font-weight: 700;
+  border: 2.5px solid var(--pk-yellow); border-radius: 999px; padding: 6px 16px;
+  box-shadow: 0 3px 0 rgba(224,167,0,.3);
+}
+#streak-badge {
+  color: var(--pk-orange-d); background: #fff; border: 2px solid var(--pk-orange);
+  border-radius: 999px; padding: 4px 14px; font-weight: 800;
+  box-shadow: 0 3px 0 rgba(231,124,40,.28);
+}
+#play-canvas {
+  border: 4px solid #fff; border-radius: 22px;
+  box-shadow: 0 10px 26px rgba(120,84,40,.18), 0 0 0 3px var(--pk-line);
+}
+#tray { background: var(--pk-paper-2); border-top: 2.5px solid var(--pk-yellow); border-radius: 0 0 18px 18px; }
+.ctrl-btn {
+  font-family: var(--font-round); font-weight: 800; border-radius: 14px;
+  box-shadow: 0 4px 0 rgba(120,84,40,.22); transition: transform .08s, box-shadow .08s;
+}
+.ctrl-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(120,84,40,.22); }
+.btn-peek  { background: var(--pk-blue);  box-shadow: 0 4px 0 var(--pk-blue-d); }
+.btn-score { background: var(--pk-green); box-shadow: 0 5px 0 var(--pk-green-d); }
+.btn-reset { background: var(--pk-red);   box-shadow: 0 4px 0 var(--pk-red-d); }
+.btn-rank  { background: var(--pk-purple);box-shadow: 0 4px 0 var(--pk-purple-d); }
+.btn-peek:disabled, .btn-score:disabled { background: #CFC4B4; box-shadow: 0 4px 0 #B3A794; }
+#peek-info { background: #fff; border: 2px solid var(--pk-line); border-radius: 12px; color: var(--pk-text); font-weight: 700; }
+#peek-timer { background: var(--pk-line); border-radius: 999px; }
+#peek-timer-bar { background: var(--pk-blue); }
+
+/* 開始オーバーレイ（カウントダウン） */
+#start-overlay {
+  background: linear-gradient(170deg, #2B1A0E 0%, #4A3524 55%, #2B1A0E 100%);
+  font-family: var(--font-round);
+}
+#start-overlay h2 {
+  font-size: 1.25rem; font-weight: 900; color: var(--pk-yellow);
+  background: rgba(255,255,255,.08); border: 2px solid rgba(255,206,61,.5);
+  border-radius: 999px; padding: 8px 22px;
+}
+#start-face { border: 5px solid var(--pk-yellow); box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+#start-countdown {
+  color: #fff; text-shadow: 0 4px 0 var(--pk-pink-d), 0 8px 18px rgba(0,0,0,.5);
+  font-weight: 900;
+}
+#start-msg { color: #F3E4CE; font-weight: 700; }
+#peek-overlay { border: 5px solid var(--pk-blue); border-radius: 24px; }
+#peek-label { color: var(--pk-blue-d); font-weight: 900; }
+
+/* ── モーダル ────────────────────────────────── */
+.modal-bg { background: rgba(74,53,36,.62); backdrop-filter: blur(2px); }
+.modal-box {
+  border-radius: var(--pk-r-lg); font-family: var(--font-round); color: var(--pk-text);
+  background: linear-gradient(180deg,#fff, var(--pk-paper));
+  border: 3px solid #fff; box-shadow: 0 20px 60px rgba(74,53,36,.45), 0 0 0 3px var(--pk-line);
+  padding: 22px 18px;
+}
+.modal-box h2 { font-size: 1.4rem; font-weight: 900; color: var(--pk-text); }
+.btn-row button { font-family: var(--font-round); font-weight: 800; border-radius: 999px; box-shadow: 0 4px 0 rgba(120,84,40,.25); }
+.btn-row button:active { transform: translateY(3px); box-shadow: none; }
+#total-score-disp {
+  font-size: 4.1rem; font-weight: 900; line-height: 1;
+  background: linear-gradient(100deg, var(--pk-orange), var(--pk-pink) 55%, var(--pk-purple));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 3px 0 #fff) drop-shadow(0 5px 8px rgba(120,84,40,.3));
+}
+#score-comment { font-size: 1.06rem; font-weight: 800; color: var(--pk-text); }
+#part-breakdown {
+  background: #fff; border: 2.5px solid var(--pk-line); border-radius: 16px;
+  padding: 12px 14px; line-height: 2.05; font-weight: 700;
+}
+#name-input { border: 2.5px solid var(--pk-line); border-radius: 14px; font-family: var(--font-round); }
+#ranking-table thead th { background: var(--pk-purple); color: #fff; font-weight: 800; }
+#ranking-table th, #ranking-table td { border-bottom: 1.5px solid var(--pk-line); }
+
+/* ==================================================================
+   5. お絵描き工房（#odekaki-overlay）
+================================================================== */
+#odekaki-overlay.pk-studio {
+  font-family: var(--font-round); color: var(--pk-text);
+  background-color: var(--pk-paper);
+  background-image:
+    linear-gradient(var(--pk-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--pk-line) 1px, transparent 1px),
+    radial-gradient(110% 55% at 50% 0%, #E4F5FF 0%, rgba(228,245,255,0) 60%);
+  background-size: 34px 34px, 34px 34px, 100% 100%;
+}
+#odekaki-clip-container { box-shadow: 0 10px 26px rgba(120,84,40,.2) !important; }
+#odekaki-viewport { background: transparent; }
+/* ツール類を丸くぷっくりさせる（既存のインラインstyleを上書き） */
+#odekaki-overlay button {
+  font-family: var(--font-round) !important; font-weight: 800 !important;
+  border-radius: 14px !important; touch-action: manipulation;
+}
+#odekaki-overlay #tool-btn-pen, #odekaki-overlay #tool-btn-bucket, #odekaki-overlay #tool-btn-eraser,
+#odekaki-overlay #size-btn-thin, #odekaki-overlay #size-btn-mid, #odekaki-overlay #size-btn-thick,
+#odekaki-overlay #shape-circle-btn, #odekaki-overlay #shape-free-btn,
+#odekaki-overlay #undo-btn, #odekaki-overlay #redo-btn,
+#odekaki-overlay #erase-layer-btn-line, #odekaki-overlay #erase-layer-btn-fill, #odekaki-overlay #erase-layer-btn-both {
+  box-shadow: 0 3px 0 rgba(120,84,40,.2);
+}
+#odekaki-overlay #shape-circle-btn, #odekaki-overlay #shape-free-btn { border-radius: 999px !important; }
+/* カラーパレットの丸を絵の具らしく */
+#color-btns button, #odekaki-overlay button[onclick^="setOdekakiColor"] {
+  border-radius: 50% !important; box-shadow: 0 3px 6px rgba(120,84,40,.28), inset 0 -3px 5px rgba(0,0,0,.14) !important;
+}
+.pk-studio-title {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  font-size: 1.22rem; font-weight: 900; color: var(--pk-text);
+}
+.pk-studio-title img { width: 34px; height: 34px; border-radius: 50%; background:#fff; }
+/* イーゼル（画用紙に載せた見立て）＋キャンバス本体をレスポンシブに */
+.pk-easel {
+  position: relative; padding: 10px; margin-bottom: 8px;
+  background: linear-gradient(180deg,#fff,var(--pk-paper));
+  border: 3px solid #fff; border-radius: 24px;
+  box-shadow: 0 10px 26px rgba(120,84,40,.18), 0 0 0 2.5px var(--pk-line);
+}
+.pk-easel::before, .pk-easel::after { /* 左右のマスキングテープ */
+  content: ''; position: absolute; top: -9px; width: 54px; height: 19px; border-radius: 3px;
+  background: repeating-linear-gradient(45deg, rgba(79,195,247,.8) 0 6px, rgba(190,232,252,.8) 6px 12px);
+  box-shadow: 0 2px 4px rgba(120,84,40,.16);
+}
+.pk-easel::before { left: 14px;  transform: rotate(-7deg); }
+.pk-easel::after  { right: 14px; transform: rotate(6deg); background: repeating-linear-gradient(45deg, rgba(255,127,166,.8) 0 6px, rgba(255,214,226,.8) 6px 12px); }
+#odekaki-viewport { width: min(320px, calc(100vw - 62px)); aspect-ratio: 1 / 1; height: auto; }
+@supports not (aspect-ratio: 1/1) { #odekaki-viewport { height: min(320px, calc(100vw - 62px)); } }
+
+/* 道具・絵の具のパネル */
+.pk-panel-t {
+  font-size: .74rem; font-weight: 900; color: var(--pk-text);
+  margin-bottom: 8px; letter-spacing: .04em;
+}
+.pk-tool-mini {
+  padding: 7px 13px; background: #fff; color: var(--pk-blue-d);
+  border: 2.5px solid var(--pk-blue); border-radius: 999px;
+  font-family: var(--font-round); font-size: .9rem; font-weight: 800; cursor: pointer; line-height: 1;
+  box-shadow: 0 3px 0 rgba(33,150,196,.28); touch-action: manipulation;
+}
+.pk-tool-mini:active { transform: translateY(2px); box-shadow: none; }
+.pk-palette { background: linear-gradient(180deg,#fff,#FFF7E8); }
+
+/* 図鑑登録フォーム */
+#odekaki-form-area {
+  background: linear-gradient(180deg,#fff,var(--pk-paper)) !important;
+  border: 2.5px solid var(--pk-line) !important;
+  border-radius: var(--pk-r-md) !important;
+  box-shadow: 0 4px 0 rgba(201,169,122,.28);
+  max-width: 340px !important; padding: 15px 14px !important;
+}
+#odekaki-form-area input[type="text"] {
+  border: 2.5px solid var(--pk-line) !important; border-radius: 12px !important;
+  font-family: var(--font-round); padding: 10px !important;
+}
+#odekaki-form-area input[type="text"]:focus { outline: none; border-color: var(--pk-blue) !important; }
+#odekaki-save-btn { border-radius: 999px !important; font-weight: 800 !important; box-shadow: 0 5px 0 var(--pk-green-d); }
+#odekaki-save-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--pk-green-d); }
+/* 道具パネルの折り返しを抑える */
+.pk-panel #undo-btn, .pk-panel #redo-btn { padding: 9px 11px !important; }
+
+/* ── 採点結果 ───────────────────────────────── */
+.pk-result-banner {
+  display: inline-block; margin: -4px 0 12px; padding: 9px 26px;
+  font-size: 1.05rem; font-weight: 900; color: #fff; border-radius: 999px;
+  background: linear-gradient(100deg, var(--pk-orange), var(--pk-pink));
+  box-shadow: 0 5px 0 rgba(220,84,128,.45), 0 8px 16px rgba(120,84,40,.22);
+  text-shadow: 0 1px 0 rgba(0,0,0,.14);
+}
+.pk-score-row { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.pk-score-num { display: flex; flex-direction: column; align-items: center; line-height: 1; }
+.pk-score-num small {
+  font-size: .82rem; font-weight: 900; letter-spacing: .12em; color: var(--pk-orange-d); margin-top: 2px;
+}
+.pk-rank {
+  flex-shrink: 0; width: 72px; height: 72px; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: #fff; background: var(--pk-purple);
+  box-shadow: 0 5px 0 rgba(0,0,0,.16), 0 8px 18px rgba(120,84,40,.28), inset 0 0 0 4px rgba(255,255,255,.55);
+}
+.pk-rank em { font-style: normal; font-size: .56rem; font-weight: 900; letter-spacing: .16em; opacity: .95; }
+.pk-rank b  { font-size: 2rem; font-weight: 900; line-height: 1; text-shadow: 0 2px 0 rgba(0,0,0,.16); }
+.pk-rank.rank-S { background: linear-gradient(145deg,#FFD54F,#FF9E2C); }
+.pk-rank.rank-A { background: linear-gradient(145deg,#FF9DBB,#F2607F); }
+.pk-rank.rank-B { background: linear-gradient(145deg,#7FD4FA,#3AA8DC); }
+.pk-rank.rank-C { background: linear-gradient(145deg,#9FE38A,#5CB63C); }
+.pk-rank.rank-D { background: linear-gradient(145deg,#C9B9A4,#9B8974); }
+#score-sub { font-size: .82rem; color: var(--pk-text-2); font-weight: 700; margin-top: 8px; }
+/* 結果モーダル内のボタンをぷっくり丸ボタンに */
+#score-modal button, #zukan-modal button, #scoring-zukan-modal button,
+#rank-modal button, #prescore-modal button, #bonus-modal button {
+  font-family: var(--font-round); font-weight: 800; border-radius: 999px !important;
+  box-shadow: 0 4px 0 rgba(120,84,40,.25); transition: transform .08s, box-shadow .08s;
+  touch-action: manipulation;
+}
+#score-modal button:active, #zukan-modal button:active, #scoring-zukan-modal button:active,
+#rank-modal button:active, #prescore-modal button:active, #bonus-modal button:active {
+  transform: translateY(3px); box-shadow: 0 1px 0 rgba(120,84,40,.25);
+}
+#result-img, #result-img-clean {
+  border: 3px solid #fff !important; border-radius: 18px !important;
+  box-shadow: 0 6px 16px rgba(120,84,40,.2);
+}
+/* カウントダウンをもっと大きく（ゲームらしく） */
+#start-countdown { font-size: clamp(3.4rem, 24vw, 8rem) !important; }
+/* ランキング・図鑑の難易度切替チップが折り返さないように */
+#rank-diff-easy, #rank-diff-normal, #rank-diff-hard, #rank-diff-hell,
+#zukan-diff-all, #zukan-diff-hard, #zukan-diff-hell {
+  white-space: nowrap; font-size: .74rem !important; padding: 7px 6px !important;
+}
+
+.pk-panel {
+  width: 100%; max-width: 340px; background: #fff; border: 2.5px solid var(--pk-line);
+  border-radius: var(--pk-r-md); padding: 10px 12px; margin-bottom: 8px;
+  box-shadow: 0 4px 0 rgba(201,169,122,.28);
+}
+
+/* ==================================================================
+   6. レスポンシブ（スマホ最優先）
+================================================================== */
+@media (max-width: 600px) {
+  h1 { font-size: 1.22rem; }
+  .pk-hub-inner, .pk-open-inner { padding-left: 13px; padding-right: 13px; }
+  .pk-att .hd .tt { font-size: 1.08rem; }
+  .pk-btn { font-size: .96rem; padding: 14px 20px; }
+  .pk-btn.big { font-size: 1.08rem; padding: 17px 22px; }
+  .pk-diff { font-size: .72rem; padding: 9px 1px; }
+}
+@media (max-width: 360px) {
+  .pk-diff { font-size: .66rem; }
+  .pk-att .hd { gap: 8px; padding: 12px 12px 10px; }
+  .pk-att .bd { padding: 0 12px 14px; }
+}
+/* 高さの低い端末でオープニングが窮屈にならないように */
+@media (max-height: 680px) {
+  .pk-hero { width: 108px !important; height: 108px !important; }
+  .pk-logotype .l2 { font-size: clamp(1.8rem, 9.5vw, 2.5rem); }
+}
+
 </style>
 </head>
 <body>
@@ -299,8 +834,8 @@ h1 {
 <!-- メンテナンス画面（パスワードゲート）は 2026-09-06 に撤去して一般公開。
      再度クローズしたい場合は git 履歴 (コミット直前) の #maintenance-screen ブロックを復元する。 -->
 
-<h1>🎨 おまんぼさんイラストゲーム</h1>
-<div id="subtitle">✏️ おまんぼさんの顔を描いて採点チャレンジ！(100点満点)</div>
+<h1>🎨 おまんぼさんのイラストパーク</h1>
+<div id="subtitle">🎯 採点チャレンジ／おまんぼさんを記憶して描こう！</div>
 
 <div id="main-layout">
   <div id="mode-bar" style="display:none;">
@@ -392,250 +927,289 @@ h1 {
   </div>
 </div>
 
-<div id="opening-screen" style="position:fixed;inset:0;z-index:1000;background:linear-gradient(135deg,#1a0a00 0%,#3d1a00 40%,#1a0a00 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;text-align:center;padding:24px;overflow:hidden;">
-  <!-- 背景の星パーティクル -->
+<!-- ============================================================
+     トップページ：おまんぼさんのイラストパーク
+============================================================ -->
+<div id="opening-screen" class="pk-bg pk-open">
+  <div class="pk-bunting" style="position:absolute;top:0;left:0;z-index:2;"></div>
+  <!-- 背景の紙吹雪・お絵描きモチーフ -->
   <div id="opening-stars" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
-  <!-- ロゴ -->
-  <div style="position:relative;z-index:2;margin-bottom:12px;">
-    <div style="font-size:5rem;line-height:1;filter:drop-shadow(0 0 20px #e67e22);animation:opening-pulse 2s ease-in-out infinite;">🎨</div>
+
+  <div class="pk-open-inner">
+    <div class="pk-eyebrow" style="margin-bottom:10px;">OMANBOSAN ILLUST PARK</div>
+
+    <div class="pk-logotype">
+      <span class="l1">おまんぼさんの</span>
+      <span class="l2">イラストパーク</span>
+    </div>
+
+    <img src="omanbo-logo.png" alt="おまんぼさん" class="pk-avatar pk-hero"
+         style="width:136px;height:136px;margin:16px 0 14px;">
+
+    <div style="font-size:0.95rem;font-weight:800;line-height:1.75;margin-bottom:6px;">
+      描いて、遊んで、<br>あなただけのおまんぼさんを作ろう！
+    </div>
+
+    <!-- 2つの遊びを最初の画面で示す（お絵描きゲームだと一目で分かるように） -->
+    <div style="display:flex;gap:8px;justify-content:center;margin:12px 0 20px;flex-wrap:wrap;">
+      <span style="background:#fff;border:2.5px solid var(--pk-orange);color:var(--pk-orange-d);border-radius:999px;padding:5px 13px;font-size:0.72rem;font-weight:800;">🎯 採点チャレンジ</span>
+      <span style="background:#fff;border:2.5px solid var(--pk-blue);color:var(--pk-blue-d);border-radius:999px;padding:5px 13px;font-size:0.72rem;font-weight:800;">🎨 お絵描きチャレンジ</span>
+    </div>
+
+    <button onclick="closeOpeningScreen()" class="pk-btn big wide pk-cta">🎨 あそびに行く！</button>
+    <div style="font-size:0.72rem;color:var(--pk-text-2);margin-top:12px;">タップしてスタート</div>
   </div>
-  <div style="position:relative;z-index:2;">
-    <div style="font-size:1.6rem;font-weight:bold;letter-spacing:0.1em;color:#f39c12;text-shadow:0 0 20px #e67e22,0 0 40px #e67e22;margin-bottom:6px;">おまんぼさん</div>
-    <div style="font-size:1.1rem;font-weight:bold;color:#fff;margin-bottom:4px;">イラストゲーム</div>
-    <div style="font-size:0.78rem;color:#aaa;margin-bottom:32px;letter-spacing:0.05em;">OMANBO ILLUST GAME</div>
-    <button onclick="closeOpeningScreen()" style="padding:16px 48px;background:linear-gradient(135deg,#e67e22,#f39c12);color:white;border:none;border-radius:50px;font-size:1.1rem;font-weight:bold;cursor:pointer;box-shadow:0 4px 20px rgba(230,126,34,0.6);letter-spacing:0.1em;animation:opening-btn-pulse 1.5s ease-in-out infinite;">
-      ▶ はじめる
-    </button>
-    <div style="font-size:0.72rem;color:#888;margin-top:16px;">タップして始める</div>
+
+  <div class="pk-tools" style="position:absolute;bottom:10px;left:0;"></div>
+</div>
+
+<!-- ============================================================
+     ゲーム選択：どのアトラクションで遊ぶ？
+============================================================ -->
+<div id="how-to-overlay" class="pk-bg pk-hub">
+  <div class="pk-bunting" style="flex-shrink:0;"></div>
+
+  <div class="pk-hub-inner">
+
+    <!-- ヘッダー -->
+    <div style="text-align:center;padding:12px 0 16px;">
+      <div style="display:inline-flex;align-items:center;gap:11px;">
+        <img src="omanbo-logo.png" alt="おまんぼさん" class="pk-avatar" style="width:46px;height:46px;">
+        <div style="text-align:left;line-height:1.2;">
+          <div style="font-size:0.72rem;font-weight:800;color:var(--pk-text-2);">おまんぼさんの</div>
+          <div style="font-size:1.22rem;font-weight:900;background:linear-gradient(100deg,var(--pk-pink),var(--pk-orange) 45%,var(--pk-green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 2px 0 #fff);">イラストパーク</div>
+        </div>
+      </div>
+      <div id="streak-badge"></div>
+    </div>
+
+    <!-- ============ 第1階層: アトラクション選び（メインハブ） ============ -->
+    <div id="htw-home" style="width:100%;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;">
+
+      <div class="pk-h" style="margin-bottom:16px;">🎡 どのアトラクションで遊ぶ？</div>
+
+      <!-- ① 採点チャレンジ -->
+      <div class="pk-att score">
+        <div class="hd">
+          <div class="num">1</div>
+          <img src="omanbo-logo.png" alt="" class="face" style="color:var(--pk-orange);">
+          <div style="flex:1;min-width:0;">
+            <div class="tt">🎯 採点チャレンジ</div>
+            <div class="ds">おまんぼさんをどれだけ正確に描けるかな？</div>
+          </div>
+        </div>
+        <div class="bd">
+          <div style="font-size:0.68rem;font-weight:800;color:var(--pk-text-2);margin-bottom:6px;">▼ 難易度をえらぶ</div>
+          <div style="display:flex;gap:6px;margin-bottom:12px;">
+            <button onclick="setDifficulty('easy',this)" id="diff-easy" class="pk-diff"
+              style="border-color:#52AE31;color:#52AE31;background:#fff;">😄<br>イージー</button>
+            <button onclick="setDifficulty('normal',this)" id="diff-normal" class="pk-diff"
+              style="border-color:#E77C28;color:#fff;background:#E77C28;">😊<br>通常</button>
+            <button onclick="setDifficulty('hard',this)" id="diff-hard" class="pk-diff"
+              style="border-color:#D94141;color:#D94141;background:#fff;">👹<br>鬼</button>
+            <button onclick="setDifficulty('hell',this)" id="diff-hell" class="pk-diff"
+              style="border-color:#8A6DD0;color:#8A6DD0;background:#fff;">😈<br>地獄</button>
+          </div>
+          <button onclick="selectModeAndStart('scoring')" class="pk-btn orange wide big">▶ スタート</button>
+          <button onclick="showHtwPlay()" class="pk-btn ghost sm wide" style="margin-top:9px;">📋 くわしいルール・賞について</button>
+        </div>
+      </div>
+
+      <!-- ② お絵描きチャレンジ -->
+      <div class="pk-att draw">
+        <div class="hd">
+          <div class="num">2</div>
+          <img src="odekaki-sample1.png" alt="" class="face" style="color:var(--pk-blue);">
+          <div style="flex:1;min-width:0;">
+            <div class="tt">🎨 お絵描きチャレンジ</div>
+            <div class="ds">お題から自由に描いて、お友達を作ろう！</div>
+          </div>
+        </div>
+        <div class="bd">
+          <div class="pk-flow" style="margin-bottom:12px;">
+            <div class="st">🎨<br>顔を描く</div>
+            <div class="ar">›</div>
+            <div class="st">🏷️<br>名前をつける</div>
+            <div class="ar">›</div>
+            <div class="st">📖<br>図鑑にのる</div>
+          </div>
+          <button onclick="selectModeAndStart('drawing')" class="pk-btn blue wide big">▶ スタート</button>
+          <button onclick="showHtwPlay()" class="pk-btn ghost sm wide" style="margin-top:9px;">📋 くわしい遊びかた・お手本</button>
+        </div>
+      </div>
+
+      <!-- サブコンテンツ -->
+      <div class="pk-h" style="margin:10px 0 12px;font-size:0.9rem;border-color:var(--pk-purple);box-shadow:0 4px 0 rgba(138,109,208,.3);">📚 みんなの作品・記録</div>
+      <div style="display:flex;flex-direction:column;gap:9px;width:100%;">
+        <button onclick="openZukan()" class="pk-sub">
+          <div class="ic">📖</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tt">お友達図鑑</div>
+            <div class="ds">お絵描きチャレンジの作品を見る</div>
+          </div>
+          <div style="color:var(--pk-line);font-weight:900;">›</div>
+        </button>
+        <button onclick="openScoringZukan()" class="pk-sub">
+          <div class="ic">👥</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tt">みんなのおまんぼさん</div>
+            <div class="ds">採点チャレンジの結果を見る</div>
+          </div>
+          <div style="color:var(--pk-line);font-weight:900;">›</div>
+        </button>
+        <button onclick="showRanking('current')" class="pk-sub">
+          <div class="ic">🏆</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tt">ランキング</div>
+            <div class="ds">今月のスコアランキングを見る</div>
+          </div>
+          <div style="color:var(--pk-line);font-weight:900;">›</div>
+        </button>
+      </div>
+
+      <!-- BONUS（メイン2つよりはっきり小さく・おまけ扱い） -->
+      <div style="width:100%;margin-top:20px;">
+        <div style="font-size:0.64rem;color:var(--pk-text-2);font-weight:800;letter-spacing:.14em;margin-bottom:6px;text-align:left;">おまけ</div>
+        <button onclick="openBonus()" class="pk-bonus">
+          <div class="badge">BONUS</div>
+          <div style="flex:1;min-width:0;text-align:left;">
+            <div style="font-size:0.82rem;font-weight:800;color:var(--pk-text);">🔍 おまんぼさんを探せ！</div>
+            <div style="font-size:0.66rem;">お絵描きの合間にちょっと遊べるおまけ</div>
+          </div>
+          <div style="color:var(--pk-line);font-weight:900;">›</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- ============ 第2階層A: くわしい遊びかた ============ -->
+    <div id="htw-play" style="width:100%;min-width:0;box-sizing:border-box;display:none;flex-direction:column;align-items:center;">
+      <button onclick="showHtwHome()" class="pk-back">← もどる</button>
+
+      <div class="pk-h" style="margin-bottom:16px;">📋 くわしい遊びかた</div>
+
+      <!-- 採点チャレンジの詳細 -->
+      <div class="pk-card pk-pin" style="width:100%;margin-bottom:16px;">
+        <div class="pk-tape"></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <img src="omanbo-logo.png" alt="" style="width:40px;height:40px;border-radius:50%;background:#fff;box-shadow:0 0 0 2.5px var(--pk-orange);">
+          <div>
+            <div style="font-size:1.05rem;font-weight:900;color:var(--pk-orange-d);">🎯 採点チャレンジ</div>
+            <div class="pk-eyebrow">SCORING CHALLENGE</div>
+          </div>
+        </div>
+
+        <div class="pk-note" style="margin-bottom:10px;">
+          おまんぼさんを<b>記憶して</b>フリーハンドで描こう！<br>
+          見本との重なり具合で自動採点します（100点満点）
+        </div>
+
+        <div class="pk-note info" style="margin-bottom:10px;">
+          <b style="color:var(--pk-blue-d);">📐 採点のしくみ</b><br>
+          髪・左目・右目・鼻・口の <b>5パーツ × 各20点＝100点満点</b>。<br>
+          <span style="color:var(--pk-text-2);font-size:0.72rem;">描いた線と見本の重なり具合で採点。正確な位置・形ほど高得点！</span>
+        </div>
+
+        <div class="pk-note warn" style="margin-bottom:12px;">
+          <b style="color:var(--pk-red-d);">👹 鬼モード・😈 地獄モードは順位発表の対象</b><br>
+          🏆 <b>特賞</b>（95点以上）スペシャルプレゼント<br>
+          🥇 1等賞　🥈 2等賞　🥉 3等賞<br>
+          <span style="color:var(--pk-text-2);font-size:0.71rem;">※ 1〜3等は順位の発表のみ（景品はありません）<br>※ 結果は不定期にインスタで発表します</span>
+        </div>
+
+        <button onclick="selectModeAndStart('scoring')" class="pk-btn orange wide">🎯 このまま はじめる →</button>
+      </div>
+
+      <!-- お絵描きチャレンジの詳細 -->
+      <div class="pk-card" style="width:100%;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <img src="odekaki-sample1.png" alt="" style="width:40px;height:40px;border-radius:50%;background:#fff;box-shadow:0 0 0 2.5px var(--pk-blue);">
+          <div>
+            <div style="font-size:1.05rem;font-weight:900;color:var(--pk-blue-d);">🎨 お絵描きチャレンジ</div>
+            <div class="pk-eyebrow">DRAWING CHALLENGE</div>
+          </div>
+        </div>
+
+        <div class="pk-note info" style="margin-bottom:12px;">
+          おまんぼさんの<b>お友達の顔を自由に描いて</b>図鑑に登録しよう！<br>
+          描いた顔に名前をつけると、あなたオリジナルのお友達が誕生します🎨
+        </div>
+
+        <!-- お手本サンプル -->
+        <div style="background:var(--pk-paper-2);border:2px dashed var(--pk-line);border-radius:16px;padding:11px;margin-bottom:12px;">
+          <div style="font-size:0.76rem;font-weight:900;color:var(--pk-text);margin-bottom:8px;text-align:center;">✏️ お手本サンプル</div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <div style="flex:0 0 auto;width:88px;text-align:center;">
+              <img src="odekaki-sample1.png" alt="にこちゃん" loading="lazy" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 3px 8px rgba(120,84,40,.2),0 0 0 2.5px var(--pk-yellow);background:#fff;display:block;margin:0 auto 5px;">
+              <div style="font-size:0.7rem;font-weight:800;line-height:1.2;">にこちゃん</div>
+            </div>
+            <div style="flex:0 0 auto;width:88px;text-align:center;">
+              <img src="odekaki-sample2.png" alt="ねこすけ" loading="lazy" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 3px 8px rgba(120,84,40,.2),0 0 0 2.5px var(--pk-pink);background:#fff;display:block;margin:0 auto 5px;">
+              <div style="font-size:0.7rem;font-weight:800;line-height:1.2;">ねこすけ</div>
+            </div>
+            <div style="flex:0 0 auto;width:88px;text-align:center;">
+              <img src="odekaki-sample3.png" alt="おだんごさん" loading="lazy" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #fff;box-shadow:0 3px 8px rgba(120,84,40,.2),0 0 0 2.5px var(--pk-blue);background:#fff;display:block;margin:0 auto 5px;">
+              <div style="font-size:0.7rem;font-weight:800;line-height:1.2;">おだんごさん</div>
+            </div>
+          </div>
+          <div style="font-size:0.68rem;color:var(--pk-text-2);text-align:center;margin-top:7px;line-height:1.5;">丸のなかに顔を描くだけ！じょうず・下手は気にしなくてOK😊</div>
+        </div>
+
+        <div class="pk-note warn" style="margin-bottom:12px;">
+          ⚠️ アニメキャラクターなどに似せた絵はご遠慮ください。おまんぼさんのオリジナルのお友達を描いてね🎨
+        </div>
+
+        <button onclick="selectModeAndStart('drawing')" class="pk-btn blue wide">🎨 このまま はじめる →</button>
+      </div>
+    </div>
+    <!-- ↑ #htw-play 終了 -->
+
+    <!-- ============ 第2階層B: 図鑑・記録を見る ============ -->
+    <div id="htw-zukan" style="width:100%;min-width:0;box-sizing:border-box;display:none;flex-direction:column;align-items:center;">
+      <button onclick="showHtwHome()" class="pk-back">← もどる</button>
+      <div class="pk-h" style="margin-bottom:16px;">📚 見たいものを選んでね</div>
+      <div style="display:flex;flex-direction:column;gap:9px;width:100%;">
+        <button onclick="openZukan()" class="pk-sub">
+          <div class="ic">📖</div>
+          <div style="flex:1;min-width:0;"><div class="tt">お友達図鑑</div><div class="ds">お絵描きチャレンジの作品を見る</div></div>
+          <div style="color:var(--pk-line);font-weight:900;">›</div>
+        </button>
+        <button onclick="openScoringZukan()" class="pk-sub">
+          <div class="ic">👥</div>
+          <div style="flex:1;min-width:0;"><div class="tt">みんなのおまんぼさん</div><div class="ds">採点チャレンジの結果を見る</div></div>
+          <div style="color:var(--pk-line);font-weight:900;">›</div>
+        </button>
+        <button onclick="showRanking('current')" class="pk-sub">
+          <div class="ic">🏆</div>
+          <div style="flex:1;min-width:0;"><div class="tt">ランキング</div><div class="ds">今月のスコアランキングを見る</div></div>
+          <div style="color:var(--pk-line);font-weight:900;">›</div>
+        </button>
+      </div>
+    </div>
+
+    <div style="height:14px;"></div>
   </div>
 </div>
 
-<!-- モード選択オーバーレイ -->
-<div id="how-to-overlay" style="position:fixed;inset:0;background:linear-gradient(160deg,#1a0a00 0%,#2d1200 35%,#1a2000 70%,#001a0d 100%);z-index:900;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-x:hidden;overflow-y:auto;padding:20px 16px;color:white;text-align:center;box-sizing:border-box;">
-
-  <!-- ヘッダー -->
-  <div style="margin-bottom:12px;padding-top:8px;">
-    <div style="font-size:0.75rem;color:#e67e22;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:4px;">OMANBO ILLUST GAME</div>
-    <div style="font-size:1.6rem;font-weight:bold;background:linear-gradient(90deg,#f39c12,#e67e22,#f1c40f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">おまんぼさん</div>
-    <div style="font-size:0.95rem;color:#ddd;margin-top:2px;">イラストゲーム</div>
-    <div id="streak-badge"></div>
+<!-- BONUS：おまんぼさんを探せ（おまけ） -->
+<div class="modal-bg" id="bonus-modal">
+  <div class="modal-box" style="max-width:460px;">
+    <div style="display:inline-block;font-size:0.6rem;font-weight:900;letter-spacing:.12em;background:var(--pk-purple);color:#fff;border-radius:999px;padding:4px 12px;margin-bottom:8px;">BONUS GAME</div>
+    <h2 style="font-size:1.25rem;">🔍 おまんぼさんを探せ！</h2>
+    <div style="font-size:0.8rem;color:var(--pk-text-2);line-height:1.7;margin-bottom:14px;">
+      お絵描きの合間に、ちょっとしたお楽しみ。<br>たくさんの人の中から、おまんぼさんを見つけてみよう！
+    </div>
+    <img src="odekaki-description.png" alt="おまんぼさんを探そう（その1）" loading="lazy"
+      style="display:block;width:100%;border-radius:16px;border:3px solid #fff;box-shadow:0 6px 16px rgba(120,84,40,.2);margin-bottom:10px;">
+    <img src="odekaki-description2.png" alt="おまんぼさんを探そう（その2）" loading="lazy"
+      style="display:block;width:100%;border-radius:16px;border:3px solid #fff;box-shadow:0 6px 16px rgba(120,84,40,.2);margin-bottom:16px;">
+    <button onclick="closeBonus()" class="pk-btn ghost wide">← もどる</button>
   </div>
-
-  <!-- ============ 第1階層: ホーム選択（あそぶ / 図鑑を見る） ============ -->
-  <div id="htw-home" style="width:100%;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;gap:14px;align-items:center;margin-top:6px;">
-    <button onclick="showHtwPlay()" class="mode-card-glow" style="width:100%;text-align:left;background:linear-gradient(135deg,rgba(230,126,34,0.28),rgba(192,57,43,0.2));border:2px solid rgba(230,126,34,0.6);border-radius:20px;padding:20px;color:white;cursor:pointer;box-shadow:0 6px 24px rgba(230,126,34,0.25);display:flex;align-items:center;gap:16px;"
-      onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform=''"
-      ontouchstart="this.style.transform='scale(0.98)'" ontouchend="this.style.transform=''">
-      <div style="font-size:2.6rem;flex-shrink:0;">🎮</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:1.15rem;font-weight:bold;">あそぶ</div>
-        <div style="font-size:0.75rem;color:#eee;margin-top:2px;">採点チャレンジ・お絵描きチャレンジ</div>
-      </div>
-      <div style="font-size:1.3rem;flex-shrink:0;opacity:0.8;">→</div>
-    </button>
-    <button onclick="showHtwZukan()" class="mode-card-glow" style="animation-delay:1.6s;width:100%;text-align:left;background:linear-gradient(135deg,rgba(155,89,182,0.25),rgba(39,174,96,0.18));border:2px solid rgba(155,89,182,0.5);border-radius:20px;padding:20px;color:white;cursor:pointer;box-shadow:0 6px 24px rgba(155,89,182,0.2);display:flex;align-items:center;gap:16px;"
-      onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform=''"
-      ontouchstart="this.style.transform='scale(0.98)'" ontouchend="this.style.transform=''">
-      <div style="font-size:2.6rem;flex-shrink:0;">📚</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:1.15rem;font-weight:bold;">図鑑・記録を見る</div>
-        <div style="font-size:0.75rem;color:#eee;margin-top:2px;">みんなの作品・ランキング</div>
-      </div>
-      <div style="font-size:1.3rem;flex-shrink:0;opacity:0.8;">→</div>
-    </button>
-  </div>
-
-  <!-- ============ 第2階層A: あそぶ選択（採点/お絵描きカード） ============ -->
-  <div id="htw-play" style="width:100%;min-width:0;box-sizing:border-box;display:none;flex-direction:column;align-items:center;margin-top:6px;">
-    <button onclick="showHtwHome()" class="htw-back-btn">← 戻る</button>
-
-    <!-- あそぶセクション見出し -->
-    <div style="width:100%;text-align:center;margin-bottom:14px;">
-      <div style="display:inline-block;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.25);border-radius:20px;padding:6px 18px;font-size:0.82rem;color:#fff;font-weight:bold;letter-spacing:0.03em;">
-        🎮 下の2枚から選んであそぼう！
-      </div>
-    </div>
-
-    <!-- 採点チャレンジカード -->
-  <div class="mode-card-glow" style="background:linear-gradient(135deg,rgba(230,126,34,0.18) 0%,rgba(192,57,43,0.14) 100%);border:2px solid rgba(230,126,34,0.7);border-radius:16px;padding:16px;margin-bottom:14px;width:100%;text-align:left;box-shadow:0 4px 24px rgba(230,126,34,0.25);">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-      <div style="font-size:2rem;">🎯</div>
-      <div style="flex:1;">
-        <div style="font-size:1.05rem;font-weight:bold;color:#f39c12;">採点チャレンジ</div>
-        <div style="font-size:0.72rem;color:#f39c12;opacity:0.8;">SCORING CHALLENGE</div>
-      </div>
-    </div>
-
-    <!-- 説明文（左ボーダーで「読むもの」と明示） -->
-    <div style="border-left:3px solid rgba(230,126,34,0.5);padding-left:10px;margin-bottom:12px;">
-      <div style="font-size:0.82rem;line-height:1.7;color:#ddd;">
-        おまんぼさんの顔を覚えて、フリーハンドで描画！<br>
-        見本との重なり具合で採点します。（100点満点）
-      </div>
-    </div>
-
-    <!-- 採点基準（折りたたみ風のINFOエリア） -->
-    <div style="border-left:3px solid rgba(230,126,34,0.5);padding-left:10px;margin-bottom:12px;font-size:0.78rem;line-height:1.8;color:#ccc;">
-      <div style="font-weight:bold;color:#f39c12;margin-bottom:4px;">📐 採点基準</div>
-      <div>髪・左目（向かって右）・右目（向かって左）・鼻・口の <b style="color:white;">5パーツ × 各20点 = 100点満点</b></div>
-      <div style="color:#999;font-size:0.72rem;margin-top:4px;">各パーツは「描いた線と見本の重なり具合」で自動採点。正確な位置・形に描くほど高得点！</div>
-    </div>
-
-    <!-- 順位情報（左ボーダーINFOエリア）※1〜3等の景品は一旦なし・順位のみ発表 -->
-    <div style="border-left:3px solid rgba(231,76,60,0.6);padding-left:10px;margin-bottom:16px;">
-      <div style="font-size:0.78rem;font-weight:bold;color:#ff6b6b;margin-bottom:6px;">👹 鬼モード・😈 地獄モードは順位発表の対象</div>
-      <div style="display:flex;flex-direction:column;gap:2px;font-size:0.78rem;color:#ccc;">
-        <div>🏆 <b style="color:#ffd700;">特賞</b>　<span style="color:#ffd700;">95点以上</span>　スペシャルプレゼント</div>
-        <div>🥇 <b style="color:#f39c12;">1等賞</b></div>
-        <div>🥈 <b style="color:#bdc3c7;">2等賞</b></div>
-        <div>🥉 <b style="color:#cd6133;">3等賞</b></div>
-      </div>
-      <div style="font-size:0.72rem;color:#999;margin-top:6px;line-height:1.6;">
-        ※ 1〜3等は順位の発表のみです（景品はありません）<br>
-        ※ 結果は<b style="color:#ffb86b;">不定期</b>にインスタで発表します
-      </div>
-    </div>
-
-    <!-- ここから操作エリア（明確に区切る） -->
-    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;">
-      <div style="font-size:0.72rem;color:#f39c12;font-weight:bold;letter-spacing:0.1em;margin-bottom:8px;text-align:center;">▼ 難易度を選んではじめる</div>
-      <div style="display:flex;gap:6px;margin-bottom:12px;">
-        <button onclick="setDifficulty('easy',this)" id="diff-easy"
-          style="flex:1;padding:10px 4px;border:2px solid #27ae60;background:transparent;color:#27ae60;border-radius:10px;font-size:0.8rem;font-weight:bold;cursor:pointer;line-height:1.4;transition:all 0.15s;">😄<br>イージー</button>
-        <button onclick="setDifficulty('normal',this)" id="diff-normal"
-          style="flex:1;padding:10px 4px;border:2px solid #e67e22;background:#e67e22;color:white;border-radius:10px;font-size:0.8rem;font-weight:bold;cursor:pointer;line-height:1.4;box-shadow:0 2px 10px rgba(230,126,34,0.5);transition:all 0.15s;">😊<br>通常</button>
-        <button onclick="setDifficulty('hard',this)" id="diff-hard"
-          style="flex:1;padding:10px 4px;border:2px solid #e74c3c;background:transparent;color:#e74c3c;border-radius:10px;font-size:0.8rem;font-weight:bold;cursor:pointer;line-height:1.4;transition:all 0.15s;">👹<br>鬼モード</button>
-        <button onclick="setDifficulty('hell',this)" id="diff-hell"
-          style="flex:1;padding:10px 4px;border:2px solid #8e44ad;background:transparent;color:#8e44ad;border-radius:10px;font-size:0.8rem;font-weight:bold;cursor:pointer;line-height:1.4;transition:all 0.15s;">😈<br>地獄モード</button>
-      </div>
-      <div style="font-size:0.68rem;color:#999;text-align:center;margin-bottom:10px;">💡 迷ったら「通常」のまま、下のボタンでスタートしてOK！</div>
-      <button onclick="selectModeAndStart('scoring')" style="width:100%;padding:16px;background:linear-gradient(135deg,#e67e22,#c0392b);color:white;border:none;border-radius:12px;font-size:1.05rem;font-weight:bold;cursor:pointer;box-shadow:0 6px 20px rgba(230,126,34,0.5);letter-spacing:0.05em;transition:transform 0.1s,box-shadow 0.1s;"
-        onmousedown="this.style.transform='scale(0.97)';this.style.boxShadow='0 2px 8px rgba(230,126,34,0.4)'"
-        onmouseup="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(230,126,34,0.5)'"
-        ontouchstart="this.style.transform='scale(0.97)'"
-        ontouchend="this.style.transform=''">
-        🎯 採点チャレンジをはじめる →
-      </button>
-    </div>
-  </div>
-
-  <!-- お絵描きチャレンジカード -->
-  <div class="mode-card-glow" style="animation-delay:1.6s;background:linear-gradient(135deg,rgba(39,174,96,0.18) 0%,rgba(21,132,70,0.14) 100%);border:2px solid rgba(39,174,96,0.7);border-radius:16px;padding:16px;margin-bottom:14px;width:100%;text-align:left;box-shadow:0 4px 24px rgba(39,174,96,0.2);">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-      <div style="font-size:2rem;">🎨</div>
-      <div>
-        <div style="font-size:1.05rem;font-weight:bold;color:#2ecc71;">お絵描きチャレンジ</div>
-        <div style="font-size:0.72rem;color:#2ecc71;opacity:0.8;">DRAWING CHALLENGE</div>
-      </div>
-    </div>
-
-    <!-- 説明文 -->
-    <div style="border-left:3px solid rgba(39,174,96,0.5);padding-left:10px;margin-bottom:10px;">
-      <div style="font-size:0.82rem;line-height:1.7;color:#ddd;">
-        おまんぼさんの<b style="color:#a8e6cf;">お友達の顔を自由に描いて</b>図鑑に登録しよう！<br>
-        描いた顔に名前をつけると、あなたオリジナルのお友達キャラクターが誕生します🎨
-      </div>
-    </div>
-
-    <!-- フロー -->
-    <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:12px;flex-wrap:wrap;">
-      <div style="background:rgba(0,0,0,0.4);border-radius:8px;padding:5px 8px;font-size:0.7rem;color:#a8e6cf;text-align:center;min-width:52px;">🎨<br>顔を描く</div>
-      <div style="color:#555;font-size:0.9rem;">→</div>
-      <div style="background:rgba(0,0,0,0.4);border-radius:8px;padding:5px 8px;font-size:0.7rem;color:#a8e6cf;text-align:center;min-width:52px;">🏷️<br>名前をつける</div>
-      <div style="color:#555;font-size:0.9rem;">→</div>
-      <div style="background:rgba(230,126,34,0.3);border-radius:8px;padding:5px 8px;font-size:0.7rem;color:#ffe;text-align:center;min-width:52px;">📖<br>図鑑に登録</div>
-      <div style="color:#555;font-size:0.9rem;">→</div>
-      <div style="background:rgba(39,174,96,0.3);border-radius:8px;padding:5px 8px;font-size:0.7rem;color:#dfd;text-align:center;min-width:52px;">🎭<br>キャラクターに！</div>
-    </div>
-
-    <!-- 「おまんぼさんを探そう」のイラスト（テーマパーク編・ビーチ編の2枚） -->
-    <img src="odekaki-description.png" alt="おまんぼさんを探そう（テーマパーク）" loading="lazy"
-      style="display:block;width:100%;border-radius:12px;object-fit:cover;margin-bottom:8px;">
-    <img src="odekaki-description2.png" alt="おまんぼさんを探そう（ビーチ）" loading="lazy"
-      style="display:block;width:100%;border-radius:12px;object-fit:cover;margin-bottom:8px;">
-    <div style="border-left:3px solid rgba(231,76,60,0.5);padding-left:8px;margin-bottom:14px;font-size:0.72rem;color:#f1948a;line-height:1.6;">
-      ⚠️ アニメキャラクターなどに似せた絵はご遠慮ください。おまんぼさんのオリジナルのお友達を描いてね🎨
-    </div>
-
-    <!-- お手本サンプル（運営が用意した見本・どう描けばいいか分からない人向け） -->
-    <div style="background:rgba(0,0,0,0.25);border:1px dashed rgba(39,174,96,0.5);border-radius:12px;padding:10px;margin-bottom:14px;">
-      <div style="font-size:0.74rem;color:#2ecc71;font-weight:bold;margin-bottom:6px;text-align:center;">✏️ お手本サンプル</div>
-      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-        <div style="flex:0 0 auto;width:88px;text-align:center;">
-          <img src="odekaki-sample1.png" alt="にこちゃん" loading="lazy" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #f39c12;background:#fff;display:block;margin:0 auto 3px;">
-          <div style="font-size:0.68rem;color:#dfd;font-weight:bold;line-height:1.2;">にこちゃん</div>
-        </div>
-        <div style="flex:0 0 auto;width:88px;text-align:center;">
-          <img src="odekaki-sample2.png" alt="ねこすけ" loading="lazy" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #f39c12;background:#fff;display:block;margin:0 auto 3px;">
-          <div style="font-size:0.68rem;color:#dfd;font-weight:bold;line-height:1.2;">ねこすけ</div>
-        </div>
-        <div style="flex:0 0 auto;width:88px;text-align:center;">
-          <img src="odekaki-sample3.png" alt="おだんごさん" loading="lazy" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #f39c12;background:#fff;display:block;margin:0 auto 3px;">
-          <div style="font-size:0.68rem;color:#dfd;font-weight:bold;line-height:1.2;">おだんごさん</div>
-        </div>
-      </div>
-      <div style="font-size:0.66rem;color:#9c9;text-align:center;margin-top:6px;line-height:1.5;">丸のなかに顔を描くだけ！じょうず・下手は気にしなくてOK😊</div>
-    </div>
-
-    <!-- 操作エリア -->
-    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px;">
-      <div style="font-size:0.72rem;color:#2ecc71;font-weight:bold;letter-spacing:0.1em;margin-bottom:8px;text-align:center;">▼ タップしてはじめる</div>
-      <button onclick="selectModeAndStart('drawing')" style="width:100%;padding:16px;background:linear-gradient(135deg,#27ae60,#1e8449);color:white;border:none;border-radius:12px;font-size:1.05rem;font-weight:bold;cursor:pointer;box-shadow:0 6px 20px rgba(39,174,96,0.45);letter-spacing:0.05em;transition:transform 0.1s,box-shadow 0.1s;"
-        onmousedown="this.style.transform='scale(0.97)';this.style.boxShadow='0 2px 8px rgba(39,174,96,0.3)'"
-        onmouseup="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(39,174,96,0.45)'"
-        ontouchstart="this.style.transform='scale(0.97)'"
-        ontouchend="this.style.transform=''">
-        🎨 お絵描きチャレンジをはじめる →
-      </button>
-    </div>
-  </div>
-
-  </div>
-  <!-- ↑ #htw-play 終了 -->
-
-  <!-- ============ 第2階層B: 図鑑・記録を見る ============ -->
-  <div id="htw-zukan" style="width:100%;min-width:0;box-sizing:border-box;display:none;flex-direction:column;align-items:center;margin-top:6px;">
-    <button onclick="showHtwHome()" class="htw-back-btn">← 戻る</button>
-
-    <div style="width:100%;text-align:center;margin-bottom:14px;">
-      <div style="display:inline-block;background:rgba(255,255,255,0.1);border:1.5px solid rgba(255,255,255,0.25);border-radius:20px;padding:6px 18px;font-size:0.82rem;color:#fff;font-weight:bold;letter-spacing:0.03em;">
-        📚 見たいものを選んでね
-      </div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:10px;width:100%;margin-bottom:16px;">
-      <button onclick="openScoringZukan()" class="htw-zukan-btn" style="background:rgba(230,126,34,0.1);border:1.5px solid rgba(230,126,34,0.5);color:#f39c12;">
-        <div style="font-size:1.6rem;flex-shrink:0;">🎯</div>
-        <div style="flex:1;">
-          <div style="font-size:0.92rem;font-weight:bold;">みんなのおまんぼさん</div>
-          <div style="font-size:0.68rem;opacity:0.8;font-weight:normal;">採点チャレンジ結果を見る</div>
-        </div>
-      </button>
-      <button onclick="openZukan()" class="htw-zukan-btn" style="background:rgba(39,174,96,0.1);border:1.5px solid rgba(39,174,96,0.5);color:#2ecc71;">
-        <div style="font-size:1.6rem;flex-shrink:0;">🎨</div>
-        <div style="flex:1;">
-          <div style="font-size:0.92rem;font-weight:bold;">お友達図鑑</div>
-          <div style="font-size:0.68rem;opacity:0.8;font-weight:normal;">お絵描きチャレンジの作品を見る</div>
-        </div>
-      </button>
-      <button onclick="showRanking('current')" class="htw-zukan-btn" style="background:rgba(155,89,182,0.1);border:1.5px solid rgba(155,89,182,0.5);color:#bb8fce;">
-        <div style="font-size:1.6rem;flex-shrink:0;">🏆</div>
-        <div style="flex:1;">
-          <div style="font-size:0.92rem;font-weight:bold;">ランキング</div>
-          <div style="font-size:0.68rem;opacity:0.8;font-weight:normal;">今月のスコアランキングを見る</div>
-        </div>
-      </button>
-    </div>
-  </div>
-
-  <div style="height:12px;"></div>
-
 </div>
+
 
 <!-- 開始オーバーレイ -->
 <div id="start-overlay">
-  <h2>顔の配置を覚えよう！</h2>
+  <h2>おまんぼさんを記憶して描こう！</h2>
   <svg id="start-face" width="270" height="270" viewBox="0 0 540 540"></svg>
   <div id="start-countdown">3</div>
   <p id="start-msg">カウントダウン後に目隠し開始！</p>
@@ -676,8 +1250,11 @@ h1 {
 <!-- 採点モーダル -->
 <div class="modal-bg" id="score-modal">
   <div class="modal-box">
-    <h2>採点結果！</h2>
-    <div id="total-score-disp">0点</div>
+    <div class="pk-result-banner">🎯 採点結果</div>
+    <div class="pk-score-row">
+      <div class="pk-score-num"><span id="total-score-disp">0</span><small>POINTS!</small></div>
+      <div id="score-rank-badge" class="pk-rank"><em>RANK</em><b>-</b></div>
+    </div>
     <div id="score-sub">/ 100点満点</div>
     <div id="score-comment"></div>
 
@@ -689,7 +1266,7 @@ h1 {
     </div>
 
     <!-- パーツ内訳 -->
-    <div id="part-breakdown" style="font-size:0.86rem;background:#f8f9fa;border-radius:8px;padding:10px 12px;line-height:2.1;margin:8px 0;"></div>
+    <div id="part-breakdown" style="margin:12px 0;"></div>
 
     <!-- 登録ステータス（鬼・地獄モードのみ・採点と同時に自動で図鑑登録申請） -->
     <div id="score-register-section" style="border-top:1px solid #eee;margin-top:12px;padding-top:12px;text-align:center;font-size:0.85rem;color:#888;">
@@ -712,110 +1289,133 @@ h1 {
 </div>
 
 <!-- お絵描きチャレンジオーバーレイ -->
-<div id="odekaki-overlay" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#e8f5e9,#f0fff4);z-index:910;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:12px 16px;">
-  <div style="font-size:1.3rem;font-weight:bold;color:#27ae60;margin-bottom:2px;">🎨 お絵描きチャレンジ</div>
-  <div style="font-size:0.8rem;color:#555;margin-bottom:8px;text-align:center;">おまんぼさんのお友達の顔を自由に描こう！</div>
+<div id="odekaki-overlay" class="pk-bg pk-studio" style="display:none;position:fixed;inset:0;z-index:910;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:0 15px 16px;">
+  <div class="pk-bunting" style="flex-shrink:0;margin:0 -15px;width:calc(100% + 30px);"></div>
+
+  <!-- ヘッダー -->
+  <div style="display:flex;align-items:center;gap:8px;width:100%;max-width:360px;margin:10px 0 9px;">
+    <button onclick="closeOdekakiOverlay()" class="pk-back" style="margin:0;flex-shrink:0;padding:9px 14px;">←</button>
+    <div style="flex:1;min-width:0;text-align:center;">
+      <div class="pk-studio-title">
+        <img src="omanbo-logo.png" alt="おまんぼさん">
+        <span>お絵描き工房</span>
+      </div>
+      <div style="font-size:0.72rem;color:var(--pk-text-2);font-weight:700;margin-top:2px;">おまんぼさんのお友達の顔を描こう！</div>
+    </div>
+    <div style="width:46px;flex-shrink:0;"></div>
+  </div>
+
+  <!-- お題 / 自由 モード -->
   <div id="odekaki-theme" style="display:none;"></div>
 
   <!-- キャンバス形状切替 -->
-  <div style="display:flex;gap:6px;margin-bottom:8px;">
+  <div style="display:flex;gap:8px;margin-bottom:10px;width:100%;max-width:340px;">
     <button id="shape-circle-btn" onclick="setOdekakiShape('circle')"
-      style="flex:1;padding:7px 10px;background:#27ae60;color:white;border:2px solid #27ae60;border-radius:20px;font-size:0.85rem;font-weight:bold;cursor:pointer;">⭕ 丸型</button>
+      style="flex:1;padding:9px 8px;background:#4FC3F7;color:white;border:2.5px solid #4FC3F7;border-radius:999px;font-size:0.85rem;font-weight:800;cursor:pointer;">⭕ 丸型</button>
     <button id="shape-free-btn" onclick="setOdekakiShape('free')"
-      style="flex:1;padding:7px 10px;background:white;color:#27ae60;border:2px solid #27ae60;border-radius:20px;font-size:0.85rem;font-weight:bold;cursor:pointer;">🔲 フリースタイル</button>
+      style="flex:1;padding:9px 8px;background:white;color:#2196C4;border:2.5px solid #4FC3F7;border-radius:999px;font-size:0.85rem;font-weight:800;cursor:pointer;">🔲 フリースタイル</button>
   </div>
 
-  <!-- キャンバスエリア（3レイヤー・形状切替対応・2本指ピンチズーム対応） -->
-  <!-- #odekaki-viewport が固定枠、#odekaki-zoom-area に transform をかけて拡大する -->
-  <div id="odekaki-viewport" style="position:relative;width:300px;height:300px;flex-shrink:0;margin-bottom:4px;overflow:hidden;touch-action:none;">
-    <div id="odekaki-zoom-area" style="position:absolute;top:0;left:0;width:300px;height:300px;transform-origin:0 0;will-change:transform;">
-      <div id="odekaki-clip-container" style="position:absolute;top:0;left:0;width:300px;height:300px;border-radius:50%;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.15);">
-        <canvas id="odekaki-canvas-bg" width="300" height="300"
-          style="position:absolute;top:0;left:0;pointer-events:none;"></canvas>
-        <canvas id="odekaki-canvas-fill" width="300" height="300"
-          style="position:absolute;top:0;left:0;pointer-events:none;"></canvas>
-        <canvas id="odekaki-canvas" width="300" height="300"
-          style="position:absolute;top:0;left:0;touch-action:none;cursor:crosshair;"></canvas>
+  <!-- キャンバス（画用紙に置いた見立て・3レイヤー・ピンチズーム対応） -->
+  <div class="pk-easel">
+    <div id="odekaki-viewport" style="position:relative;flex-shrink:0;overflow:hidden;touch-action:none;">
+      <div id="odekaki-zoom-area" style="position:absolute;top:0;left:0;width:100%;height:100%;transform-origin:0 0;will-change:transform;">
+        <div id="odekaki-clip-container" style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;overflow:hidden;">
+          <canvas id="odekaki-canvas-bg" width="300" height="300"
+            style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
+          <canvas id="odekaki-canvas-fill" width="300" height="300"
+            style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
+          <canvas id="odekaki-canvas" width="300" height="300"
+            style="position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;cursor:crosshair;"></canvas>
+        </div>
+        <svg id="odekaki-outline-svg" viewBox="0 0 300 300" preserveAspectRatio="none"
+             style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:5;">
+          <circle cx="150" cy="150" r="148" fill="none" stroke="#2B1A0E" stroke-width="3"/>
+        </svg>
       </div>
-      <svg id="odekaki-outline-svg" width="300" height="300" style="position:absolute;top:0;left:0;pointer-events:none;z-index:5;">
-        <circle cx="150" cy="150" r="148" fill="none" stroke="#333" stroke-width="3"/>
-      </svg>
+      <div id="odekaki-zoom-badge" style="display:none;position:absolute;top:6px;right:6px;z-index:10;background:rgba(43,26,14,0.6);color:#fff;font-size:0.68rem;font-weight:800;padding:3px 10px;border-radius:999px;pointer-events:none;">100%</div>
     </div>
-    <!-- ズーム倍率バッジ（拡大中のみ表示） -->
-    <div id="odekaki-zoom-badge" style="display:none;position:absolute;top:6px;right:6px;z-index:10;background:rgba(0,0,0,0.55);color:#fff;font-size:0.68rem;font-weight:bold;padding:3px 9px;border-radius:20px;pointer-events:none;">100%</div>
   </div>
 
-  <!-- ズーム操作（スマホ=2本指ピンチ / PC=ボタン） -->
-  <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-    <button onclick="odekakiZoomStep(-1)" style="padding:5px 12px;background:white;color:#27ae60;border:1.5px solid #27ae60;border-radius:16px;font-size:0.9rem;font-weight:bold;cursor:pointer;line-height:1;">－</button>
-    <button id="odekaki-zoom-reset" onclick="odekakiZoomReset()" style="padding:5px 12px;background:white;color:#27ae60;border:1.5px solid #27ae60;border-radius:16px;font-size:0.72rem;font-weight:bold;cursor:pointer;">🔍 等倍に戻す</button>
-    <button onclick="odekakiZoomStep(1)" style="padding:5px 12px;background:white;color:#27ae60;border:1.5px solid #27ae60;border-radius:16px;font-size:0.9rem;font-weight:bold;cursor:pointer;line-height:1;">＋</button>
+  <!-- ズーム操作 -->
+  <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;">
+    <button onclick="odekakiZoomStep(-1)" class="pk-tool-mini">－</button>
+    <button id="odekaki-zoom-reset" onclick="odekakiZoomReset()" class="pk-tool-mini" style="font-size:0.72rem;">🔍 等倍に戻す</button>
+    <button onclick="odekakiZoomStep(1)" class="pk-tool-mini">＋</button>
   </div>
-  <div style="font-size:0.68rem;color:#7a9a85;margin-bottom:6px;text-align:center;">✌️ 2本指でひろげると拡大、2本指でなぞると移動できます</div>
+  <div style="font-size:0.68rem;color:var(--pk-text-2);margin-bottom:11px;text-align:center;">✌️ 2本指でひろげると拡大、2本指でなぞると移動できます</div>
 
-  <!-- ツール選択 + アンドゥ/リドゥ -->
-  <div style="display:flex;gap:6px;margin-bottom:4px;flex-wrap:wrap;justify-content:center;">
-    <button id="tool-btn-pen" onclick="setOdekakiTool('pen')"
-      style="padding:7px 12px;background:#27ae60;color:white;border:2px solid #27ae60;border-radius:8px;font-size:0.85rem;font-weight:bold;cursor:pointer;">✏️ ペン</button>
-    <button id="tool-btn-bucket" onclick="setOdekakiTool('bucket')"
-      style="padding:7px 12px;background:white;color:#27ae60;border:2px solid #27ae60;border-radius:8px;font-size:0.85rem;font-weight:bold;cursor:pointer;">🪣 ぬる</button>
-    <button id="tool-btn-eraser" onclick="setOdekakiTool('eraser')"
-      style="padding:7px 12px;background:white;color:#27ae60;border:2px solid #27ae60;border-radius:8px;font-size:0.85rem;font-weight:bold;cursor:pointer;">🧽 消す</button>
-    <button id="undo-btn" onclick="undoOdekaki()"
-      style="padding:7px 12px;background:white;color:#555;border:2px solid #aaa;border-radius:8px;font-size:0.85rem;font-weight:bold;cursor:pointer;" disabled>↩</button>
-    <button id="redo-btn" onclick="redoOdekaki()"
-      style="padding:7px 12px;background:white;color:#555;border:2px solid #aaa;border-radius:8px;font-size:0.85rem;font-weight:bold;cursor:pointer;" disabled>↪</button>
-  </div>
-  <!-- 消しゴム：レイヤー選択（消しゴム選択時のみ表示） -->
-  <div id="eraser-layer-selector" style="display:none;gap:6px;margin-bottom:4px;flex-wrap:wrap;justify-content:center;">
-    <span style="font-size:0.72rem;color:#666;align-self:center;">消す対象：</span>
-    <button id="erase-layer-btn-line" onclick="setEraseLayer('line')"
-      style="padding:5px 12px;background:#27ae60;color:white;border:2px solid #27ae60;border-radius:8px;font-size:0.78rem;font-weight:bold;cursor:pointer;">✏️ 線</button>
-    <button id="erase-layer-btn-fill" onclick="setEraseLayer('fill')"
-      style="padding:5px 12px;background:white;color:#27ae60;border:2px solid #27ae60;border-radius:8px;font-size:0.78rem;font-weight:bold;cursor:pointer;">🎨 塗り</button>
-    <button id="erase-layer-btn-both" onclick="setEraseLayer('both')"
-      style="padding:5px 12px;background:white;color:#27ae60;border:2px solid #27ae60;border-radius:8px;font-size:0.78rem;font-weight:bold;cursor:pointer;">両方</button>
-  </div>
-  <!-- 線の太さ -->
-  <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">
-    <span style="font-size:0.72rem;color:#666;">太さ：</span>
-    <button id="size-btn-thin" onclick="setOdekakiSize('thin')"
-      style="padding:5px 10px;background:#27ae60;color:white;border:2px solid #27ae60;border-radius:8px;font-size:0.8rem;font-weight:bold;cursor:pointer;">細</button>
-    <button id="size-btn-mid" onclick="setOdekakiSize('mid')"
-      style="padding:5px 10px;background:white;color:#27ae60;border:2px solid #27ae60;border-radius:8px;font-size:0.8rem;font-weight:bold;cursor:pointer;">中</button>
-    <button id="size-btn-thick" onclick="setOdekakiSize('thick')"
-      style="padding:5px 10px;background:white;color:#27ae60;border:2px solid #27ae60;border-radius:8px;font-size:0.8rem;font-weight:bold;cursor:pointer;">太</button>
-    <span id="size-preview" style="display:inline-block;background:#333;border-radius:50%;width:4px;height:4px;"></span>
-  </div>
+  <!-- お絵描き道具パネル -->
+  <div class="pk-panel">
+    <div class="pk-panel-t">🧰 どうぐ</div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-bottom:9px;">
+      <button id="tool-btn-pen" onclick="setOdekakiTool('pen')"
+        style="padding:9px 14px;background:#4FC3F7;color:white;border:2.5px solid #4FC3F7;font-size:0.85rem;font-weight:800;cursor:pointer;">✏️ ペン</button>
+      <button id="tool-btn-bucket" onclick="setOdekakiTool('bucket')"
+        style="padding:9px 14px;background:white;color:#2196C4;border:2.5px solid #4FC3F7;font-size:0.85rem;font-weight:800;cursor:pointer;">🪣 ぬる</button>
+      <button id="tool-btn-eraser" onclick="setOdekakiTool('eraser')"
+        style="padding:9px 14px;background:white;color:#2196C4;border:2.5px solid #4FC3F7;font-size:0.85rem;font-weight:800;cursor:pointer;">🧽 消す</button>
+    </div>
+    <div style="display:flex;gap:7px;justify-content:center;margin-bottom:9px;">
+      <button id="undo-btn" onclick="undoOdekaki()"
+        style="flex:1;max-width:130px;padding:8px 10px;background:white;color:#8A7358;border:2.5px solid #E7D6BB;font-size:0.78rem;font-weight:800;cursor:pointer;" disabled>↩ もどす</button>
+      <button id="redo-btn" onclick="redoOdekaki()"
+        style="flex:1;max-width:130px;padding:8px 10px;background:white;color:#8A7358;border:2.5px solid #E7D6BB;font-size:0.78rem;font-weight:800;cursor:pointer;" disabled>↪ やりなおす</button>
+    </div>
 
-  <!-- カラーパレット：おまんぼさんカラー -->
-  <div style="font-size:0.7rem;color:#666;margin-bottom:3px;align-self:flex-start;margin-left:4px;">おまんぼさんカラー</div>
-  <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;justify-content:center;" id="color-btns">
-    <button onclick="setOdekakiColor('#FFCBA4')" style="width:32px;height:32px;background:#FFCBA4;border:3px solid #e0a080;border-radius:50%;cursor:pointer;" title="肌色"></button>
-    <button onclick="setOdekakiColor('#e67e22')" style="width:32px;height:32px;background:#e67e22;border:3px solid #c0392b;border-radius:50%;cursor:pointer;" title="おまんぼさんオレンジ"></button>
-    <button onclick="setOdekakiColor('#F5DEB3')" style="width:32px;height:32px;background:#F5DEB3;border:3px solid #c8a870;border-radius:50%;cursor:pointer;" title="ベージュ"></button>
-    <button onclick="setOdekakiColor('#8B4513')" style="width:32px;height:32px;background:#8B4513;border:3px solid #5c2d00;border-radius:50%;cursor:pointer;" title="茶色"></button>
-    <button onclick="setOdekakiColor('#111111')" style="width:32px;height:32px;background:#111;border:3px solid #000;border-radius:50%;cursor:pointer;" title="黒"></button>
-    <button onclick="setOdekakiColor('#ffffff')" style="width:32px;height:32px;background:#fff;border:3px solid #aaa;border-radius:50%;cursor:pointer;" title="白"></button>
-  </div>
-  <!-- カラーパレット：標準カラー -->
-  <div style="font-size:0.7rem;color:#666;margin-bottom:3px;align-self:flex-start;margin-left:4px;">標準カラー</div>
-  <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;justify-content:center;">
-    <button onclick="setOdekakiColor('#e74c3c')" style="width:32px;height:32px;background:#e74c3c;border:3px solid #c0392b;border-radius:50%;cursor:pointer;" title="赤"></button>
-    <button onclick="setOdekakiColor('#3498db')" style="width:32px;height:32px;background:#3498db;border:3px solid #2980b9;border-radius:50%;cursor:pointer;" title="青"></button>
-    <button onclick="setOdekakiColor('#27ae60')" style="width:32px;height:32px;background:#27ae60;border:3px solid #219a52;border-radius:50%;cursor:pointer;" title="緑"></button>
-    <button onclick="setOdekakiColor('#f1c40f')" style="width:32px;height:32px;background:#f1c40f;border:3px solid #d4ac0d;border-radius:50%;cursor:pointer;" title="黄"></button>
-    <button onclick="setOdekakiColor('#9b59b6')" style="width:32px;height:32px;background:#9b59b6;border:3px solid #8e44ad;border-radius:50%;cursor:pointer;" title="紫"></button>
-    <button onclick="setOdekakiColor('#f368e0')" style="width:32px;height:32px;background:#f368e0;border:3px solid #c44dbc;border-radius:50%;cursor:pointer;" title="ピンク"></button>
+    <!-- 消しゴム：レイヤー選択 -->
+    <div id="eraser-layer-selector" style="display:none;gap:6px;margin-bottom:9px;flex-wrap:wrap;justify-content:center;align-items:center;">
+      <span style="font-size:0.72rem;color:var(--pk-text-2);font-weight:800;">消す対象：</span>
+      <button id="erase-layer-btn-line" onclick="setEraseLayer('line')"
+        style="padding:6px 13px;background:#4FC3F7;color:white;border:2.5px solid #4FC3F7;font-size:0.78rem;font-weight:800;cursor:pointer;">✏️ 線</button>
+      <button id="erase-layer-btn-fill" onclick="setEraseLayer('fill')"
+        style="padding:6px 13px;background:white;color:#2196C4;border:2.5px solid #4FC3F7;font-size:0.78rem;font-weight:800;cursor:pointer;">🎨 塗り</button>
+      <button id="erase-layer-btn-both" onclick="setEraseLayer('both')"
+        style="padding:6px 13px;background:white;color:#2196C4;border:2.5px solid #4FC3F7;font-size:0.78rem;font-weight:800;cursor:pointer;">両方</button>
+    </div>
+
+    <!-- 線の太さ -->
+    <div style="display:flex;gap:7px;align-items:center;justify-content:center;">
+      <span style="font-size:0.74rem;color:var(--pk-text-2);font-weight:800;">太さ</span>
+      <button id="size-btn-thin" onclick="setOdekakiSize('thin')"
+        style="padding:7px 14px;background:#4FC3F7;color:white;border:2.5px solid #4FC3F7;font-size:0.82rem;font-weight:800;cursor:pointer;">細</button>
+      <button id="size-btn-mid" onclick="setOdekakiSize('mid')"
+        style="padding:7px 14px;background:white;color:#2196C4;border:2.5px solid #4FC3F7;font-size:0.82rem;font-weight:800;cursor:pointer;">中</button>
+      <button id="size-btn-thick" onclick="setOdekakiSize('thick')"
+        style="padding:7px 14px;background:white;color:#2196C4;border:2.5px solid #4FC3F7;font-size:0.82rem;font-weight:800;cursor:pointer;">太</button>
+      <span id="size-preview" style="display:inline-block;background:#2B1A0E;border-radius:50%;width:4px;height:4px;"></span>
+    </div>
   </div>
 
-  <!-- 全消しボタン -->
-  <div style="display:flex;gap:8px;margin-bottom:8px;">
-    <button onclick="clearOdekakiCanvas()" style="padding:7px 14px;background:#e74c3c;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.85rem;">🗑 全消し</button>
+  <!-- 絵の具パレット -->
+  <div class="pk-panel pk-palette">
+    <div class="pk-panel-t">🎨 いろ</div>
+    <div style="font-size:0.68rem;color:var(--pk-text-2);font-weight:800;margin-bottom:6px;">おまんぼさんカラー</div>
+    <div style="display:flex;gap:9px;margin-bottom:12px;flex-wrap:wrap;justify-content:center;" id="color-btns">
+      <button onclick="setOdekakiColor('#FFE3B3')" style="width:36px;height:36px;background:#FFE3B3;border:3px solid #fff;cursor:pointer;" title="おまんぼさんの肌"></button>
+      <button onclick="setOdekakiColor('#9E713E')" style="width:36px;height:36px;background:#9E713E;border:3px solid #fff;cursor:pointer;" title="おまんぼさんの髪"></button>
+      <button onclick="setOdekakiColor('#FF6944')" style="width:36px;height:36px;background:#FF6944;border:3px solid #fff;cursor:pointer;" title="おまんぼさんの口"></button>
+      <button onclick="setOdekakiColor('#FFCBA4')" style="width:36px;height:36px;background:#FFCBA4;border:3px solid #fff;cursor:pointer;" title="うすい肌色"></button>
+      <button onclick="setOdekakiColor('#111111')" style="width:36px;height:36px;background:#111;border:3px solid #fff;cursor:pointer;" title="黒"></button>
+      <button onclick="setOdekakiColor('#ffffff')" style="width:36px;height:36px;background:#fff;border:3px solid #E7D6BB;cursor:pointer;" title="白"></button>
+    </div>
+    <div style="font-size:0.68rem;color:var(--pk-text-2);font-weight:800;margin-bottom:6px;">パークカラー</div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center;">
+      <button onclick="setOdekakiColor('#FF7FA6')" style="width:36px;height:36px;background:#FF7FA6;border:3px solid #fff;cursor:pointer;" title="ピンク"></button>
+      <button onclick="setOdekakiColor('#4FC3F7')" style="width:36px;height:36px;background:#4FC3F7;border:3px solid #fff;cursor:pointer;" title="ブルー"></button>
+      <button onclick="setOdekakiColor('#7ED957')" style="width:36px;height:36px;background:#7ED957;border:3px solid #fff;cursor:pointer;" title="グリーン"></button>
+      <button onclick="setOdekakiColor('#FFCE3D')" style="width:36px;height:36px;background:#FFCE3D;border:3px solid #fff;cursor:pointer;" title="イエロー"></button>
+      <button onclick="setOdekakiColor('#FFA45B')" style="width:36px;height:36px;background:#FFA45B;border:3px solid #fff;cursor:pointer;" title="オレンジ"></button>
+      <button onclick="setOdekakiColor('#B49BE8')" style="width:36px;height:36px;background:#B49BE8;border:3px solid #fff;cursor:pointer;" title="パープル"></button>
+    </div>
   </div>
+
+  <!-- 全消し -->
+  <button onclick="clearOdekakiCanvas()" class="pk-btn sm" style="--btn-c:var(--pk-red);--btn-d:var(--pk-red-d);margin-bottom:13px;">🗑 ぜんぶ消す</button>
+
   <!-- 図鑑登録フォーム -->
   <div id="odekaki-form-area" style="background:white;border:2px solid #27ae60;border-radius:10px;padding:14px;max-width:300px;width:100%;margin-bottom:10px;">
-    <div style="font-size:0.85rem;font-weight:bold;color:#27ae60;margin-bottom:8px;">📖 図鑑に登録する（必須）</div>
+    <div style="font-size:0.88rem;font-weight:900;color:var(--pk-text);margin-bottom:10px;">📖 図鑑に登録する（必須）</div>
 
     <div style="font-size:0.78rem;color:#555;margin-bottom:4px;">🏷️ キャラクター名（必須・最大10文字）</div>
     <input type="text" id="odekaki-name" placeholder="" maxlength="10"
@@ -1761,7 +2361,15 @@ async function doScore() {
                   scorePct >= 18 ? '😂 バラバラ顔！笑'          :
                                 '😱 もはや別の生き物！？';
 
-  document.getElementById('total-score-disp').textContent = total + '点';
+  document.getElementById('total-score-disp').textContent = total;
+  // ランク（S/A/B/C/D）— 満点に対する割合で決める
+  const rank = scorePct >= 92 ? 'S' : scorePct >= 75 ? 'A' :
+               scorePct >= 55 ? 'B' : scorePct >= 35 ? 'C' : 'D';
+  const rankEl = document.getElementById('score-rank-badge');
+  if (rankEl) {
+    rankEl.querySelector('b').textContent = rank;
+    rankEl.className = 'pk-rank rank-' + rank;
+  }
   const diffLabels2 = { hard: '👹 鬼モード', normal: '😊 通常モード', easy: '😄 イージーモード', hell: '😈 地獄モード' };
   const fullScore2  = isHellMode() ? activeFhOrder().length * 20 : 100;
   document.getElementById('score-sub').textContent = `/ ${fullScore2}点満点（${diffLabels2[currentDifficulty] || '通常モード'}）`;
@@ -2430,7 +3038,7 @@ let _scoreRegisterSectionHTML = null;
 function closeScoreModal() {
   document.getElementById('score-modal').classList.remove('show');
   // すぐもう一度遊べるよう、トップではなく「あそぶ」のカード一覧へ戻す
-  showHtwPlay();
+  showHtwHome();
   // 登録フォームを元のHTMLに戻す
   const sec = document.getElementById('score-register-section');
   if (sec && _scoreRegisterSectionHTML) sec.innerHTML = _scoreRegisterSectionHTML;
@@ -2728,10 +3336,10 @@ function setDifficulty(diff, btn) {
   currentDifficulty = diff;
   // ボタンハイライト更新
   const styles = {
-    hard:   { active: '#e74c3c', border: '#e74c3c' },
-    normal: { active: '#e67e22', border: '#e67e22' },
-    easy:   { active: '#27ae60', border: '#27ae60' },
-    hell:   { active: '#8e44ad', border: '#8e44ad' },
+    hard:   { active: '#D94141', border: '#D94141' },
+    normal: { active: '#E77C28', border: '#E77C28' },
+    easy:   { active: '#52AE31', border: '#52AE31' },
+    hell:   { active: '#8A6DD0', border: '#8A6DD0' },
   };
   ['hard','normal','easy','hell'].forEach(d => {
     const b = document.getElementById('diff-' + d);
@@ -2762,8 +3370,8 @@ function setDifficulty(diff, btn) {
   const subtitle = document.getElementById('subtitle');
   if (subtitle) {
     subtitle.textContent = isHellMode()
-      ? '✏️ 地獄モードのキャラクターを描いて採点チャレンジ！(120点満点)'
-      : '✏️ おまんぼさんの顔を描いて採点チャレンジ！(100点満点)';
+      ? '😈 地獄モード／キャラクターを記憶して描こう！(120点満点)'
+      : '🎯 採点チャレンジ／おまんぼさんを記憶して描こう！(100点満点)';
   }
   trackPlay('select', diff);
 }
@@ -2847,14 +3455,14 @@ function setOdekakiShape(shape) {
     cc.style.borderRadius = '8px';
     cc.style.overflow = 'visible'; // 丸クリッピングを解除
     if (svg) svg.style.display = 'none';
-    cb.style.background = 'white'; cb.style.color = '#27ae60';
-    fb.style.background = '#27ae60'; fb.style.color = 'white';
+    cb.style.background = 'white'; cb.style.color = '#2196C4';
+    fb.style.background = '#4FC3F7'; fb.style.color = 'white';
   } else {
     cc.style.borderRadius = '50%';
     cc.style.overflow = 'hidden'; // 丸クリッピングを有効化
     if (svg) svg.style.display = '';
-    cb.style.background = '#27ae60'; cb.style.color = 'white';
-    fb.style.background = 'white'; fb.style.color = '#27ae60';
+    cb.style.background = '#4FC3F7'; cb.style.color = 'white';
+    fb.style.background = 'white'; fb.style.color = '#2196C4';
   }
   // キャンバスをクリアして白背景リセット
   const c1 = document.getElementById('odekaki-canvas-bg');
@@ -2870,8 +3478,8 @@ function setOdekakiSize(size) {
   ['thin','mid','thick'].forEach(s => {
     const btn = document.getElementById('size-btn-' + s);
     if (!btn) return;
-    btn.style.background = s === size ? '#27ae60' : 'white';
-    btn.style.color      = s === size ? 'white'   : '#27ae60';
+    btn.style.background = s === size ? '#4FC3F7' : 'white';
+    btn.style.color      = s === size ? 'white'    : '#2196C4';
   });
   // プレビュードット更新
   const px = { thin: 4, mid: 10, thick: 18 };
@@ -2892,8 +3500,8 @@ function setOdekakiTool(tool) {
   tools.forEach(t => {
     const btn = document.getElementById('tool-btn-' + t);
     if (!btn) return;
-    btn.style.background = t === tool ? '#27ae60' : 'white';
-    btn.style.color      = t === tool ? 'white'   : '#27ae60';
+    btn.style.background = t === tool ? '#4FC3F7' : 'white';
+    btn.style.color      = t === tool ? 'white'    : '#2196C4';
   });
   // 消しゴムレイヤー選択を表示/非表示
   const sel = document.getElementById('eraser-layer-selector');
@@ -2908,8 +3516,8 @@ function setEraseLayer(layer) {
   ['line','fill','both'].forEach(l => {
     const btn = document.getElementById('erase-layer-btn-' + l);
     if (!btn) return;
-    btn.style.background = l === layer ? '#27ae60' : 'white';
-    btn.style.color      = l === layer ? 'white'   : '#27ae60';
+    btn.style.background = l === layer ? '#4FC3F7' : 'white';
+    btn.style.color      = l === layer ? 'white'    : '#2196C4';
   });
 }
 
@@ -3486,7 +4094,7 @@ function renderScoringZukanList(list, empty, rawData) {
 function closeOdekakiOverlay() {
   document.getElementById('odekaki-overlay').style.display = 'none';
   // すぐもう一度遊べるよう、トップではなく「あそぶ」のカード一覧へ戻す
-  showHtwPlay();
+  showHtwHome();
 }
 
 // ================================================================
@@ -3495,14 +4103,19 @@ function closeOdekakiOverlay() {
 // #odekaki-zoom-area に transform をかけるだけなので、描画用の getPos()
 // （canvas自身のgetBoundingClientRectから算出）は変更不要で座標が一致する。
 // ================================================================
-const ODK_VIEW = 300;          // ビューポート（＝キャンバス）の一辺
+// ビューポート（＝キャンバス）の一辺。CSSで可変にしたので実寸から取る。
+function odkView() {
+  const vp = document.getElementById('odekaki-viewport');
+  return (vp && vp.clientWidth) ? vp.clientWidth : 300;
+}
 const ODK_ZOOM_MIN = 1, ODK_ZOOM_MAX = 5;
 let odkZoom = 1, odkPanX = 0, odkPanY = 0;
 let odkPinch = null;           // ピンチ中の状態（nullなら非ピンチ）
 
 function odkClampPan() {
   // 拡大した中身がビューポートから離れないよう平行移動量を制限する
-  const min = ODK_VIEW - ODK_VIEW * odkZoom; // 例: zoom=2 なら -300
+  const V = odkView();
+  const min = V - V * odkZoom; // 例: zoom=2 なら -(一辺)
   odkPanX = Math.min(0, Math.max(min, odkPanX));
   odkPanY = Math.min(0, Math.max(min, odkPanY));
 }
@@ -3529,7 +4142,8 @@ function odekakiZoomReset() {
 
 // ビューポート中心を固定したままズーム倍率を1段階変える（PC用の＋／－ボタン）
 function odekakiZoomStep(dir) {
-  odkZoomAt(odkZoom * (dir > 0 ? 1.4 : 1 / 1.4), ODK_VIEW / 2, ODK_VIEW / 2, true);
+  const V = odkView();
+  odkZoomAt(odkZoom * (dir > 0 ? 1.4 : 1 / 1.4), V / 2, V / 2, true);
 }
 
 // ビューポート座標 (vx, vy) の点を動かさずに newZoom へ変更する
@@ -3738,6 +4352,16 @@ function setupOdekakiCanvas() {
   c.addEventListener('touchstart', onStart, { passive: false });
   c.addEventListener('touchmove',  onMove,  { passive: false });
   c.addEventListener('touchend',   onEnd,   { passive: false });
+}
+
+// ================================================================
+// BONUS：おまんぼさんを探せ（おまけコンテンツ）
+// ================================================================
+function openBonus() {
+  document.getElementById('bonus-modal').classList.add('show');
+}
+function closeBonus() {
+  document.getElementById('bonus-modal').classList.remove('show');
 }
 
 function closeOpeningScreen() {
