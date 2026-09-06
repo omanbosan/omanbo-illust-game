@@ -1189,7 +1189,7 @@ h1 {
               style="border-color:#8A6DD0;color:#8A6DD0;background:#fff;">😈<br>地獄</button>
           </div>
           <div style="font-size:0.68rem;color:var(--pk-text-2);line-height:1.6;margin-bottom:10px;">
-            😈 地獄モードだけは、おまんぼさんプロデューサーの<b style="color:#8A6DD0;">ポッピー</b>を描くよ！
+            😈 地獄モードだけは、おまんぼさんプロデューサーの<b style="color:#8A6DD0;">ぽっぴー</b>を描くよ！
           </div>
           <button onclick="selectModeAndStart('scoring')" class="pk-btn orange wide big">▶ スタート</button>
           <button onclick="showHtwPlay()" class="pk-btn ghost sm wide" style="margin-top:9px;">📋 くわしいルール・賞について</button>
@@ -1291,8 +1291,8 @@ h1 {
         </div>
 
         <div class="pk-note" style="border-left-color:#8A6DD0;background:#F7F2FE;margin-bottom:10px;">
-          <b style="color:#7A5BC0;">😈 地獄モードは「ポッピー」を描くモード</b><br>
-          おまんぼさんプロデューサーの<b>ポッピー</b>が見本になります。<br>
+          <b style="color:#7A5BC0;">😈 地獄モードは「ぽっぴー」を描くモード</b><br>
+          おまんぼさんプロデューサーの<b>ぽっぴー</b>が見本になります。<br>
           <span style="color:var(--pk-text-2);font-size:0.72rem;">顔だけでなく全身を描くので、満点は120点です。</span>
         </div>
 
@@ -3684,17 +3684,17 @@ function setDifficulty(diff, btn) {
   // プレイ画面の背景（丸輪郭 or 地獄モードのキャラクター輪郭）を切り替え
   updateFaceBgForDifficulty();
   // サブタイトルも切り替え
-  // 地獄モードだけは、おまんぼさんプロデューサーの「ポッピー」を描くモード
+  // 地獄モードだけは、おまんぼさんプロデューサーの「ぽっぴー」を描くモード
   const subtitle = document.getElementById('subtitle');
   if (subtitle) {
     subtitle.textContent = isHellMode()
-      ? '😈 地獄モード／プロデューサーのポッピーを記憶して描こう！(120点満点)'
+      ? '😈 地獄モード／プロデューサーのぽっぴーを記憶して描こう！(120点満点)'
       : '🎯 採点チャレンジ／おまんぼさんを記憶して描こう！(100点満点)';
   }
   const startTitle = document.getElementById('start-title');
   if (startTitle) {
     startTitle.textContent = isHellMode()
-      ? 'ポッピーを記憶して描こう！'
+      ? 'ぽっぴーを記憶して描こう！'
       : 'おまんぼさんを記憶して描こう！';
   }
   trackPlay('select', diff);
