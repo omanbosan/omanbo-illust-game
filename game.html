@@ -277,10 +277,6 @@ h1 {
   0%,100% { box-shadow: 0 4px 20px rgba(230,126,34,0.6); }
   50% { box-shadow: 0 4px 35px rgba(243,156,18,0.9); }
 }
-@keyframes star-fall {
-  0% { transform: translateY(-10px) rotate(0deg); opacity:1; }
-  100% { transform: translateY(110vh) rotate(360deg); opacity:0; }
-}
 @keyframes shimmer {
   0%   { background-position: 200% center; }
   100% { background-position: -200% center; }
@@ -1117,9 +1113,6 @@ h1 {
 ============================================================ -->
 <div id="opening-screen" class="pk-bg pk-open">
   <div class="pk-bunting" style="position:absolute;top:0;left:0;z-index:2;"></div>
-  <!-- 背景の紙吹雪・お絵描きモチーフ -->
-  <div id="opening-stars" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
-
   <div class="pk-open-inner">
     <div class="pk-eyebrow" style="margin-bottom:10px;">OMANBOSAN ILLUST PARK</div>
 
@@ -4249,7 +4242,7 @@ function preloadThumbs(list, from, count, w) {
 }
 
 // ── お友達図鑑：絵本のようにページをめくって見る ──────────────
-const ZUKAN_PAGE_SIZE = 4;   // 1ページ4体（2×2の見開き）
+const ZUKAN_PAGE_SIZE = 20;  // 1ページ20体（2列×10行）
 let zukanPageData = [];
 let zukanPageNo   = 0;
 
@@ -4266,7 +4259,7 @@ function renderZukanList(list, empty, data) {
   }
   empty.style.display = 'none';
   if (pager) pager.style.display = 'flex';
-  preloadThumbs(zukanPageData, 0, ZUKAN_PAGE_SIZE * 2, 160);
+  preloadThumbs(zukanPageData, 0, 8, 160);  // 最初に見える範囲だけ先に取っておく
   renderZukanPage(0);
 }
 
@@ -4281,7 +4274,7 @@ function renderZukanPage(dir) {
   list.innerHTML = items.map((entry, i) => {
     const no  = String(start + i + 1).padStart(3, '0');
     const img = entry.imageUrl
-      ? `<img src="${thumbUrl(entry.imageUrl, 160)}" width="160" height="160" decoding="async" alt="" onerror="this.style.display='none'">`
+      ? `<img src="${thumbUrl(entry.imageUrl, 160)}" width="160" height="160" loading="lazy" decoding="async" alt="" onerror="this.style.display='none'">`
       : `<div class="ph">🎨</div>`;
     const cm  = entry.comment ? `<div class="cm">「${esc(String(entry.comment))}」</div>` : '';
     const ig  = (entry.igShow && entry.instagram)
@@ -4302,8 +4295,14 @@ function renderZukanPage(dir) {
     list.classList.add(dir > 0 ? 'turn-next' : 'turn-prev');
   }
 
-  // 次のページの画像を先読みしておく
-  preloadThumbs(zukanPageData, start + ZUKAN_PAGE_SIZE, ZUKAN_PAGE_SIZE, 160);
+  // 次のページの「最初に見える範囲」だけ先読みしておく（残りは lazy 任せ）
+  preloadThumbs(zukanPageData, start + ZUKAN_PAGE_SIZE, 8, 160);
+
+  // ページを移ったらモーダルの先頭に戻す（20体表示だと下の方から始まってしまうため）
+  if (dir) {
+    const box = list.closest('.modal-box');
+    if (box) box.scrollTop = 0;
+  }
 
   const now = document.getElementById('zukan-page-now');
   const max = document.getElementById('zukan-page-max');
@@ -4754,18 +4753,6 @@ function closeOpeningScreen() {
   updateDailyStreak();
 }
 
-function initOpeningStars() {
-  const container = document.getElementById('opening-stars');
-  if (!container) return;
-  const emojis = ['✨','🌟','⭐','🎨','🖌️','🎭'];
-  for (let i = 0; i < 26; i++) {
-    const star = document.createElement('div');
-    star.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-    star.style.cssText = `position:absolute;font-size:${Math.random()*14+8}px;left:${Math.random()*100}%;top:-20px;animation:star-fall ${Math.random()*6+4}s linear ${Math.random()*4}s infinite;opacity:0.7;`;
-    container.appendChild(star);
-  }
-}
-
 // ================================================================
 // 起動
 // ================================================================
@@ -4781,8 +4768,6 @@ window.addEventListener('load', () => {
   // 登録フォームのHTMLを保存（クローズ時のリセット用）
   const _sec = document.getElementById('score-register-section');
   if (_sec) _scoreRegisterSectionHTML = _sec.innerHTML;
-  // オープニング画面の星パーティクル初期化
-  initOpeningStars();
 });
 </script>
 </body>
