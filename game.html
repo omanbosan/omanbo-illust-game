@@ -827,6 +827,183 @@ h1 {
   .pk-logotype .l2 { font-size: clamp(1.8rem, 9.5vw, 2.5rem); }
 }
 
+
+/* ==================================================================
+   7. ランキング：1〜3位の表彰台
+================================================================== */
+.pk-podium {
+  display: flex; align-items: flex-end; justify-content: center; gap: 6px;
+  margin: 6px 0 14px; padding: 10px 4px 0;
+}
+.pk-podium .slot { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.pk-podium .crown { font-size: 1.2rem; line-height: 1; margin-bottom: 2px; height: 20px; }
+.pk-podium .ava {
+  width: 52px; height: 52px; border-radius: 50%; background: #fff; object-fit: contain;
+  border: 3px solid #fff; box-shadow: 0 4px 10px rgba(120,84,40,.24);
+}
+.pk-podium .slot.p1 .ava { width: 64px; height: 64px; box-shadow: 0 0 0 3px #FFCE3D, 0 5px 14px rgba(224,167,0,.45); }
+.pk-podium .slot.p2 .ava { box-shadow: 0 0 0 3px #C9D2DA, 0 4px 10px rgba(120,84,40,.24); }
+.pk-podium .slot.p3 .ava { box-shadow: 0 0 0 3px #E2A76B, 0 4px 10px rgba(120,84,40,.24); }
+.pk-podium .nm {
+  font-size: .76rem; font-weight: 900; color: var(--pk-text); margin-top: 5px;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pk-podium .sc { font-size: .92rem; font-weight: 900; line-height: 1.1; }
+.pk-podium .slot.p1 .sc { color: #D79A00; font-size: 1.06rem; }
+.pk-podium .slot.p2 .sc { color: #8A97A3; }
+.pk-podium .slot.p3 .sc { color: #B4753C; }
+.pk-podium .base {
+  width: 100%; margin-top: 6px; border-radius: 12px 12px 4px 4px;
+  display: flex; align-items: flex-start; justify-content: center; padding-top: 6px;
+  font-size: 1.02rem; font-weight: 900; color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.18);
+}
+.pk-podium .slot.p1 .base { height: 74px; background: linear-gradient(180deg,#FFD75E,#EDA800); box-shadow: inset 0 -4px 0 rgba(0,0,0,.12); }
+.pk-podium .slot.p2 .base { height: 56px; background: linear-gradient(180deg,#DCE4EA,#A9B6C2); box-shadow: inset 0 -4px 0 rgba(0,0,0,.12); }
+.pk-podium .slot.p3 .base { height: 44px; background: linear-gradient(180deg,#F0BE8B,#CE8B4C); box-shadow: inset 0 -4px 0 rgba(0,0,0,.12); }
+@keyframes pk-rise { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+.pk-podium .slot { animation: pk-rise .45s ease-out backwards; }
+.pk-podium .slot.p2 { animation-delay: .05s; }
+.pk-podium .slot.p1 { animation-delay: .15s; }
+.pk-podium .slot.p3 { animation-delay: .25s; }
+
+/* 4位以降 */
+.pk-ranklist { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.pk-rankrow {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+  background: #fff; border: 2px solid var(--pk-line); border-radius: 14px;
+  font-size: .84rem; text-align: left;
+}
+.pk-rankrow .no {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--pk-paper-2); color: var(--pk-text-2);
+  display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: .76rem;
+}
+.pk-rankrow .nm { flex: 1; min-width: 0; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pk-rankrow .sc { flex-shrink: 0; font-weight: 900; color: var(--pk-orange-d); }
+.pk-rankrow .ig { flex-shrink: 0; font-size: .68rem; color: var(--pk-text-2); max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ==================================================================
+   8. お友達図鑑：絵本のページめくり
+================================================================== */
+.pk-book {
+  position: relative; margin-bottom: 10px;
+  background: linear-gradient(90deg,#FFF9EA 0%,#FFFDF6 46%,#EFE2C8 50%,#FFFDF6 54%,#FFF9EA 100%);
+  border: 3px solid #fff; border-radius: 16px; padding: 14px 12px 10px;
+  box-shadow: 0 10px 24px rgba(120,84,40,.2), 0 0 0 2.5px var(--pk-line);
+  overflow: hidden; min-height: 300px;
+}
+.pk-book::after { /* ページの折れ角 */
+  content: ''; position: absolute; right: 0; bottom: 0; width: 26px; height: 26px;
+  background: linear-gradient(225deg, var(--pk-line) 50%, transparent 50%);
+}
+.pk-book-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+@keyframes pk-page-next { from { transform: rotateY(-24deg) translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pk-page-prev { from { transform: rotateY(24deg)  translateX(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.pk-book-grid.turn-next { animation: pk-page-next .34s ease-out; transform-origin: left center; }
+.pk-book-grid.turn-prev { animation: pk-page-prev .34s ease-out; transform-origin: right center; }
+.pk-zcard {
+  background: #fff; border: 2.5px solid var(--pk-yellow); border-radius: 14px;
+  padding: 10px 8px; text-align: center; position: relative;
+  box-shadow: 0 3px 0 rgba(224,167,0,.25);
+}
+.pk-zcard .no { font-size: .62rem; font-weight: 900; color: var(--pk-text-2); letter-spacing: .06em; }
+.pk-zcard img, .pk-zcard .ph {
+  width: 78px; height: 78px; border-radius: 50%; object-fit: cover; display: block; margin: 5px auto 6px;
+  border: 3px solid #fff; box-shadow: 0 3px 8px rgba(120,84,40,.18), 0 0 0 2px var(--pk-line); background: #fff;
+}
+.pk-zcard .ph { display: flex; align-items: center; justify-content: center; font-size: 1.7rem; border-style: dashed; }
+.pk-zcard .nm { font-size: .88rem; font-weight: 900; color: var(--pk-text); line-height: 1.25; }
+.pk-zcard .au { font-size: .68rem; color: var(--pk-text-2); font-weight: 700; margin-top: 1px; }
+.pk-zcard .cm { font-size: .68rem; color: var(--pk-text); margin-top: 3px; line-height: 1.4; }
+.pk-zcard .ig { font-size: .62rem; color: var(--pk-text-2); margin-top: 2px; }
+.pk-pager { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px; }
+.pk-pager button {
+  width: 42px; height: 42px; border-radius: 50% !important; border: 2.5px solid var(--pk-yellow);
+  background: #fff; color: var(--pk-orange-d); font-size: 1.1rem; font-weight: 900; cursor: pointer;
+  box-shadow: 0 3px 0 rgba(224,167,0,.35); touch-action: manipulation;
+}
+.pk-pager button:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; }
+.pk-pager .pg { font-size: .82rem; font-weight: 900; color: var(--pk-text); min-width: 74px; }
+.pk-pager .pg small { font-weight: 700; color: var(--pk-text-2); }
+
+/* ==================================================================
+   9. お題シーン：お題のジャンルに合わせて装飾を変える
+   （読みやすさを保つため、ページ全体を暗くせず
+     「お題バナー」「イーゼルのテープ」「背景の薄いモチーフ」を差し替える）
+================================================================== */
+.theme-card.scene { border-color: transparent; box-shadow: 0 6px 18px rgba(120,84,40,.28); }
+.theme-card.scene .theme-text { color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.theme-card.scene .theme-mode-btn { background: rgba(255,255,255,.9); border-color: rgba(255,255,255,.9); }
+.theme-card.scene .theme-mode-btn.active { background: rgba(0,0,0,.34); border-color: rgba(255,255,255,.85); color: #fff; }
+.theme-scene-tag {
+  display: inline-block; font-size: .62rem; font-weight: 900; letter-spacing: .1em;
+  background: rgba(255,255,255,.92); border-radius: 999px; padding: 2px 10px; margin-bottom: 6px;
+}
+
+/* お題バナーの世界観（すべてCSSグラデーション＋自作SVGモチーフ） */
+.theme-card.sc-space    { background: linear-gradient(160deg,#2E2A6E,#4B3E9B 55%,#7157C4); }
+.theme-card.sc-space .theme-scene-tag { color:#4B3E9B; }
+.theme-card.sc-sea      { background: linear-gradient(160deg,#1E7FB8,#31A9D6 55%,#6FD3E8); }
+.theme-card.sc-sea .theme-scene-tag { color:#1E7FB8; }
+.theme-card.sc-summer   { background: linear-gradient(160deg,#FF9B3D,#FFC53D 55%,#FFE47A); }
+.theme-card.sc-summer .theme-scene-tag { color:#C96B00; }
+.theme-card.sc-halloween{ background: linear-gradient(160deg,#5B2C82,#8E44AD 50%,#E8791F); }
+.theme-card.sc-halloween .theme-scene-tag { color:#5B2C82; }
+.theme-card.sc-christmas{ background: linear-gradient(160deg,#1F6B45,#2E9160 52%,#D14545); }
+.theme-card.sc-christmas .theme-scene-tag { color:#1F6B45; }
+.theme-card.sc-forest   { background: linear-gradient(160deg,#3E8E41,#6ABF56 55%,#A8DE8B); }
+.theme-card.sc-forest .theme-scene-tag { color:#2F7233; }
+.theme-card.sc-food     { background: linear-gradient(160deg,#E2643E,#F58C4E 55%,#FFC087); }
+.theme-card.sc-food .theme-scene-tag { color:#C2492A; }
+.theme-card.sc-animal   { background: linear-gradient(160deg,#B07A3E,#D6A15C 55%,#F2CE93); }
+.theme-card.sc-animal .theme-scene-tag { color:#8C5C26; }
+.theme-card.sc-future   { background: linear-gradient(160deg,#2B4E8C,#3E7FD1 52%,#5FD3E0); }
+.theme-card.sc-future .theme-scene-tag { color:#2B4E8C; }
+.theme-card.sc-fantasy  { background: linear-gradient(160deg,#8E4FB0,#C062C4 52%,#F58BC2); }
+.theme-card.sc-fantasy .theme-scene-tag { color:#8E4FB0; }
+.theme-card.sc-winter   { background: linear-gradient(160deg,#4A7FA8,#79ADD0 55%,#BFE0F0); }
+.theme-card.sc-winter .theme-scene-tag { color:#3A688B; }
+
+/* バナーに重ねるモチーフ（白い図形の繰り返し・作品由来のものは無し） */
+.theme-card.scene { position: relative; overflow: hidden; }
+.theme-card.scene::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background-repeat: repeat; background-size: 74px 74px;
+}
+.theme-card.sc-space::before, .theme-card.sc-winter::before, .theme-card.sc-fantasy::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='74' height='74'%3E%3Cg fill='%23fff'%3E%3Cpath d='M14 8l1.6 4.4L20 14l-4.4 1.6L14 20l-1.6-4.4L8 14l4.4-1.6z'/%3E%3Cpath d='M52 40l1.2 3.3L56 44.5l-3.3 1.2L52 49l-1.2-3.3L47 44.5l3.3-1.2z'/%3E%3Ccircle cx='60' cy='16' r='2.2'/%3E%3Ccircle cx='30' cy='56' r='2.6'/%3E%3Ccircle cx='9' cy='44' r='1.8'/%3E%3C/g%3E%3C/svg%3E");
+}
+.theme-card.sc-sea::before, .theme-card.sc-future::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='74' height='74'%3E%3Cg fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M4 20q9-7 18 0t18 0 18 0'/%3E%3Cpath d='M4 52q9-7 18 0t18 0 18 0'/%3E%3C/g%3E%3Cg fill='%23fff'%3E%3Ccircle cx='16' cy='36' r='3'/%3E%3Ccircle cx='48' cy='32' r='2'/%3E%3Ccircle cx='62' cy='60' r='2.6'/%3E%3C/g%3E%3C/svg%3E");
+}
+.theme-card.sc-summer::before, .theme-card.sc-food::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='74' height='74'%3E%3Cg fill='%23fff'%3E%3Ccircle cx='14' cy='14' r='4'/%3E%3Ccircle cx='50' cy='26' r='3'/%3E%3Ccircle cx='28' cy='50' r='3.6'/%3E%3Ccircle cx='62' cy='58' r='2.6'/%3E%3Crect x='40' y='4' width='7' height='7' rx='2' transform='rotate(20 43 7)'/%3E%3Crect x='6' y='58' width='6' height='6' rx='2' transform='rotate(-16 9 61)'/%3E%3C/g%3E%3C/svg%3E");
+}
+.theme-card.sc-forest::before, .theme-card.sc-animal::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='74' height='74'%3E%3Cg fill='%23fff'%3E%3Cpath d='M16 6q10 6 0 16-10-10 0-16z'/%3E%3Cpath d='M54 34q10 6 0 16-10-10 0-16z'/%3E%3Cpath d='M28 52q8 5 0 13-8-8 0-13z'/%3E%3Ccircle cx='64' cy='12' r='2.4'/%3E%3C/g%3E%3C/svg%3E");
+}
+.theme-card.sc-halloween::before, .theme-card.sc-christmas::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='74' height='74'%3E%3Cg fill='%23fff'%3E%3Cpath d='M14 6l2 5 5 2-5 2-2 5-2-5-5-2 5-2z'/%3E%3Cpath d='M52 30l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z'/%3E%3Cpath d='M30 48l1.4 3.6 3.6 1.4-3.6 1.4L30 58l-1.4-3.6-3.6-1.4 3.6-1.4z'/%3E%3Ccircle cx='64' cy='14' r='2.2'/%3E%3Ccircle cx='8' cy='40' r='2'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* 工房の背景・イーゼルのテープもシーンの色に寄せる（淡くして可読性は維持） */
+#odekaki-overlay.scene-space    { background-color:#F3F1FF; }
+#odekaki-overlay.scene-sea      { background-color:#EFFAFF; }
+#odekaki-overlay.scene-summer   { background-color:#FFF8EA; }
+#odekaki-overlay.scene-halloween{ background-color:#F7F0FB; }
+#odekaki-overlay.scene-christmas{ background-color:#F0F8F2; }
+#odekaki-overlay.scene-forest   { background-color:#F2FBEE; }
+#odekaki-overlay.scene-food     { background-color:#FFF5EF; }
+#odekaki-overlay.scene-animal   { background-color:#FBF5EA; }
+#odekaki-overlay.scene-future   { background-color:#EFF5FF; }
+#odekaki-overlay.scene-fantasy  { background-color:#FBF0FB; }
+#odekaki-overlay.scene-winter   { background-color:#F0F7FC; }
+
+/* 画面の高さが足りないとき、縦flexの子要素が押し潰されるのを防ぐ。
+   （overflow-y:auto でスクロールさせたいので、縮小ではなく溢れさせる） */
+#odekaki-overlay > *, #how-to-overlay > *, #opening-screen > * { flex-shrink: 0; }
+.pk-hub-inner, .pk-open-inner { flex-shrink: 0; }
+
 </style>
 </head>
 <body>
@@ -1484,7 +1661,12 @@ h1 {
       ⚠️ アニメキャラクターなどに似せた絵は著作権の問題があるため、オリジナルの絵を描いてね💛<br>
       🎨 これまでにそういった絵を投稿してくれた方の作品は、管理者の思い出図鑑に大切に残しています💛
     </div>
-    <div id="zukan-list" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;"></div>
+    <div class="pk-book"><div id="zukan-list" class="pk-book-grid"></div></div>
+    <div id="zukan-pager" class="pk-pager" style="display:none;">
+      <button id="zukan-prev" onclick="zukanTurnPage(-1)" aria-label="前のページ">‹</button>
+      <div class="pg"><span id="zukan-page-now">1</span> <small>/ <span id="zukan-page-max">1</span></small></div>
+      <button id="zukan-next" onclick="zukanTurnPage(1)" aria-label="次のページ">›</button>
+    </div>
     <div id="zukan-loading" style="text-align:center;padding:20px;color:#888;font-size:0.9rem;">読み込み中...</div>
     <div id="zukan-empty" style="display:none;text-align:center;padding:20px;color:#aaa;font-size:0.85rem;">まだキャラクターがいません。<br>最初のキャラクターになろう！</div>
     <button onclick="document.getElementById('zukan-modal').classList.remove('show')" style="padding:10px 24px;background:#95a5a6;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">← 戻る</button>
@@ -1536,11 +1718,10 @@ h1 {
       <button id="rank-diff-hell" onclick="switchRankDiff('hell')"
         style="flex:1;padding:5px 4px;border:2px solid #8e44ad;background:white;color:#8e44ad;border-radius:8px;cursor:pointer;font-size:0.78rem;font-weight:bold;">😈 地獄</button>
     </div>
-    <div id="rank-note" style="font-size:0.75rem;color:#888;margin-bottom:6px;text-align:center;">毎月1日にリセット（結果発表は不定期）</div>
-    <table id="ranking-table">
-      <thead><tr><th>順位</th><th>名前</th><th>スコア</th><th>Instagram</th></tr></thead>
-      <tbody id="ranking-tbody"></tbody>
-    </table>
+    <div id="rank-note" style="font-size:0.75rem;color:var(--pk-text-2);margin-bottom:6px;text-align:center;font-weight:700;">毎月1日にリセット（結果発表は不定期）</div>
+    <div id="rank-podium" class="pk-podium" style="display:none;"></div>
+    <div id="rank-rest" class="pk-ranklist"></div>
+    <div id="rank-status" style="font-size:0.85rem;color:var(--pk-text-2);padding:16px 4px;font-weight:700;">読み込み中...</div>
     <div class="btn-row" style="margin-top:12px;">
       <button onclick="document.getElementById('rank-modal').classList.remove('show')"
               style="background:#95a5a6;color:white;">← 戻る</button>
@@ -1836,13 +2017,51 @@ function setOdekakiFreeMode(free) {
 // ・お題が未設定なら非表示
 // ・「今週のお題」「自由に描く」の2ボタンを常に並べて表示し、選択中を強調する
 //   （描く内容に制限はなく、自由モードはお題を気にせず好きなものを描いてよい）
+// ── お題のジャンル（シーン）判定 ───────────────────────────
+// お題の文言からジャンルを推測して、お題バナーと工房の色みを切り替える。
+// GAS側にカテゴリ列を足さなくても動くよう、キーワード一致で判定している。
+// 上にあるものほど優先。新しいお題を足したら kw に単語を追加すればよい。
+const THEME_SCENES = [
+  { id: 'space',     tag: '🚀 うちゅう',     kw: ['宇宙', '星空', '惑星', 'ロケット', '満月', '月'] },
+  { id: 'sea',       tag: '🌊 うみ',         kw: ['海', '船', '潜水艦', '水の中', '魚'] },
+  { id: 'summer',    tag: '🍉 なつ',         kw: ['かき氷', '花火', 'ひまわり', '夏', 'アイス'] },
+  { id: 'halloween', tag: '🎃 ハロウィン',   kw: ['ハロウィン', 'かぼちゃ', 'お化け', 'おばけ'] },
+  { id: 'christmas', tag: '🎄 クリスマス',   kw: ['クリスマス', 'サンタ', '年越し', 'お正月', '雑煮'] },
+  { id: 'winter',    tag: '❄️ ふゆ',         kw: ['雪', 'こたつ', 'あったかい', 'マフラー'] },
+  { id: 'fantasy',   tag: '🪄 ファンタジー', kw: ['魔法', '妖精', 'ドラゴン', 'モンスター', '空想', '宝物', '物語', '本'] },
+  { id: 'forest',    tag: '🌳 もり',         kw: ['森', '木', 'お花畑', '花', '紅葉', '葉', '雨上がり', '虹', '景色'] },
+  { id: 'food',      tag: '🍰 たべもの',     kw: ['お菓子', '食べ物', 'お弁当', 'フルーツ', '味覚', 'スイーツ', '焼き芋', 'ご飯'] },
+  { id: 'animal',    tag: '🐾 どうぶつ',     kw: ['動物', 'うさぎ', 'ねこ', '猫', '犬', '鳥', 'かえる', '生き物'] },
+  { id: 'future',    tag: '🛸 のりもの',     kw: ['未来', '乗り物', '電車', '列車', '自転車', '気球', '飛ぶ'] },
+];
+
+function detectThemeScene(theme) {
+  if (!theme) return null;
+  for (let i = 0; i < THEME_SCENES.length; i++) {
+    const sc = THEME_SCENES[i];
+    for (let j = 0; j < sc.kw.length; j++) {
+      if (theme.indexOf(sc.kw[j]) >= 0) return sc;
+    }
+  }
+  return null;
+}
+
 function applyOdekakiTheme() {
   const el = document.getElementById('odekaki-theme');
+  const ov = document.getElementById('odekaki-overlay');
+  // 直前のシーンclassをいったん外す
+  if (ov) ov.className = ov.className.replace(/\s*scene-\S+/g, '');
   if (!el) return;
-  if (!_weeklyTheme) { el.style.display = 'none'; return; }
+  if (!_weeklyTheme) { el.style.display = 'none'; el.className = 'theme-card'; return; }
 
-  const free = _odekakiFreeMode;
-  el.className = free ? 'theme-card free-mode' : 'theme-card';
+  const free  = _odekakiFreeMode;
+  // 自由モードのときはお題に縛られないので、シーンは付けず通常のパーク色に戻す
+  const scene = free ? null : detectThemeScene(_weeklyTheme);
+
+  el.className = 'theme-card'
+    + (free  ? ' free-mode' : '')
+    + (scene ? ' scene sc-' + scene.id : '');
+  if (scene && ov) ov.classList.add('scene-' + scene.id);
   el.innerHTML = '';
 
   const sw = document.createElement('div');
@@ -1855,12 +2074,20 @@ function applyOdekakiTheme() {
     b.addEventListener('click', function() { setOdekakiFreeMode(opt[1]); });
     sw.appendChild(b);
   });
+  el.appendChild(sw);
+
+  if (scene) {
+    const tag = document.createElement('div');
+    tag.className = 'theme-scene-tag';
+    tag.textContent = scene.tag;
+    el.appendChild(tag);
+  }
 
   const text = document.createElement('div');
   text.className = 'theme-text';
   text.textContent = free ? '好きなものを自由に描いてOK！' : _weeklyTheme;
+  el.appendChild(text);
 
-  el.append(sw, text);
   el.style.display = 'block';
 }
 
@@ -3165,9 +3392,10 @@ document.getElementById('rank-btn').addEventListener('click', () => showRanking(
 let currentRankDiff = 'hard';
 
 async function showRanking(tab = 'current') {
-  const tbody  = document.getElementById('ranking-tbody');
-  const medals = ['🥇','🥈','🥉'];
-  tbody.innerHTML = '<tr><td colspan="4" style="color:#aaa;padding:12px;">読み込み中...</td></tr>';
+  const status = document.getElementById('rank-status');
+  document.getElementById('rank-podium').style.display = 'none';
+  document.getElementById('rank-rest').innerHTML = '';
+  status.style.display = ''; status.textContent = '読み込み中...';
   document.getElementById('rank-modal').classList.add('show');
   switchRankTab(tab, false);
   switchRankDiff(currentRankDiff, false);
@@ -3184,9 +3412,49 @@ async function showRanking(tab = 'current') {
     const all = JSON.parse(localStorage.getItem('omanbo_illust_v1') || '[]');
     scores = all.filter(s => (s.difficulty || 'normal') === currentRankDiff);
   }
-  tbody.innerHTML = scores.length ? scores.map((s,i) =>
-    `<tr><td>${medals[i]||i+1}</td><td>${esc(s.name)}</td><td>${s.score}点</td><td>${s.instagram ? '@'+esc(s.instagram) : (s.month||s.date||'')}</td></tr>`
-  ).join('') : `<tr><td colspan="4" style="color:#aaa;padding:12px;">${tab==='archive'?'先月のデータがありません':'まだ記録がありません'}</td></tr>`;
+  renderRanking(scores, tab);
+}
+
+// 1〜3位は表彰台、4位以降はリストで表示する
+function renderRanking(scores, tab) {
+  const podium = document.getElementById('rank-podium');
+  const rest   = document.getElementById('rank-rest');
+  const status = document.getElementById('rank-status');
+  podium.innerHTML = ''; rest.innerHTML = '';
+
+  if (!scores || !scores.length) {
+    podium.style.display = 'none';
+    status.style.display = '';
+    status.textContent = tab === 'archive' ? '先月のデータがありません' : 'まだ記録がありません';
+    return;
+  }
+  status.style.display = 'none';
+  podium.style.display = 'flex';
+
+  // 表彰台は「2位・1位・3位」の順に並べる（真ん中が一番高い）
+  const top3   = scores.slice(0, 3);
+  const crowns = ['👑', '🥈', '🥉'];
+  podium.innerHTML = [1, 0, 2].map(i => {
+    const s = top3[i];
+    if (!s) return '<div class="slot" style="visibility:hidden;"><div class="base"></div></div>';
+    return `<div class="slot p${i + 1}">
+      <div class="crown">${crowns[i]}</div>
+      <img class="ava" src="omanbo-logo.png" alt="">
+      <div class="nm">${esc(String(s.name || '?'))}</div>
+      <div class="sc">${s.score}点</div>
+      <div class="base">${i + 1}</div>
+    </div>`;
+  }).join('');
+
+  rest.innerHTML = scores.slice(3).map((s, i) => {
+    const sub = s.instagram ? '@' + esc(String(s.instagram)) : esc(String(s.month || s.date || ''));
+    return `<div class="pk-rankrow">
+      <div class="no">${i + 4}</div>
+      <div class="nm">${esc(String(s.name || '?'))}</div>
+      <div class="sc">${s.score}点</div>
+      <div class="ig">${sub}</div>
+    </div>`;
+  }).join('');
 }
 
 function switchRankDiff(diff, reload = true) {
@@ -3913,32 +4181,75 @@ async function refreshZukan() {
   if (btn) { btn.textContent = '🔄 更新'; btn.disabled = false; }
 }
 
+// ── お友達図鑑：絵本のようにページをめくって見る ──────────────
+const ZUKAN_PAGE_SIZE = 4;   // 1ページ4体（2×2の見開き）
+let zukanPageData = [];
+let zukanPageNo   = 0;
+
 function renderZukanList(list, empty, data) {
-  list.innerHTML = '';
-  if (!data || data.length === 0) {
+  zukanPageData = data || [];
+  zukanPageNo   = 0;
+  const pager = document.getElementById('zukan-pager');
+
+  if (!zukanPageData.length) {
+    list.innerHTML = '';
     empty.style.display = 'block';
+    if (pager) pager.style.display = 'none';
     return;
   }
   empty.style.display = 'none';
+  if (pager) pager.style.display = 'flex';
+  renderZukanPage(0);
+}
 
-  data.forEach((entry, index) => {
-    const displayNo = index + 1; // 連番（却下分は含まない）
+// dir: 0=アニメなし / 1=次へ / -1=前へ
+function renderZukanPage(dir) {
+  const list = document.getElementById('zukan-list');
+  if (!list) return;
+  const maxPage = Math.max(1, Math.ceil(zukanPageData.length / ZUKAN_PAGE_SIZE));
+  const start   = zukanPageNo * ZUKAN_PAGE_SIZE;
+  const items   = zukanPageData.slice(start, start + ZUKAN_PAGE_SIZE);
 
-    const card = document.createElement('div');
-    card.style.cssText = 'background:#fffbf0;border:2px solid #f39c12;border-radius:10px;padding:10px;text-align:center;position:relative;';
-    card.innerHTML = `
-      <div style="font-size:0.65rem;color:#aaa;margin-bottom:3px;">No.${String(displayNo).padStart(3,'0')}</div>
-      ${entry.imageUrl
-        ? `<img src="${entry.imageUrl}" loading="lazy" style="width:80px;height:80px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 6px;" onerror="this.style.display='none'">`
-        : `<div style="width:80px;height:80px;border-radius:50%;border:2px dashed #ccc;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:1.8rem;">🎨</div>`
-      }
-      <div style="font-size:0.9rem;font-weight:bold;color:#c0392b;margin-bottom:2px;">${entry.villageName}</div>
-      <div style="font-size:0.72rem;color:#888;margin-bottom:2px;">by ${entry.penname || '?'}</div>
-      ${entry.comment ? `<div style="font-size:0.72rem;color:#666;margin-bottom:2px;">「${entry.comment}」</div>` : ''}
-      ${entry.igShow && entry.instagram ? `<div style="font-size:0.65rem;color:#aaa;margin-bottom:4px;">@${entry.instagram}</div>` : ''}
-    `;
-    list.appendChild(card);
-  });
+  list.innerHTML = items.map((entry, i) => {
+    const no  = String(start + i + 1).padStart(3, '0');
+    const img = entry.imageUrl
+      ? `<img src="${entry.imageUrl}" loading="lazy" alt="" onerror="this.style.display='none'">`
+      : `<div class="ph">🎨</div>`;
+    const cm  = entry.comment ? `<div class="cm">「${esc(String(entry.comment))}」</div>` : '';
+    const ig  = (entry.igShow && entry.instagram)
+      ? `<div class="ig">@${esc(String(entry.instagram))}</div>` : '';
+    return `<div class="pk-zcard">
+      <div class="no">No.${no}</div>
+      ${img}
+      <div class="nm">${esc(String(entry.villageName || ''))}</div>
+      <div class="au">by ${esc(String(entry.penname || '?'))}</div>
+      ${cm}${ig}
+    </div>`;
+  }).join('');
+
+  // ページをめくる演出
+  list.classList.remove('turn-next', 'turn-prev');
+  if (dir) {
+    void list.offsetWidth; // アニメを確実に再生させるためリフローを挟む
+    list.classList.add(dir > 0 ? 'turn-next' : 'turn-prev');
+  }
+
+  const now = document.getElementById('zukan-page-now');
+  const max = document.getElementById('zukan-page-max');
+  const prev = document.getElementById('zukan-prev');
+  const next = document.getElementById('zukan-next');
+  if (now)  now.textContent = zukanPageNo + 1;
+  if (max)  max.textContent = maxPage;
+  if (prev) prev.disabled = zukanPageNo === 0;
+  if (next) next.disabled = zukanPageNo >= maxPage - 1;
+}
+
+function zukanTurnPage(dir) {
+  const maxPage = Math.max(1, Math.ceil(zukanPageData.length / ZUKAN_PAGE_SIZE));
+  const target  = Math.min(maxPage - 1, Math.max(0, zukanPageNo + dir));
+  if (target === zukanPageNo) return;
+  zukanPageNo = target;
+  renderZukanPage(dir);
 }
 
 // ================================================================
