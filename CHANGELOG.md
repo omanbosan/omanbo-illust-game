@@ -779,3 +779,21 @@ const multipliers = { hard: 3.8, normal: 5.46 };
 - お題が未設定(`_weeklyTheme`が空)のときは従来どおりカード非表示（その状態は元々「自由」なのでトグル不要）
 
 **未対応:** GitHub Pages への push で反映。
+
+---
+
+### [2026-09-06] メンテナンス画面（パスワードゲート）を撤去して一般公開
+
+**発端:** 「トップ画面もパスワード無しにして公開にして」という依頼。
+
+**変更（game.html のみ）:**
+- `#maintenance-screen`（「もうすぐ新しくなるよ！」の全画面オーバーレイ＋管理者パスワード `omanbo2026` 入力欄）と、それを制御する `<script>`（`sessionStorage['ml']` 判定・`checkMaintenancePassword()`）を削除
+- CSS セレクタ `#peek-overlay, #maintenance-screen, .modal-bg { touch-action: manipulation; }` から `#maintenance-screen` を除去
+- 跡地に復元方法をコメントで明記
+- これで game.html を開くと即タイトル画面（▶ はじめる）が出る。`index.html` は元々 `game.html` へリダイレクトするだけでゲートなし
+
+**再クローズしたい場合:** このコミット直前の `#maintenance-screen` ブロックと `<script>` を git 履歴から復元する。将来ソフトに切り替えたいなら GAS config シートにフラグを持たせて `?type=config` で判定する方式が候補。
+
+**admin.html は対象外**（承認・却下操作があるため保護を維持）。
+
+**未対応:** GitHub Pages への push で反映。

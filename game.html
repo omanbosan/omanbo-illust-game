@@ -37,7 +37,7 @@ html, body { touch-action: manipulation; }
 button, a, img, label, input, canvas, svg { touch-action: manipulation; }
 /* 全画面オーバーレイは body の上に重なるので個別にも指定しておく */
 #opening-screen, #how-to-overlay, #odekaki-overlay, #start-overlay,
-#peek-overlay, #maintenance-screen, .modal-bg { touch-action: manipulation; }
+#peek-overlay, .modal-bg { touch-action: manipulation; }
 
 body {
   background: linear-gradient(135deg, var(--color-bg-start), var(--color-bg-end));
@@ -295,43 +295,8 @@ h1 {
 </head>
 <body>
 
-<!-- ⚠️ メンテナンス画面 -->
-<div id="maintenance-screen" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#0d0d0d 0%,#1a1a2e 100%);display:none;flex-direction:column;align-items:center;justify-content:center;color:white;text-align:center;padding:32px;">
-  <div style="font-size:3.5rem;margin-bottom:12px;">🎨</div>
-  <div style="font-size:1.5rem;font-weight:bold;color:#f39c12;margin-bottom:12px;letter-spacing:0.05em;">もうすぐ新しくなるよ！</div>
-  <div style="font-size:1rem;color:#ddd;line-height:2;margin-bottom:20px;">
-    おまんぼさんゲームをパワーアップ中✨<br>
-    もっと楽しくなって戻ってくるから<br>
-    楽しみに待っててね🙌
-  </div>
-  <div style="font-size:0.8rem;color:#888;margin-bottom:32px;">（ただいまアップデート中）</div>
-  <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:16px 20px;width:100%;max-width:280px;">
-    <div style="font-size:0.75rem;color:#888;margin-bottom:8px;">管理者の方はこちら</div>
-    <input id="maintenance-password" type="password" placeholder="パスワード"
-      style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #444;background:#1a1a1a;color:white;font-size:1rem;box-sizing:border-box;margin-bottom:8px;"
-      onkeydown="if(event.key==='Enter')checkMaintenancePassword()">
-    <button onclick="checkMaintenancePassword()"
-      style="width:100%;padding:10px;background:#e67e22;color:white;border:none;border-radius:8px;font-size:0.95rem;font-weight:bold;cursor:pointer;touch-action:manipulation;">
-      ログイン
-    </button>
-    <div id="maintenance-login-msg" style="font-size:0.8rem;color:#e74c3c;margin-top:6px;min-height:18px;"></div>
-  </div>
-</div>
-<script>
-  (function() {
-    try { if (sessionStorage.getItem('ml') === '1') return; } catch(e) {}
-    document.getElementById('maintenance-screen').style.display = 'flex';
-  })();
-  function checkMaintenancePassword() {
-    if (document.getElementById('maintenance-password').value === 'omanbo2026') {
-      try { sessionStorage.setItem('ml', '1'); } catch(e) {}
-      document.getElementById('maintenance-screen').style.display = 'none';
-    } else {
-      document.getElementById('maintenance-login-msg').textContent = 'パスワードが違います';
-      document.getElementById('maintenance-password').value = '';
-    }
-  }
-</script>
+<!-- メンテナンス画面（パスワードゲート）は 2026-09-06 に撤去して一般公開。
+     再度クローズしたい場合は git 履歴 (コミット直前) の #maintenance-screen ブロックを復元する。 -->
 
 <h1>🎨 おまんぼさんイラストゲーム</h1>
 <div id="subtitle">✏️ おまんぼさんの顔を描いて採点チャレンジ！(100点満点)</div>
