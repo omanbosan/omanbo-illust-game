@@ -185,26 +185,27 @@ h1 {
 .modal-box { background: white; border-radius: var(--radius-lg); padding: 28px 22px; max-width: 420px; width: 94%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.4); max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .modal-box h2 { font-size: 1.6rem; color: var(--color-primary-dark); margin-bottom: 10px; }
 
-/* ─── お絵描き「今週のお題」カード ─── */
+/* ─── お絵描き「お題 / 自由」モードカード ─── */
 .theme-card {
   width:100%; max-width:320px; margin-bottom:10px;
   background:linear-gradient(135deg,#fff8e1,#ffe9c7); border:2px solid var(--color-accent);
-  border-radius:14px; padding:10px 14px; box-shadow:0 3px 14px rgba(243,156,18,0.25); text-align:left;
+  border-radius:14px; padding:10px 12px; box-shadow:0 3px 14px rgba(243,156,18,0.25);
 }
-.theme-card .theme-label { font-size:0.68rem; color:#c0752f; font-weight:bold; letter-spacing:.05em; }
-.theme-card .theme-text { font-size:0.92rem; color:#7a3b00; font-weight:bold; margin-top:2px; }
-.theme-card .theme-toggle {
-  margin-top:7px; display:inline-block; background:rgba(255,255,255,0.75);
-  border:1px solid currentColor; border-radius:14px; padding:3px 11px;
-  font-size:0.68rem; font-weight:bold; cursor:pointer; color:#c0752f; line-height:1.4;
+.theme-card .theme-text { font-size:0.9rem; color:#7a3b00; font-weight:bold; text-align:center; }
+.theme-mode-switch { display:flex; gap:6px; margin-bottom:7px; }
+.theme-mode-btn {
+  flex:1; padding:6px 4px; border-radius:9px; font-size:0.74rem; font-weight:bold;
+  cursor:pointer; border:1.5px solid #d9a441; background:#fff; color:#b9761f;
+  line-height:1.3; touch-action:manipulation;
 }
+.theme-mode-btn.active { background:var(--color-accent); color:#fff; border-color:var(--color-accent); }
 .theme-card.free-mode {
   background:linear-gradient(135deg,#e8f9ee,#d3f0de); border-color:#27ae60;
   box-shadow:0 3px 14px rgba(39,174,96,0.22);
 }
-.theme-card.free-mode .theme-label { color:#1e8449; }
-.theme-card.free-mode .theme-text  { color:#1e6b3a; }
-.theme-card.free-mode .theme-toggle { color:#1e8449; }
+.theme-card.free-mode .theme-text { color:#1e6b3a; }
+.theme-card.free-mode .theme-mode-btn { border-color:#7fc7a0; color:#2e8b57; }
+.theme-card.free-mode .theme-mode-btn.active { background:#27ae60; color:#fff; border-color:#27ae60; }
 
 /* ─── モード選択カードのささやかな浮遊演出 ─── */
 @keyframes mode-card-float {
@@ -559,32 +560,19 @@ h1 {
 
     <!-- お手本サンプル（運営が用意した見本・どう描けばいいか分からない人向け） -->
     <div style="background:rgba(0,0,0,0.25);border:1px dashed rgba(39,174,96,0.5);border-radius:12px;padding:10px;margin-bottom:14px;">
-      <div style="font-size:0.74rem;color:#2ecc71;font-weight:bold;margin-bottom:6px;text-align:center;">✏️ こんな絵でOK！いろんな人の見本</div>
-      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;">
+      <div style="font-size:0.74rem;color:#2ecc71;font-weight:bold;margin-bottom:6px;text-align:center;">✏️ お手本サンプル</div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
         <div style="flex:0 0 auto;width:88px;text-align:center;">
           <img src="odekaki-sample1.png" alt="にこちゃん" loading="lazy" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #f39c12;background:#fff;display:block;margin:0 auto 3px;">
           <div style="font-size:0.68rem;color:#dfd;font-weight:bold;line-height:1.2;">にこちゃん</div>
-          <div style="font-size:0.6rem;color:#9c9;line-height:1.2;">小学生</div>
         </div>
         <div style="flex:0 0 auto;width:88px;text-align:center;">
           <img src="odekaki-sample2.png" alt="ねこすけ" loading="lazy" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #f39c12;background:#fff;display:block;margin:0 auto 3px;">
           <div style="font-size:0.68rem;color:#dfd;font-weight:bold;line-height:1.2;">ねこすけ</div>
-          <div style="font-size:0.6rem;color:#9c9;line-height:1.2;">小学生</div>
         </div>
         <div style="flex:0 0 auto;width:88px;text-align:center;">
-          <img src="odekaki-sample3.png" alt="まるおくん" loading="lazy" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #f39c12;background:#fff;display:block;margin:0 auto 3px;">
-          <div style="font-size:0.68rem;color:#dfd;font-weight:bold;line-height:1.2;">まるおくん</div>
-          <div style="font-size:0.6rem;color:#9c9;line-height:1.2;">20代</div>
-        </div>
-        <div style="flex:0 0 auto;width:88px;text-align:center;">
-          <img src="odekaki-sample4.png" alt="ほしのこ" loading="lazy" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #f39c12;background:#fff;display:block;margin:0 auto 3px;">
-          <div style="font-size:0.68rem;color:#dfd;font-weight:bold;line-height:1.2;">ほしのこ</div>
-          <div style="font-size:0.6rem;color:#9c9;line-height:1.2;">20代</div>
-        </div>
-        <div style="flex:0 0 auto;width:88px;text-align:center;">
-          <img src="odekaki-sample5.png" alt="おだんごさん" loading="lazy" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #f39c12;background:#fff;display:block;margin:0 auto 3px;">
+          <img src="odekaki-sample3.png" alt="おだんごさん" loading="lazy" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #f39c12;background:#fff;display:block;margin:0 auto 3px;">
           <div style="font-size:0.68rem;color:#dfd;font-weight:bold;line-height:1.2;">おだんごさん</div>
-          <div style="font-size:0.6rem;color:#9c9;line-height:1.2;">30代</div>
         </div>
       </div>
       <div style="font-size:0.66rem;color:#9c9;text-align:center;margin-top:6px;line-height:1.5;">丸のなかに顔を描くだけ！じょうず・下手は気にしなくてOK😊</div>
@@ -1237,44 +1225,42 @@ let _scoringConfigReady = (async function fetchScoringConfig() {
   applyOdekakiTheme();
 })();
 
-// 「お題あり ↔ お題なしで自由に描く」を切り替える
-function toggleOdekakiFreeMode() {
-  _odekakiFreeMode = !_odekakiFreeMode;
+// 「お題モード / 自由お絵描きモード」を選ぶ（選択は端末ごとにlocalStorageで記憶）
+function setOdekakiFreeMode(free) {
+  _odekakiFreeMode = !!free;
   try { localStorage.setItem('omanbo_odekaki_free_v1', _odekakiFreeMode ? '1' : '0'); } catch(e) { /* 保存失敗は無視 */ }
   applyOdekakiTheme();
 }
 
 // お絵描きモードのお題カード表示
 // ・お題が未設定なら非表示
-// ・お題ありでも「お題なしで自由に描く」に切り替え可能（描く内容に制限はない）
+// ・「今週のお題」「自由に描く」の2ボタンを常に並べて表示し、選択中を強調する
+//   （描く内容に制限はなく、自由モードはお題を気にせず好きなものを描いてよい）
 function applyOdekakiTheme() {
   const el = document.getElementById('odekaki-theme');
   if (!el) return;
   if (!_weeklyTheme) { el.style.display = 'none'; return; }
 
-  el.className = _odekakiFreeMode ? 'theme-card free-mode' : 'theme-card';
+  const free = _odekakiFreeMode;
+  el.className = free ? 'theme-card free-mode' : 'theme-card';
   el.innerHTML = '';
 
-  const label = document.createElement('div');
-  label.className = 'theme-label';
+  const sw = document.createElement('div');
+  sw.className = 'theme-mode-switch';
+  [['📝 今週のお題', false], ['✨ 自由に描く', true]].forEach(function(opt) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'theme-mode-btn' + (opt[1] === free ? ' active' : '');
+    b.textContent = opt[0];
+    b.addEventListener('click', function() { setOdekakiFreeMode(opt[1]); });
+    sw.appendChild(b);
+  });
+
   const text = document.createElement('div');
   text.className = 'theme-text';
-  const toggle = document.createElement('button');
-  toggle.type = 'button';
-  toggle.className = 'theme-toggle';
-  toggle.addEventListener('click', toggleOdekakiFreeMode);
+  text.textContent = free ? '好きなものを自由に描いてOK！' : _weeklyTheme;
 
-  if (_odekakiFreeMode) {
-    label.textContent = '🎨 自由お絵描きモード';
-    text.textContent  = 'お題は気にせず、好きなものを描いてOK！';
-    toggle.textContent = '📌 今週のお題を見る';
-  } else {
-    label.textContent = '🎨 今週のお題';
-    text.textContent  = _weeklyTheme;
-    toggle.textContent = '🎲 お題なしで自由に描く';
-  }
-
-  el.append(label, text, toggle);
+  el.append(sw, text);
   el.style.display = 'block';
 }
 
