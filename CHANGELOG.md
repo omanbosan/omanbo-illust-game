@@ -748,3 +748,16 @@ const multipliers = { hard: 3.8, normal: 5.46 };
 **生成スクリプト:** 一時ファイル（`scratchpad/gen_drawings.py` ほか）。年代別レンダラは `draw_kid` / `draw_20s` / `draw_30s`。
 
 **未対応:** この変更は GitHub Pages への push で反映（GASの再デプロイは不要。図鑑への5枚はすでに本番反映済み）。
+
+---
+
+### [2026-09-06] お絵描きお題を自由ジャンル48件へ切り替え（9/5の未完了作業 #1 を完了）
+
+2026-09-05 の「未完了の作業 #1」を実施。
+
+- **`clasp push`**: ローカルの `gas/src/コード.js`（コミット `3154003` 相当）をApps Scriptプロジェクトへ反映。サーバー側との差分は `getFreeThemesData` / `writeThemesData` / `resetThemesToFreeThemes` の追加と `setupThemesSheet` のリファクタのみで、失われるサーバー変更なし・`appsscript.json` 一致を pull で確認済み
+- **`themes` シートをバックアップ**後、エディタから **`resetThemesToFreeThemes()` を手動実行** → ログ「✅ themesシートを自由お題48件に総入れ替えしました！」
+- **本番デプロイの再デプロイは不要だった**: 週替わりお題を返す `getCurrentWeeklyTheme()` はコミット `3154003` で変更されておらず、`themes` シートを読むだけ。シート更新だけで本番デプロイ(v31)がそのまま新お題を配信する
+- 確認: 本番 `?type=config` → `theme` / `autoTheme` が `"アイスクリームを描いてみよう"`（9月第1週の自由ジャンルお題）に切り替わった
+
+**補足:** コミット `3154003` の新関数群（editor実行用のメンテ関数）はv31デプロイには含まれないまま。実行時のWebアプリ挙動には影響しないが、次回GASを再デプロイする際にコード/デプロイの版ずれは解消される。
