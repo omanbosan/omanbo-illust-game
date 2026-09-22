@@ -211,7 +211,7 @@ body {
             却下 <span class="badge badge-rejected" id="cnt-rejected">0</span>
           </button>
         </div>
-        <button class="reload-btn" onclick="loadData()">🔄</button>
+        <button class="reload-btn" onclick="loadData(true)">🔄</button>
         <button onclick="adminLogout()" style="padding:7px 10px;background:#e74c3c;color:white;border:none;border-radius:20px;font-size:0.85rem;cursor:pointer;">🚪</button>
       </div>
     </div>
@@ -395,10 +395,45 @@ let currentMode = 'drawing'; // 'drawing' | 'scoring' | 'config' | 'stats' | 're
 const SESSION_KEY = 'omanbo_admin_session';
 const SESSION_DAYS = 30; // ログイン保持日数
 
+// ── 一覧データの先読み＆キャッシュ ──────────────────────────
+// GAS Web Appは中身が空でも応答に2〜3秒かかる（データ量の問題ではない）。
+// ログイン操作中に裏で取っておき、モード切替では取り直さない。
+// 最新に更新したいときは 🔄（loadData(true)）を押す。
+const ADMIN_TTL   = 3 * 60 * 1000;
+const adminCache   = {};   // { pending: {at, data}, pendingScores: {at, data} }
+const adminPromise = {};
+
+function prefetchAdmin(type, force) {
+  if (adminPromise[type]) return adminPromise[type];
+  const c = adminCache[type];
+  if (!force && c && Date.now() - c.at < ADMIN_TTL) return Promise.resolve(c.data);
+  adminPromise[type] = fetch(WEBHOOK_URL + '?type=' + type, { redirect: 'follow' })
+    .then(r => r.text())
+    .then(t => {
+      const d   = JSON.parse(t);
+      const arr = Array.isArray(d) ? d : [];
+      adminCache[type]   = { at: Date.now(), data: arr };
+      adminPromise[type] = null;
+      return arr;
+    })
+    .catch(err => { adminPromise[type] = null; throw err; });
+  return adminPromise[type];
+}
+
+// Driveのサムネイルは幅を指定した分だけ生成される。カードの表示は120pxなので
+// w300ではなくw240（Retina用の2倍）を要求して転送量を減らす。
+function adminThumb(url) {
+  if (!url) return '';
+  return url.indexOf('sz=w') >= 0 ? url.replace(/sz=w\d+/, 'sz=w240') : url;
+}
+
 function showAdminScreen() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('admin-screen').style.display = 'block';
   loadData();
+  // もう片方のモードも裏で取っておく（タブ切替を待たせない）
+  prefetchAdmin('pending').catch(() => {});
+  prefetchAdmin('pendingScores').catch(() => {});
 }
 
 function adminLogin() {
@@ -439,24 +474,46 @@ function adminLogout() {
   } catch(e) { localStorage.removeItem(SESSION_KEY); }
 })();
 
+// パスワード入力中に裏で一覧を取っておく（GASの2〜3秒をログイン操作で隠す）
+prefetchAdmin('pending').catch(() => {});
+prefetchAdmin('pendingScores').catch(() => {});
+
 // ================================================================
 // データ取得
 // ================================================================
-async function loadData() {
+async function loadData(force) {
+  const type = currentMode === 'scoring' ? 'pendingScores' : 'pending';
+
+  // 取得済みなら古くてもまず出す（待たせない）
+  const cached = adminCache[type];
+  if (!force && cached) {
+    show(cached.data);
+    if (Date.now() - cached.at >= ADMIN_TTL) {
+      prefetchAdmin(type).then(d => {
+        // 見ているモードが変わっていなければ静かに差し替える
+        if (type !== (currentMode === 'scoring' ? 'pendingScores' : 'pending')) return;
+        show(d);
+      }).catch(() => {});
+    }
+    return;
+  }
+
   document.getElementById('loading').style.display = 'block';
+  document.getElementById('loading').textContent = '読み込み中...';
   document.getElementById('card-grid').innerHTML = '';
   document.getElementById('empty').style.display = 'none';
   try {
-    const type = currentMode === 'scoring' ? 'pendingScores' : 'pending';
-    const res  = await fetch(WEBHOOK_URL + '?type=' + type, { redirect: 'follow' });
-    const text = await res.text();
-    allData = JSON.parse(text);
-    if (!Array.isArray(allData)) allData = [];
+    show(await prefetchAdmin(type, force));
+  } catch(e) {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('loading').textContent = '読み込みに失敗しました。再度お試しください。';
+  }
+
+  function show(data) {
+    allData = Array.isArray(data) ? data : [];
     if (currentMode === 'drawing') applyFlags();
     updateBadges();
-    renderCards();
-  } catch(e) {
-    document.getElementById('loading').textContent = '読み込みに失敗しました。再度お試しください。';
+    renderCards();   // renderCards内でloadingを隠す
   }
 }
 
@@ -797,7 +854,7 @@ function renderCards() {
           <span style="background:#e67e22;color:white;border-radius:10px;padding:4px 14px;font-size:1.1rem;font-weight:bold;font-family:monospace;letter-spacing:2px;">🎫 ${entry.entryId}</span>
         </div>` : ''}
         ${entry.imageUrl
-          ? `<img class="card-img" src="${entry.imageUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          ? `<img class="card-img" src="${adminThumb(entry.imageUrl)}" width="120" height="120" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
           : ''}
         <div class="card-img-placeholder" style="${entry.imageUrl ? 'display:none' : ''}">🎯</div>
         <div style="text-align:center;margin-bottom:6px;display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;">
@@ -829,7 +886,7 @@ function renderCards() {
           <span style="background:#e67e22;color:white;border-radius:10px;padding:4px 14px;font-size:1.1rem;font-weight:bold;font-family:monospace;letter-spacing:2px;">🎫 ${entry.entryId}</span>
         </div>` : ''}
         ${entry.imageUrl
-          ? `<img class="card-img" src="${entry.imageUrl}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          ? `<img class="card-img" src="${adminThumb(entry.imageUrl)}" width="120" height="120" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
           : ''}
         <div class="card-img-placeholder" style="${entry.imageUrl ? 'display:none' : ''}">🎨</div>
         <div class="card-name">${entry.villageName || '（名前なし）'}</div>

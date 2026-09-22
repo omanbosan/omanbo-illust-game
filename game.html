@@ -3341,23 +3341,19 @@ async function saveScore() {
   const registerSectionEl = document.getElementById('score-register-section');
   if (registerSectionEl) registerSectionEl.textContent = '📮 図鑑登録を申請中...';
 
-  let entryId = null;
+  // 送信の完了は待たない（番号はクライアント生成なので応答が要らない）
+  const entryId = WEBHOOK_URL ? entryIdLocal : null;
+  let scoreSendPromise = null;
   if (WEBHOOK_URL) {
-    try {
-      const res = await fetch(WEBHOOK_URL, {
-        method: 'POST', redirect: 'follow',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({
-          type: 'score', name, score: lastScore, instagram,
-          difficulty: currentDifficulty,
-          image: lastFreehandImage,
-          entryId: entryIdLocal,
-          luckLevel: getLuckLevel(_scoringMultipliers.hard)
-        })
-      });
-      await res.json().catch(() => ({}));
-      entryId = entryIdLocal;
-    } catch(e) {}
+    _scorePayload = {
+      type: 'score', name, score: lastScore, instagram,
+      difficulty: currentDifficulty,
+      image: lastFreehandImage,
+      entryId: entryIdLocal,
+      luckLevel: getLuckLevel(_scoringMultipliers.hard)
+    };
+    scoreSendPromise = postToBackend(_scorePayload);
+    scoreSendPromise.catch(() => {});
   }
 
   // 番号を画像に焼き込んで更新
@@ -3387,10 +3383,14 @@ async function saveScore() {
             🎁 結果はインスタ・LINEで発表予定<br>
             当選確認にはこの<b>5桁の番号</b>が必要です
           </div>
+          <div id="score-send-status" style="font-size:0.72rem;margin-top:8px;"></div>
         ` : `<div style="font-size:0.85rem;color:#555;">ランキングに登録しました🎉</div>`}
       </div>
     `;
+    if (scoreSendPromise) watchSend(scoreSendPromise, 'score-send-status', 'retryScorePost');
   }
+  // 採点図鑑の保存データは次に開いたとき取り直す
+  zukanScoringFetchedAt = 0;
 }
 
 // ================================================================
@@ -4046,6 +4046,48 @@ function updateOdekakiSubmitBtn() {
   btn.style.cursor  = ok ? 'pointer' : 'not-allowed';
 }
 
+// ── 投稿の送信状態表示（送信は裏で走らせ、結果はすぐ見せる）──────
+// 参加番号はクライアントで作っているのでGASの応答を待つ必要がない。
+// 送信中は「📮送信中」、失敗したら再送ボタンを出して正直に伝える。
+function postToBackend(payload) {
+  return fetch(WEBHOOK_URL, {
+    method: 'POST', redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload)
+  }).then(res => res.json().catch(() => ({})));
+}
+
+function renderSendStatus(elId, state, retryFn) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (state === 'sending') {
+    el.innerHTML = '<span style="color:#999;">📮 サーバーに送信中…</span>';
+  } else if (state === 'ok') {
+    el.innerHTML = '<span style="color:#27ae60;">✅ 送信完了</span>';
+  } else {
+    el.innerHTML = '<span style="color:#e74c3c;font-weight:bold;">⚠️ 送信できませんでした</span>'
+      + '<button onclick="' + retryFn + '()" style="margin-left:8px;padding:4px 12px;border:none;border-radius:14px;background:#e74c3c;color:#fff;font-size:0.72rem;font-weight:bold;cursor:pointer;">🔄 再送する</button>';
+  }
+}
+
+function watchSend(promise, elId, retryFn) {
+  renderSendStatus(elId, 'sending', retryFn);
+  promise.then(() => renderSendStatus(elId, 'ok', retryFn))
+         .catch(() => renderSendStatus(elId, 'error', retryFn));
+}
+
+let _odekakiPayload = null;
+function retryOdekakiPost() {
+  if (!_odekakiPayload) return;
+  watchSend(postToBackend(_odekakiPayload), 'odekaki-send-status', 'retryOdekakiPost');
+}
+
+let _scorePayload = null;
+function retryScorePost() {
+  if (!_scorePayload) return;
+  watchSend(postToBackend(_scorePayload), 'score-send-status', 'retryScorePost');
+}
+
 async function saveOdekakiImage() {
   const villageName = (document.getElementById('odekaki-name').value || '').trim();
   const penname     = (document.getElementById('odekaki-penname').value || '').trim();
@@ -4104,29 +4146,24 @@ async function saveOdekakiImage() {
     link.click();
   }
 
-  // GASバックエンドへ送信
+  // GASバックエンドへ送信（応答は待たない。番号はここで作っているので待つ必要がない）
   const entryIdLocal = generateEntryId(); // ランダム5桁
-  let entryId = null;
+  const entryId = WEBHOOK_URL ? entryIdLocal : null;
+  let sendPromise = null;
   if (WEBHOOK_URL) {
-    try {
-      const res = await fetch(WEBHOOK_URL, {
-        method: 'POST', redirect: 'follow',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({
-          type: 'drawing',
-          instagram: ig,
-          igShow: igShow,
-          penname: penname,
-          villageName: villageName,
-          comment: comment,
-          image: dataUrl,
-          consentAt: new Date().toLocaleString('ja-JP'),
-          entryId: entryIdLocal
-        })
-      });
-      await res.json().catch(() => ({}));
-      entryId = entryIdLocal;
-    } catch(e) {}
+    _odekakiPayload = {
+      type: 'drawing',
+      instagram: ig,
+      igShow: igShow,
+      penname: penname,
+      villageName: villageName,
+      comment: comment,
+      image: dataUrl,
+      consentAt: new Date().toLocaleString('ja-JP'),
+      entryId: entryIdLocal
+    };
+    sendPromise = postToBackend(_odekakiPayload);
+    sendPromise.catch(() => {});   // 未処理の拒否を出さない（状態表示は下のwatchSendが担当）
   }
 
   // 番号を画像に焼き込んで更新
@@ -4152,6 +4189,7 @@ async function saveOdekakiImage() {
           スタッフが内容を確認してから図鑑に公開します🌿<br>
           反映は明日以降になります
         </div>
+        <div id="odekaki-send-status" style="font-size:0.72rem;margin-top:8px;"></div>
         <div style="background:linear-gradient(135deg,#e8f9ee,#f5fff8);border:2px solid #27ae60;border-radius:12px;padding:12px;margin-top:10px;text-align:left;">
           <div style="font-size:0.82rem;color:#1e8449;font-weight:bold;margin-bottom:4px;">🎁 この絵をレーザー彫刻作品にできます！</div>
           <div style="font-size:0.72rem;color:#3a6a4a;line-height:1.7;margin-bottom:8px;">
@@ -4161,6 +4199,9 @@ async function saveOdekakiImage() {
         </div>
       </div>
     `;
+    if (sendPromise) watchSend(sendPromise, 'odekaki-send-status', 'retryOdekakiPost');
+    // 図鑑の保存データは次に開いたとき取り直す（自分の投稿が反映されるように）
+    zukanFetchedAt = 0;
   } else {
     alert(`✅ 投稿ありがとうございます！\n「${villageName}」として受け付けました🎉\n\nスタッフが確認後、図鑑に公開します🌿\n\n🎁 この絵はレーザー彫刻作品にもできます！\nBASEショップ(omanbosan.base.shop)をチェック✨`);
   }
@@ -4170,24 +4211,50 @@ async function saveOdekakiImage() {
 // 図鑑
 // ================================================================
 // ================================================================
-// 図鑑キャッシュ（ページ読み込み時に先読みしておく）
+// 図鑑キャッシュ（localStorageに保存して2回目以降は待たせない）
 // ================================================================
-let zukanCache    = null;   // 取得済みデータ
-let zukanPromise  = null;   // 進行中のfetch Promise（重複防止）
-const ZUKAN_TTL   = 5 * 60 * 1000; // 5分でキャッシュ無効化
-let zukanFetchedAt = 0;
+// GAS Web Appは中身が空でも応答に2〜3秒かかる。データ量の問題ではないので、
+// 一度取ったJSONを端末に残しておき、開いた瞬間は保存分を出して
+// 裏で取り直す（stale-while-revalidate）。
+const ZUKAN_TTL    = 5 * 60 * 1000;       // これを過ぎたら裏で取り直す
+const ZUKAN_LS_TTL = 24 * 60 * 60 * 1000; // 保存データを使う上限（1日）
 
-function prefetchZukan() {
-  if (zukanPromise) return; // すでに取得中
-  if (zukanCache && Date.now() - zukanFetchedAt < ZUKAN_TTL) return; // キャッシュ有効
+function zkLoad(key) {
+  try {
+    const o = JSON.parse(localStorage.getItem(key) || 'null');
+    if (!o || !Array.isArray(o.data)) return null;
+    if (Date.now() - (o.at || 0) > ZUKAN_LS_TTL) return null;
+    return o;
+  } catch(e) { return null; }
+}
+function zkSave(key, data) {
+  try { localStorage.setItem(key, JSON.stringify({ at: Date.now(), data: data })); } catch(e) {}
+}
+
+const ZUKAN_LS_KEY = 'omanbo_zukan_cache_v1';
+const _zkSaved     = zkLoad(ZUKAN_LS_KEY);
+let zukanCache     = _zkSaved ? _zkSaved.data : null;  // 取得済みデータ
+let zukanFetchedAt = _zkSaved ? _zkSaved.at   : 0;
+let zukanPromise   = null;                              // 進行中のfetch（重複防止）
+
+function prefetchZukan(force) {
+  if (zukanPromise) return zukanPromise;                                            // すでに取得中
+  if (!force && zukanCache && Date.now() - zukanFetchedAt < ZUKAN_TTL) {
+    return Promise.resolve(zukanCache);                                             // キャッシュ有効
+  }
   zukanPromise = fetch(WEBHOOK_URL + '?type=zukan')
     .then(r => r.json())
     .then(data => {
-      zukanCache    = data;
-      zukanFetchedAt = Date.now();
-      zukanPromise  = null;
+      if (Array.isArray(data)) {
+        zukanCache     = data;
+        zukanFetchedAt = Date.now();
+        zkSave(ZUKAN_LS_KEY, data);
+      }
+      zukanPromise = null;
+      return zukanCache;
     })
-    .catch(() => { zukanPromise = null; });
+    .catch(() => { zukanPromise = null; return zukanCache; });
+  return zukanPromise;
 }
 
 async function openZukan() {
@@ -4196,12 +4263,20 @@ async function openZukan() {
   const loading = document.getElementById('zukan-loading');
   const empty   = document.getElementById('zukan-empty');
 
-  // キャッシュがあれば即座に表示
-  if (zukanCache && Date.now() - zukanFetchedAt < ZUKAN_TTL) {
+  // 保存データがあれば古くてもまず出す（待たせない）
+  if (zukanCache) {
     loading.style.display = 'none';
     renderZukanList(list, empty, zukanCache);
-    // バックグラウンドで静かに更新（次回用）
-    setTimeout(prefetchZukan, 500);
+    if (Date.now() - zukanFetchedAt >= ZUKAN_TTL) {
+      const before = JSON.stringify(zukanCache);
+      prefetchZukan().then(data => {
+        // 開いたまま・1ページ目のまま・中身が変わったときだけ静かに差し替える
+        if (!data || JSON.stringify(data) === before) return;
+        if (!document.getElementById('zukan-modal').classList.contains('show')) return;
+        if (zukanPageNo !== 0) return;
+        renderZukanList(list, empty, data);
+      });
+    }
     return;
   }
 
@@ -4212,8 +4287,7 @@ async function openZukan() {
 
   try {
     // 進行中のfetchがあればそれを待つ、なければ新規fetch
-    if (!zukanPromise) prefetchZukan();
-    await zukanPromise;
+    await prefetchZukan();
     loading.style.display = 'none';
     renderZukanList(list, empty, zukanCache);
   } catch(e) {
@@ -4224,14 +4298,12 @@ async function openZukan() {
 async function refreshZukan() {
   const btn = document.getElementById('zukan-refresh-btn');
   if (btn) { btn.textContent = '⏳ 更新中...'; btn.disabled = true; }
-  zukanCache = null; zukanFetchedAt = 0; zukanPromise = null;
   const list    = document.getElementById('zukan-list');
   const loading = document.getElementById('zukan-loading');
   const empty   = document.getElementById('zukan-empty');
   loading.style.display = 'block';
   list.innerHTML = '';
-  prefetchZukan();
-  await zukanPromise;
+  await prefetchZukan(true);   // 🔄は必ず取り直す
   loading.style.display = 'none';
   renderZukanList(list, empty, zukanCache);
   if (btn) { btn.textContent = '🔄 更新'; btn.disabled = false; }
@@ -4341,9 +4413,11 @@ function zukanTurnPage(dir) {
 // ================================================================
 // 採点チャレンジ図鑑（独立モーダル）
 // ================================================================
-let zukanScoringCache    = null;
-let zukanScoringPromise  = null;
-let zukanScoringFetchedAt = 0;
+const ZUKAN_SC_LS_KEY     = 'omanbo_zukan_scoring_cache_v1';
+const _zkScSaved          = zkLoad(ZUKAN_SC_LS_KEY);
+let zukanScoringCache     = _zkScSaved ? _zkScSaved.data : null;
+let zukanScoringFetchedAt = _zkScSaved ? _zkScSaved.at   : 0;
+let zukanScoringPromise   = null;
 
 async function openScoringZukan() {
   document.getElementById('scoring-zukan-modal').classList.add('show');
@@ -4353,19 +4427,35 @@ async function openScoringZukan() {
 async function refreshScoringZukan() {
   const btn = document.getElementById('scoring-zukan-refresh-btn');
   if (btn) { btn.textContent = '⏳ 更新中...'; btn.disabled = true; }
-  zukanScoringCache = null; zukanScoringFetchedAt = 0; zukanScoringPromise = null;
+  await prefetchZukanScoring(true);   // 🔄は必ず取り直す
   await loadScoringZukan();
   if (btn) { btn.textContent = '🔄 更新'; btn.disabled = false; }
 }
 
-function prefetchZukanScoring() {
-  if (zukanScoringPromise) return;
-  if (zukanScoringCache && Date.now() - zukanScoringFetchedAt < ZUKAN_TTL) return;
+function prefetchZukanScoring(force) {
+  if (zukanScoringPromise) return zukanScoringPromise;
+  if (!force && zukanScoringCache && Date.now() - zukanScoringFetchedAt < ZUKAN_TTL) {
+    return Promise.resolve(zukanScoringCache);
+  }
   zukanScoringPromise = fetch(WEBHOOK_URL + '?type=zukanScoring')
     .then(r => r.json())
-    .then(data => { zukanScoringCache = data; zukanScoringFetchedAt = Date.now(); zukanScoringPromise = null; })
-    .catch(() => { zukanScoringPromise = null; });
+    .then(data => {
+      if (Array.isArray(data)) {
+        zukanScoringCache     = data;
+        zukanScoringFetchedAt = Date.now();
+        zkSave(ZUKAN_SC_LS_KEY, data);
+      }
+      zukanScoringPromise = null;
+      return zukanScoringCache;
+    })
+    .catch(() => { zukanScoringPromise = null; return zukanScoringCache; });
+  return zukanScoringPromise;
 }
+
+// 先読みはページ読み込みを待たずにここで開始する（GASの往復が2〜3秒あるため、
+// 早く投げるほど図鑑を開いたときの待ち時間が減る）
+prefetchZukan();
+prefetchZukanScoring();
 
 const SCORING_ZUKAN_PAGE_SIZE = 20; // 1ページの表示件数
 let scoringZukanPage = 0;           // 現在表示済みページ数
@@ -4378,9 +4468,19 @@ async function loadScoringZukan() {
 
   scoringZukanPage = 0; // 開くたびに先頭から
 
-  if (zukanScoringCache && Date.now() - zukanScoringFetchedAt < ZUKAN_TTL) {
+  // 保存データがあれば古くてもまず出す（待たせない）
+  if (zukanScoringCache) {
     loading.style.display = 'none';
     renderScoringZukanList(list, empty, zukanScoringCache);
+    if (Date.now() - zukanScoringFetchedAt >= ZUKAN_TTL) {
+      const before = JSON.stringify(zukanScoringCache);
+      prefetchZukanScoring().then(data => {
+        if (!data || JSON.stringify(data) === before) return;
+        if (!document.getElementById('scoring-zukan-modal').classList.contains('show')) return;
+        if (scoringZukanPage !== 0) return;
+        renderScoringZukanList(list, empty, data);
+      });
+    }
     return;
   }
 
@@ -4396,8 +4496,7 @@ async function loadScoringZukan() {
   empty.style.display = 'none';
 
   try {
-    if (!zukanScoringPromise) prefetchZukanScoring();
-    await zukanScoringPromise;
+    await prefetchZukanScoring();
     list.innerHTML = '';
     renderScoringZukanList(list, empty, zukanScoringCache);
   } catch(e) {
@@ -4777,10 +4876,7 @@ window.addEventListener('load', () => {
     initParts();
     applyGameScale();
   }, 120);
-  // 図鑑データをバックグラウンドで先読み（GASコールドスタート対策）
-  setTimeout(prefetchZukan, 1500);
-  // 採点図鑑も先読み（こちらの方が重いので早めに開始）
-  setTimeout(prefetchZukanScoring, 2500);
+  // ※図鑑データの先読みはスクリプト読み込み時点で開始済み（prefetchZukan / prefetchZukanScoring）
   // 登録フォームのHTMLを保存（クローズ時のリセット用）
   const _sec = document.getElementById('score-register-section');
   if (_sec) _scoreRegisterSectionHTML = _sec.innerHTML;
