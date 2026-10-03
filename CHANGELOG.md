@@ -1145,3 +1145,9 @@ Playwright＋ヘッドレスChrome（390px・iPhone UA・外部通信はroute �
 - **デプロイ順序に注意**: `UrlFetchApp` で外部通信の権限が新たに要るので、**先にエディタで `testLine()` を実行して承認してから** 本番デプロイ（`@31` のID）を更新する。
   承認前にデプロイすると Web App 全体が権限エラーになるおそれがある
 - 本番v31との差分を `clasp pull --versionNumber 31` で確認済み：今回の通知以外は、手動実行用のお題入れ替え関数（`getFreeThemesData` / `resetThemesToFreeThemes` など）だけで、Web Appの挙動は変わらない
+
+### デプロイ結果（2026-10-03）
+
+- `testLine()` で LINE 送信 200 を確認（スクリプトプロパティ `LINE_TO` / `LINE_CHANNEL_TOKEN` 設定済み・権限承認済み）
+- 本番デプロイを **同じID のまま `@31` → `@32`** に更新（`clasp deploy -i AKfycby0q8…`）。`game.html` / `admin.html` のURL変更なし
+- 更新後に `?type=zukan` / `config` が正常に返ることを確認し、本番ページからテスト投稿（参加番号 39656）→ `{"ok":true,"fileUrl":…}`
