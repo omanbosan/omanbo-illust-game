@@ -1600,47 +1600,56 @@ h1 {
   <!-- 全消し -->
   <button onclick="clearOdekakiCanvas()" class="pk-btn sm" style="--btn-c:var(--pk-red);--btn-d:var(--pk-red-d);margin-bottom:13px;">🗑 ぜんぶ消す</button>
 
-  <!-- 図鑑登録フォーム -->
+  <!-- 描き終わったら押す。フォームはここを押すまで出さない（描く前から書類に見せない） -->
+  <button id="odekaki-done-btn" onclick="showOdekakiFinish()" class="pk-btn" style="--btn-c:var(--pk-green);--btn-d:var(--pk-green-d);margin-bottom:12px;">✅ できた！</button>
+
+  <div id="odekaki-finish-area" style="display:none;flex-direction:column;align-items:center;width:100%;">
+  <!-- 図鑑登録フォーム（入力はすべて任意。必須は紹介への同意だけ） -->
   <div id="odekaki-form-area" style="background:white;border:2px solid #27ae60;border-radius:10px;padding:14px;max-width:300px;width:100%;margin-bottom:10px;">
-    <div style="font-size:0.88rem;font-weight:900;color:var(--pk-text);margin-bottom:10px;">📖 図鑑に登録する（必須）</div>
+    <div style="font-size:0.88rem;font-weight:900;color:var(--pk-text);margin-bottom:4px;">📖 図鑑にのせよう！</div>
+    <div style="font-size:0.72rem;color:#888;margin-bottom:10px;">名前は空欄でもOK。あとはボタンを押すだけ✨</div>
 
-    <div style="font-size:0.78rem;color:#555;margin-bottom:4px;">🏷️ キャラクター名（必須・最大10文字）</div>
-    <input type="text" id="odekaki-name" placeholder="" maxlength="10"
-      style="width:100%;padding:8px;border:2px solid #e67e22;border-radius:6px;font-size:0.95rem;margin-bottom:8px;box-sizing:border-box;font-weight:bold;"
-      oninput="updateOdekakiSubmitBtn()">
+    <div style="font-size:0.78rem;color:#555;margin-bottom:4px;">🏷️ キャラクター名（任意・最大10文字）</div>
+    <input type="text" id="odekaki-name" placeholder="空欄なら「ななしのおともだち」" maxlength="10"
+      style="width:100%;padding:8px;border:2px solid #e67e22;border-radius:6px;font-size:0.95rem;margin-bottom:8px;box-sizing:border-box;font-weight:bold;">
 
-    <div style="font-size:0.78rem;color:#555;margin-bottom:4px;">✏️ 作者ペンネーム（必須・最大15文字）</div>
-    <input type="text" id="odekaki-penname" placeholder="例: おまんぼ太郎" maxlength="15"
-      style="width:100%;padding:8px;border:2px solid #e67e22;border-radius:6px;font-size:0.9rem;margin-bottom:8px;box-sizing:border-box;"
-      oninput="updateOdekakiSubmitBtn()">
+    <div style="font-size:0.78rem;color:#555;margin-bottom:4px;">✏️ 作者ペンネーム（任意・最大15文字）</div>
+    <input type="text" id="odekaki-penname" placeholder="空欄なら「ななしさん」" maxlength="15"
+      style="width:100%;padding:8px;border:2px solid #e67e22;border-radius:6px;font-size:0.9rem;margin-bottom:8px;box-sizing:border-box;">
 
     <div style="font-size:0.78rem;color:#555;margin-bottom:4px;">💬 このキャラクターのひとこと（任意・最大20文字）</div>
     <input type="text" id="odekaki-comment" placeholder="例: 眉毛が自慢" maxlength="20"
       style="width:100%;padding:8px;border:2px solid #ddd;border-radius:6px;font-size:0.9rem;margin-bottom:10px;box-sizing:border-box;">
 
-    <div style="font-size:0.78rem;color:#555;margin-bottom:4px;">📸 Instagramアカウント名（プレゼント受け取り希望の方のみ・@なしでOK）</div>
-    <input type="text" id="odekaki-instagram" placeholder="例: omanbo_taro（任意）"
-      style="width:100%;padding:8px;border:2px solid #aaa;border-radius:6px;font-size:0.9rem;margin-bottom:6px;box-sizing:border-box;">
-
-    <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.78rem;cursor:pointer;line-height:1.4;margin-bottom:6px;">
-      <input type="checkbox" id="odekaki-ig-show" style="margin-top:2px;flex-shrink:0;">
-      <span>Instagramアカウント名を図鑑にも表示する</span>
-    </label>
-
-    <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.8rem;cursor:pointer;line-height:1.4;margin-bottom:6px;">
-      <input type="checkbox" id="odekaki-follow-check" onchange="updateOdekakiSubmitBtn()" style="margin-top:2px;flex-shrink:0;">
-      <span><a href="https://www.instagram.com/omanbosan.lv/" target="_blank" style="color:#27ae60;font-weight:bold;">@omanbosan.lv</a> をフォロー済みです</span>
-    </label>
+    <!-- プレゼント応募は希望者だけ。投稿の条件にはしない -->
+    <details id="odekaki-gift" style="font-size:0.78rem;color:#555;margin-bottom:10px;border:1.5px dashed #E7D6BB;border-radius:8px;padding:8px 10px;">
+      <summary style="cursor:pointer;font-weight:800;color:#e67e22;">🎁 プレゼントに応募する（任意）</summary>
+      <div style="margin-top:8px;">
+        <div style="margin-bottom:4px;">📸 Instagramアカウント名（@なしでOK）</div>
+        <input type="text" id="odekaki-instagram" placeholder="例: omanbo_taro"
+          style="width:100%;padding:8px;border:2px solid #aaa;border-radius:6px;font-size:0.9rem;margin-bottom:6px;box-sizing:border-box;">
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.78rem;cursor:pointer;line-height:1.4;margin-bottom:6px;">
+          <input type="checkbox" id="odekaki-ig-show" style="margin-top:2px;flex-shrink:0;">
+          <span>Instagramアカウント名を図鑑にも表示する</span>
+        </label>
+        <div style="font-size:0.72rem;color:#888;line-height:1.5;">当選のご連絡は <a href="https://www.instagram.com/omanbosan.lv/" target="_blank" style="color:#27ae60;font-weight:bold;">@omanbosan.lv</a> からお送りします</div>
+      </div>
+    </details>
 
     <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.8rem;cursor:pointer;line-height:1.5;background:#fff8e1;border:1.5px solid #f39c12;border-radius:8px;padding:8px 10px;">
       <input type="checkbox" id="odekaki-consent-check" onchange="updateOdekakiSubmitBtn()" style="margin-top:2px;flex-shrink:0;width:16px;height:16px;accent-color:#e67e22;">
-      <span><b style="color:#e67e22;">著作権・肖像権に同意する（必須）</b><br>
-        <span style="font-size:0.72rem;color:#888;">投稿した作品の著作権はおまんぼさん運営に帰属し、商業利用・SNS掲載等に同意します。</span>
+      <span><b style="color:#e67e22;">図鑑・SNSでの紹介に同意する（必須）</b><br>
+        <span style="font-size:0.72rem;color:#888;">描いた絵を図鑑やおまんぼさんのSNSで紹介させてもらいます。グッズなど商品にしたいときは、事前にご連絡して許可をいただきます。</span>
       </span>
     </label>
   </div>
   <button id="odekaki-save-btn" onclick="saveOdekakiImage()" disabled
-    style="padding:10px 24px;background:#3498db;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;opacity:0.5;margin-bottom:10px;">💾 投稿＆保存する</button>
+    style="padding:10px 24px;background:#3498db;color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;opacity:0.5;margin-bottom:8px;">📖 図鑑に投稿する</button>
+  <button id="odekaki-saveonly-btn" onclick="saveOdekakiOnly()"
+    style="padding:8px 20px;background:white;color:#8A7358;border:2px solid #E7D6BB;border-radius:999px;cursor:pointer;font-size:0.82rem;font-weight:800;margin-bottom:6px;">💾 投稿せずに保存だけする</button>
+  <button id="odekaki-more-btn" onclick="hideOdekakiFinish()"
+    style="padding:6px 16px;background:none;color:#8A7358;border:none;cursor:pointer;font-size:0.78rem;text-decoration:underline;margin-bottom:10px;">✏️ もうすこし描く</button>
+  </div>
   <!-- 生成画像（長押し保存用） -->
   <div id="odekaki-result-wrap" style="display:none;text-align:center;margin-bottom:10px;">
     <p style="font-size:0.78rem;color:#555;margin-bottom:4px;">📲 長押しで保存できます</p>
@@ -1648,9 +1657,9 @@ h1 {
   </div>
   <div style="background:#e8f5e9;border-radius:10px;padding:12px;max-width:320px;font-size:0.82rem;line-height:1.8;text-align:left;color:#2d5a3d;margin-bottom:10px;">
     📖 <b>あなたの絵が図鑑に載る！</b><br>
-    ① 絵を描いてキャラクター名をつける<br>
-    ② 「投稿＆図鑑登録する」を押す<br>
-    ③ <b>#おまんぼさんイラスト</b> でインスタに投稿🌿<br>
+    ① 自由に描いて「✅ できた！」を押す<br>
+    ② 「📖 図鑑に投稿する」を押す（名前は空欄でもOK）<br>
+    ③ よかったら <b>#おまんぼさんイラスト</b> でインスタにも🌿<br>
     🔍 キャラクターに紛れた本物のおまんぼさんを探せ！<br>
     <span style="color:#e74c3c;font-size:0.75rem;">⚠️ すでにあるキャラクターに似せた絵はご遠慮ください</span>
   </div>
@@ -4035,15 +4044,107 @@ function floodFill(fillCanvas, lineCanvas, startX, startY, fillHex) {
 }
 
 function updateOdekakiSubmitBtn() {
-  const name    = (document.getElementById('odekaki-name').value || '').trim();
-  const penname = (document.getElementById('odekaki-penname').value || '').trim();
-  const checked = document.getElementById('odekaki-follow-check').checked;
+  // 必須は紹介への同意だけ（名前は空欄なら自動でつける）
   const consent = document.getElementById('odekaki-consent-check').checked;
   const btn     = document.getElementById('odekaki-save-btn');
-  const ok = name.length > 0 && penname.length > 0 && checked && consent;
-  btn.disabled = !ok;
-  btn.style.opacity = ok ? '1' : '0.5';
-  btn.style.cursor  = ok ? 'pointer' : 'not-allowed';
+  btn.disabled = !consent;
+  btn.style.opacity = consent ? '1' : '0.5';
+  btn.style.cursor  = consent ? 'pointer' : 'not-allowed';
+}
+
+// ── 「できた！」で投稿フォームを出す ──────────────────────────
+// 描く前から入力欄が並ぶと書類に見えるので、描き終わってから出す。
+// ペンネームは一度入れたら端末に覚えておき、次から入力不要にする。
+const ODEKAKI_PENNAME_KEY = 'omanbo_odekaki_penname_v1';
+const ODEKAKI_DEFAULT_NAME    = 'ななしのおともだち';
+const ODEKAKI_DEFAULT_PENNAME = 'ななしさん';
+let _odekakiFormHtml = null;   // 投稿後に完了表示へ差し替えるので、元のフォームを控えておく
+
+function showOdekakiFinish() {
+  document.getElementById('odekaki-done-btn').style.display = 'none';
+  const area = document.getElementById('odekaki-finish-area');
+  area.style.display = 'flex';
+  const pn = document.getElementById('odekaki-penname');
+  if (pn && !pn.value) {
+    try { pn.value = localStorage.getItem(ODEKAKI_PENNAME_KEY) || ''; } catch(e) {}
+  }
+  updateOdekakiSubmitBtn();
+  area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function hideOdekakiFinish() {
+  document.getElementById('odekaki-finish-area').style.display = 'none';
+  document.getElementById('odekaki-done-btn').style.display = '';
+}
+
+// 新しく描き始めるときにフォームを初期状態へ戻す
+function resetOdekakiFinish() {
+  const formArea = document.getElementById('odekaki-form-area');
+  if (_odekakiFormHtml === null) _odekakiFormHtml = formArea.innerHTML;
+  else formArea.innerHTML = _odekakiFormHtml;
+  ['odekaki-save-btn', 'odekaki-saveonly-btn', 'odekaki-more-btn'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.style.display = '';
+  });
+  const btn = document.getElementById('odekaki-save-btn');
+  btn.textContent = '📖 図鑑に投稿する';
+  document.getElementById('odekaki-result-wrap').style.display = 'none';
+  hideOdekakiFinish();
+}
+
+// 3枚のレイヤーを合成して1枚の画像にする（投稿・保存だけ の共通処理）
+function composeOdekakiImage() {
+  const canvasBg   = document.getElementById('odekaki-canvas-bg');
+  const canvasFill = document.getElementById('odekaki-canvas-fill');
+  const canvasLine = document.getElementById('odekaki-canvas');
+  const out = document.createElement('canvas');
+  out.width = 300; out.height = 300;
+  const ctx = out.getContext('2d');
+  if (odekakiShape === 'free') {
+    // フリースタイル: クリップなし・角丸枠のみ
+    if (canvasBg)   ctx.drawImage(canvasBg,   0, 0);
+    if (canvasFill) ctx.drawImage(canvasFill, 0, 0);
+    if (canvasLine) ctx.drawImage(canvasLine, 0, 0);
+    ctx.strokeStyle = '#aaa'; ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, 298, 298);
+  } else {
+    // 丸型: 円形クリップ
+    ctx.save();
+    ctx.beginPath(); ctx.arc(150,150,149,0,Math.PI*2); ctx.clip();
+    if (canvasBg)   ctx.drawImage(canvasBg,   0, 0);
+    if (canvasFill) ctx.drawImage(canvasFill, 0, 0);
+    if (canvasLine) ctx.drawImage(canvasLine, 0, 0);
+    ctx.restore();
+    ctx.strokeStyle = '#333'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(150,150,148,0,Math.PI*2); ctx.stroke();
+  }
+  drawShareWatermark(ctx, 300, 300);
+  return out.toDataURL('image/png');
+}
+
+// 長押し保存用に表示し、PCならダウンロードもする
+function showOdekakiResult(dataUrl, fileLabel) {
+  const resultWrap = document.getElementById('odekaki-result-wrap');
+  const resultImg  = document.getElementById('odekaki-result-img');
+  resultImg.src = dataUrl;
+  resultImg.style.borderRadius = odekakiShape === 'free' ? '8px' : '50%';
+  resultWrap.style.display = 'block';
+
+  const isMobile = /iPhone|Android|iPad/i.test(navigator.userAgent);
+  if (!isMobile) {
+    const link = document.createElement('a');
+    link.download = `omanbo_${fileLabel}.png`;
+    link.href = dataUrl;
+    link.click();
+  }
+  return resultImg;
+}
+
+// 図鑑には出さず、自分の端末に保存するだけ（サーバーには送らない）
+function saveOdekakiOnly() {
+  const name = (document.getElementById('odekaki-name').value || '').trim() || 'おえかき';
+  const img = showOdekakiResult(composeOdekakiImage(), name);
+  img.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // ── 投稿の送信状態表示（送信は裏で走らせ、結果はすぐ見せる）──────
@@ -4089,62 +4190,25 @@ function retryScorePost() {
 }
 
 async function saveOdekakiImage() {
-  const villageName = (document.getElementById('odekaki-name').value || '').trim();
-  const penname     = (document.getElementById('odekaki-penname').value || '').trim();
+  const villageName = (document.getElementById('odekaki-name').value || '').trim() || ODEKAKI_DEFAULT_NAME;
+  const pennameIn   = (document.getElementById('odekaki-penname').value || '').trim();
+  const penname     = pennameIn || ODEKAKI_DEFAULT_PENNAME;
   const comment     = (document.getElementById('odekaki-comment').value || '').trim();
   const ig          = (document.getElementById('odekaki-instagram').value || '').trim().replace('@','');
   const igShow      = document.getElementById('odekaki-ig-show').checked;
-  const followed    = document.getElementById('odekaki-follow-check').checked;
   const consented   = document.getElementById('odekaki-consent-check').checked;
-  if (!villageName || !penname || !followed || !consented) {
-    alert('キャラクター名・作者ペンネーム・フォロー確認をすべて入力してください');
+  if (!consented) {
+    alert('図鑑・SNSでの紹介への同意にチェックしてください');
     return;
+  }
+  if (pennameIn) {
+    try { localStorage.setItem(ODEKAKI_PENNAME_KEY, pennameIn); } catch(e) {}
   }
   const btn = document.getElementById('odekaki-save-btn');
   btn.textContent = '図鑑に登録中...'; btn.disabled = true;
 
-  const canvasBg   = document.getElementById('odekaki-canvas-bg');
-  const canvasFill = document.getElementById('odekaki-canvas-fill');
-  const canvasLine = document.getElementById('odekaki-canvas');
-  const out = document.createElement('canvas');
-  out.width = 300; out.height = 300;
-  const ctx = out.getContext('2d');
-  if (odekakiShape === 'free') {
-    // フリースタイル: クリップなし・角丸枠のみ
-    if (canvasBg)   ctx.drawImage(canvasBg,   0, 0);
-    if (canvasFill) ctx.drawImage(canvasFill, 0, 0);
-    if (canvasLine) ctx.drawImage(canvasLine, 0, 0);
-    ctx.strokeStyle = '#aaa'; ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, 298, 298);
-  } else {
-    // 丸型: 円形クリップ
-    ctx.save();
-    ctx.beginPath(); ctx.arc(150,150,149,0,Math.PI*2); ctx.clip();
-    if (canvasBg)   ctx.drawImage(canvasBg,   0, 0);
-    if (canvasFill) ctx.drawImage(canvasFill, 0, 0);
-    if (canvasLine) ctx.drawImage(canvasLine, 0, 0);
-    ctx.restore();
-    ctx.strokeStyle = '#333'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(150,150,148,0,Math.PI*2); ctx.stroke();
-  }
-  drawShareWatermark(ctx, 300, 300);
-  const dataUrl = out.toDataURL('image/png');
-
-  // 長押し保存用の画像を表示（スマホはこれで保存）
-  const resultWrap = document.getElementById('odekaki-result-wrap');
-  const resultImg  = document.getElementById('odekaki-result-img');
-  resultImg.src = dataUrl;
-  resultImg.style.borderRadius = odekakiShape === 'free' ? '8px' : '50%';
-  resultWrap.style.display = 'block';
-
-  // PCのみダウンロード（スマホはスキップ）
-  const isMobile = /iPhone|Android|iPad/i.test(navigator.userAgent);
-  if (!isMobile) {
-    const link = document.createElement('a');
-    link.download = `omanbo_${villageName}.png`;
-    link.href = dataUrl;
-    link.click();
-  }
+  const dataUrl = composeOdekakiImage();
+  const resultImg = showOdekakiResult(dataUrl, villageName);
 
   // GASバックエンドへ送信（応答は待たない。番号はここで作っているので待つ必要がない）
   const entryIdLocal = generateEntryId(); // ランダム5桁
@@ -4171,17 +4235,21 @@ async function saveOdekakiImage() {
     resultImg.src = await stampEntryId(resultImg.src, entryId);
   }
 
-  btn.textContent = '💾 投稿＆図鑑登録する'; btn.disabled = false; btn.style.opacity = '1';
+  btn.textContent = '📖 図鑑に投稿する'; btn.disabled = false; btn.style.opacity = '1';
 
   const formArea = document.getElementById('odekaki-form-area');
   if (formArea && entryId) {
+    // 投稿済みの絵を二重に送らないよう、ボタン類は隠す（新しく描けば戻る）
+    btn.style.display = 'none';
+    document.getElementById('odekaki-saveonly-btn').style.display = 'none';
+    document.getElementById('odekaki-more-btn').style.display = 'none';
     formArea.innerHTML = `
       <div style="text-align:center;padding:12px 8px;">
         <div style="font-size:0.9rem;color:#27ae60;font-weight:bold;margin-bottom:10px;">✅ 投稿完了！「${villageName}」として受け付けました🎉</div>
         <div style="background:#fff8e1;border:2px solid #f39c12;border-radius:12px;padding:14px;margin-bottom:10px;">
           <div style="font-size:0.78rem;color:#888;margin-bottom:6px;">あなたの参加番号</div>
           <div style="font-size:2.4rem;font-weight:bold;color:#e67e22;letter-spacing:4px;">${entryId}</div>
-          <div style="font-size:0.7rem;color:#999;margin-top:8px;">📸 上の画像に番号が記載されています<br>長押しで保存しておいてね！<br><b style="color:#e74c3c;">※ この番号は他の人に見せないでください</b></div>
+          <div style="font-size:0.7rem;color:#999;margin-top:8px;">📸 下の画像に番号が記載されています<br>長押しで保存しておいてね！<br><b style="color:#e74c3c;">※ この番号は他の人に見せないでください</b></div>
         </div>
         <div style="font-size:0.72rem;color:#888;line-height:1.8;">
           🎁 結果はインスタ・LINEで発表予定<br>
@@ -4670,6 +4738,8 @@ function odkTouchInfo(e) {
 function setupOdekakiCanvas() {
   // ズーム状態をリセット
   odekakiZoomReset();
+  // 投稿フォームは「できた！」を押すまで隠す
+  resetOdekakiFinish();
   // 白背景レイヤー初期化（1回だけ）
   initBgCanvas();
   // 塗り・線レイヤーはクリア
