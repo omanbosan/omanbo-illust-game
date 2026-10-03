@@ -365,7 +365,8 @@ function saveDrawing(data) {
 // LINE Notify は2025年3月で終了したため、LINE公式アカウントのMessaging APIを使う。
 // トークンと送り先はコードに書かず、スクリプトプロパティに置く（リポジトリが公開のため）。
 //   LINE_CHANNEL_TOKEN … チャネルアクセストークン（長期）
-//   LINE_TO            … 通知を受け取る人のユーザーID（U から始まる33文字）
+//   LINE_TO            … 通知を受け取る人のユーザーID（U から始まる33文字）。
+//                        複数人に送るときはカンマ区切り（例: Uaaa…,Ubbb…）
 // 未設定なら何もしない。通知に失敗しても投稿の保存には影響させない。
 // ----------------------------------------------------------------
 const ADMIN_URL = 'https://omanbosan.github.io/omanbo-illust-game/admin.html';
@@ -390,18 +391,21 @@ function sendLine(text) {
   try {
     const props = PropertiesService.getScriptProperties();
     const token = props.getProperty('LINE_CHANNEL_TOKEN');
-    const to    = props.getProperty('LINE_TO');
-    if (!token || !to) return { skipped: 'LINE未設定' };
-    const res = UrlFetchApp.fetch('https://api.line.me/v2/bot/message/push', {
+    const ids   = String(props.getProperty('LINE_TO') || '')
+      .split(/[\s,、]+/).filter(Boolean);
+    if (!token || ids.length === 0) return { skipped: 'LINE未設定' };
+    // 1人ならpush、複数人ならmulticast（どちらも送った人数ぶん月の無料枠を使う）
+    const multi = ids.length > 1;
+    const res = UrlFetchApp.fetch('https://api.line.me/v2/bot/message/' + (multi ? 'multicast' : 'push'), {
       method: 'post',
       contentType: 'application/json',
       headers: { Authorization: 'Bearer ' + token },
-      payload: JSON.stringify({ to: to, messages: [{ type: 'text', text: text.slice(0, 5000) }] }),
+      payload: JSON.stringify({ to: multi ? ids : ids[0], messages: [{ type: 'text', text: text.slice(0, 5000) }] }),
       muteHttpExceptions: true
     });
     const code = res.getResponseCode();
     if (code !== 200) console.warn('LINE通知に失敗: ' + code + ' ' + res.getContentText());
-    return { code: code, body: res.getContentText() };
+    return { code: code, to: ids.length + '人', body: res.getContentText() };
   } catch(err) {
     console.warn('LINE通知に失敗: ' + err.message);
     return { error: err.message };
