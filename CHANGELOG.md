@@ -1129,3 +1129,19 @@ Playwright＋ヘッドレスChrome（390px・iPhone UA・外部通信はroute �
 （「プレゼント欄が折りたたみ」の1項目は `offsetParent` 判定が `<details>` 内で効かずFAIL扱いになったが、スクショで折りたたみ表示を確認済み）
 
 採点チャレンジ側の「SNS公開に同意する（必須）」は今回触っていない。
+
+---
+
+## 2026-10-03 お絵描き投稿時のLINE通知（GAS・要デプロイ）
+
+- `saveDrawing()` の最後で `notifyNewDrawing()` を呼び、LINE公式アカウントの **Messaging API（push）** で通知する。
+  LINE Notify は2025年3月に終了しているので使わない。Drive保存に失敗したときも「⚠️」付きで通知する
+- 文面: キャラ名／ペンネーム／ひとこと／Instagram／参加番号／Drive画像URL／管理画面URL
+- 設定は **スクリプトプロパティ** に置く（`gas-backend.gs` はGitHub Pagesで公開されるので、トークンをコードに書かない）
+  - `LINE_CHANNEL_TOKEN` … チャネルアクセストークン（長期）
+  - `LINE_TO` … 受け取る人のユーザーID（`U`＋32文字。LINE Developers のチャネル基本設定「あなたのユーザーID」）
+- 未設定なら何もしない。通知の失敗は `console.warn` に出すだけで、投稿の保存・応答には影響させない
+- `testLine()` をエディタから実行するとテスト通知が届く
+- **デプロイ順序に注意**: `UrlFetchApp` で外部通信の権限が新たに要るので、**先にエディタで `testLine()` を実行して承認してから** 本番デプロイ（`@31` のID）を更新する。
+  承認前にデプロイすると Web App 全体が権限エラーになるおそれがある
+- 本番v31との差分を `clasp pull --versionNumber 31` で確認済み：今回の通知以外は、手動実行用のお題入れ替え関数（`getFreeThemesData` / `resetThemesToFreeThemes` など）だけで、Web Appの挙動は変わらない
