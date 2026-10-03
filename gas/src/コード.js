@@ -350,7 +350,7 @@ function saveDrawing(data) {
 
     // 3. シートのURLを更新
     sheet.getRange(rowIndex, 3).setValue(fileUrl);
-    notifyNewDrawing({ villageName, penname, comment, ig, entryId, fileUrl });
+    notifyNewDrawing({ villageName, penname, comment, ig, entryId, fileUrl, blob });
     return { ok: true, fileUrl, entryId };
   } catch(err) {
     sheet.getRange(rowIndex, 3).setValue('Drive保存失敗: ' + err.message);
@@ -361,61 +361,44 @@ function saveDrawing(data) {
 }
 
 // ----------------------------------------------------------------
-// LINE通知（Messaging API のプッシュメッセージ）
-// LINE Notify は2025年3月で終了したため、LINE公式アカウントのMessaging APIを使う。
-// トークンと送り先はコードに書かず、スクリプトプロパティに置く（リポジトリが公開のため）。
-//   LINE_CHANNEL_TOKEN … チャネルアクセストークン（長期）
-//   LINE_TO            … 通知を受け取る人のユーザーID（U から始まる33文字）。
-//                        複数人に送るときはカンマ区切り（例: Uaaa…,Ubbb…）
-// 未設定なら何もしない。通知に失敗しても投稿の保存には影響させない。
+// 投稿ごとのメール通知（管理者へ・絵を本文に埋め込む）
+// LINE（Messaging API）は無料枠が月200通のため、回数を気にしなくてよいメールにした。
+// 通知に失敗しても投稿の保存には影響させない。
 // ----------------------------------------------------------------
 const ADMIN_URL = 'https://omanbosan.github.io/omanbo-illust-game/admin.html';
 
+function escHtml(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function notifyNewDrawing(d) {
-  const lines = [
-    d.error ? '⚠️ お絵描き投稿（Drive保存に失敗）' : '🎨 お絵描きの新しい投稿がありました',
-    '',
-    'キャラ名: ' + (d.villageName || '-'),
-    'ペンネーム: ' + (d.penname || '-'),
-  ];
-  if (d.comment) lines.push('ひとこと: ' + d.comment);
-  if (d.ig)      lines.push('Instagram: @' + d.ig);
-  lines.push('参加番号: ' + (d.entryId || '-'));
-  if (d.fileUrl) lines.push('', '🖼 画像: ' + d.fileUrl);
-  if (d.error)   lines.push('', 'エラー: ' + d.error);
-  lines.push('', '✅ 承認はこちら: ' + ADMIN_URL);
-  sendLine(lines.join('\n'));
-}
-
-function sendLine(text) {
   try {
-    const props = PropertiesService.getScriptProperties();
-    const token = props.getProperty('LINE_CHANNEL_TOKEN');
-    const ids   = String(props.getProperty('LINE_TO') || '')
-      .split(/[\s,、]+/).filter(Boolean);
-    if (!token || ids.length === 0) return { skipped: 'LINE未設定' };
-    // 1人ならpush、複数人ならmulticast（どちらも送った人数ぶん月の無料枠を使う）
-    const multi = ids.length > 1;
-    const res = UrlFetchApp.fetch('https://api.line.me/v2/bot/message/' + (multi ? 'multicast' : 'push'), {
-      method: 'post',
-      contentType: 'application/json',
-      headers: { Authorization: 'Bearer ' + token },
-      payload: JSON.stringify({ to: multi ? ids : ids[0], messages: [{ type: 'text', text: text.slice(0, 5000) }] }),
-      muteHttpExceptions: true
-    });
-    const code = res.getResponseCode();
-    if (code !== 200) console.warn('LINE通知に失敗: ' + code + ' ' + res.getContentText());
-    return { code: code, to: ids.length + '人', body: res.getContentText() };
+    const rows = [
+      ['キャラ名',   d.villageName || '-'],
+      ['ペンネーム', d.penname || '-'],
+      ['ひとこと',   d.comment || '-'],
+      ['Instagram',  d.ig ? '@' + d.ig : '-'],
+      ['参加番号',   d.entryId || '-'],
+    ];
+    const subject = d.error
+      ? `【イラストパーク】⚠️ 投稿のDrive保存に失敗（${d.villageName || '-'}）`
+      : `【イラストパーク】新しい投稿：${d.villageName || '-'}（${d.penname || '-'}）`;
+    const html = `
+      <h2 style="color:#27ae60;margin:0 0 12px;">${d.error ? '⚠️ 投稿のDrive保存に失敗しました' : '🎨 お絵描きの新しい投稿がありました'}</h2>
+      ${d.blob ? '<p><img src="cid:drawing" width="240" style="border-radius:12px;border:1px solid #ddd;"></p>' : ''}
+      <table style="border-collapse:collapse;font-size:14px;">
+        ${rows.map(r => `<tr><td style="padding:4px 12px 4px 0;color:#888;">${r[0]}</td><td style="padding:4px 0;"><b>${escHtml(r[1])}</b></td></tr>`).join('')}
+      </table>
+      ${d.error ? `<p style="color:#e74c3c;">エラー: ${escHtml(d.error)}</p>` : ''}
+      ${d.fileUrl ? `<p>🖼 <a href="${d.fileUrl}">Driveで画像を開く</a></p>` : ''}
+      <p><a href="${ADMIN_URL}" style="display:inline-block;padding:10px 20px;background:#27ae60;color:#fff;border-radius:20px;text-decoration:none;font-weight:bold;">✅ 管理画面で承認する</a></p>`;
+    const opts = { to: CONFIG.ownerEmail, subject: subject, htmlBody: html, name: 'おまんぼさんのイラストパーク' };
+    if (d.blob) opts.inlineImages = { drawing: d.blob };
+    MailApp.sendEmail(opts);
   } catch(err) {
-    console.warn('LINE通知に失敗: ' + err.message);
-    return { error: err.message };
+    console.warn('メール通知に失敗: ' + err.message);
   }
-}
-
-// 【設定後にGASエディタから1回実行】LINEにテスト通知を送る
-function testLine() {
-  const r = sendLine('✅ おまんぼさんイラストパークのLINE通知テストです。これが届いていれば設定完了！');
-  Logger.log(JSON.stringify(r));
 }
 
 // ----------------------------------------------------------------

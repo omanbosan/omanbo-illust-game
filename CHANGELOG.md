@@ -1161,3 +1161,13 @@ Playwright＋ヘッドレスChrome（390px・iPhone UA・外部通信はroute �
 - 無料プランは月200通。2人宛てだと1投稿で2通消費するので、月100投稿が目安
 - `testLine()` で2人とも受信を確認 → 本番を `@33` に更新 → 本番ページからテスト投稿（参加番号 87853）で保存OK
 - デプロイ直後の数秒は `?type=config` がHTMLを返したが、すぐ正常なJSONに戻った（反映待ち）
+
+---
+
+## 2026-10-03 投稿通知をLINEからメールに切り替え（GAS・要デプロイ）
+
+- ユーザー判断で、LINEの無料枠（月200通）を気にしなくてよい **メール通知** に変更。宛先は `CONFIG.ownerEmail`（omanbosan.lv@gmail.com）のみ
+- `notifyNewDrawing()` を `MailApp.sendEmail` に置き換え、`sendLine()` / `testLine()` は削除。投稿された絵は `inlineImages`（`cid:drawing`）で本文に埋め込み、Driveリンクと管理画面ボタンを付ける。投稿者が入力した文字は `escHtml()` でエスケープ
+- MailApp は日次まとめで使用済みのため、新しい権限の承認は不要
+- スクリプトプロパティ `LINE_CHANNEL_TOKEN` / `LINE_TO` はもう読まない（残っていても害はない）
+- 既存の日次まとめ `sendDailySummary`（トリガー設定時のみ動く）はそのまま
