@@ -1151,3 +1151,13 @@ Playwright＋ヘッドレスChrome（390px・iPhone UA・外部通信はroute �
 - `testLine()` で LINE 送信 200 を確認（スクリプトプロパティ `LINE_TO` / `LINE_CHANNEL_TOKEN` 設定済み・権限承認済み）
 - 本番デプロイを **同じID のまま `@31` → `@32`** に更新（`clasp deploy -i AKfycby0q8…`）。`game.html` / `admin.html` のURL変更なし
 - 更新後に `?type=zukan` / `config` が正常に返ることを確認し、本番ページからテスト投稿（参加番号 39656）→ `{"ok":true,"fileUrl":…}`
+
+### 複数人への通知（2026-10-03・@33）
+
+- `LINE_TO` をカンマ区切りで複数指定できるようにした。1人なら push、2人以上なら multicast（`/v2/bot/message/multicast`）
+- 2人目はLINE Developersのチャネルにメンバー招待し、本人に `…/console/channel/2011843084/basics` の「あなたのユーザーID」を見てもらって取得
+  （`/console/channel/<ID>` だけのURLは404になる）
+- 通知は **公式アカウント → 各人の個人LINE** に届く。受け取る人は個人LINEで公式アカウントを友だち追加しておく必要がある
+- 無料プランは月200通。2人宛てだと1投稿で2通消費するので、月100投稿が目安
+- `testLine()` で2人とも受信を確認 → 本番を `@33` に更新 → 本番ページからテスト投稿（参加番号 87853）で保存OK
+- デプロイ直後の数秒は `?type=config` がHTMLを返したが、すぐ正常なJSONに戻った（反映待ち）
